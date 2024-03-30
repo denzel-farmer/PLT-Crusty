@@ -107,24 +107,20 @@ lin_qual:
     | LINEAR { Linear }
 
 /* Primative types */
+/* TODO integrade struct into primtyp? */
 primtyp:
     INT   { Int   }
   | BOOL  { Bool  }
   | CHAR  { Char  }
   | FLOAT { Float }
 
-/* Function return type (includes void) */
-ret_typ :
-    | primtyp { $1}
-    | STRUCT ID { $2}
-    | VOID { Void }
-
 /*TODO allow declaring structs in function body */
 /*TODO allow mixed declaration and assignment */
 
 /* Returns record of function return type, name, arguments, local variables, and body */
+/* TODO add returning void */
 func_decl:
-  ret_typ ID LPAREN args_opt RPAREN LBRACE var_decl_list stmt_list RBRACE
+  | primtyp ID LPAREN args_opt RPAREN LBRACE var_decl_list stmt_list RBRACE
   {
     {
       rtyp=$1;
@@ -132,6 +128,16 @@ func_decl:
       args=$4;
       locals=$7;
       body=$8
+    }
+  }
+  | STRUCT ID ID LPAREN args_opt RPAREN LBRACE var_decl_list stmt_list RBRACE
+  {
+    {
+      rtyp=Struct($2);
+      fname=$3;
+      args=$5;
+      locals=$8;
+      body=$9
     }
   }
 

@@ -9,14 +9,7 @@ type typ =
   | Float
   | Struct of string
 
-(* TODO unify typ and ret_typ*)
-type ret_typ =
-  | Int
-  | Bool
-  | Char
-  | Float
-  | Struct of string
-  | Void
+(* TODO add VOID function return type *)
 
 (* Operator Types *)
 type binArithOp =
