@@ -87,7 +87,7 @@ struct_decl:
 /* Returns list of variable declarations */
 var_decl_list:
   /*nothing*/ { [] }
-  | var_decl SEMI vdecl_list  {  $1 :: $3 }
+  | var_decl SEMI var_decl_list  {  $1 :: $3 }
 
 /* Returns record of qualifiers, type, and name for variable declaration */
 var_decl:
@@ -142,10 +142,10 @@ args_opt :
 
 /* Returns list of arguments */
 args :
-  vdecl { [(Val, $1)] }
-  | REF vdecl { [(Ref, $2)] }
-  | vdecl COMMA args { (Val, $1) :: $3 }
-  | REF vdecl COMMA args { (Ref, $2) :: $4 }
+  var_decl { [(Val, $1)] }
+  | REF var_decl { [(Ref, $2)] }
+  | var_decl COMMA args { (Val, $1) :: $3 }
+  | REF var_decl COMMA args { (Ref, $2) :: $4 }
 
 
 /* Returns list of statements OR empty list */
