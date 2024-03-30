@@ -240,9 +240,9 @@ comparison_expression:
     | expr EQ expr { CompOp($1, Eq, $3) }
     | expr NEQ expr { CompOp($1, Neq, $3) }
     | expr LT expr { CompOp($1, Lt, $3) }
-    | expr LTE expr { CompOp($1, Lte, $3) }
+    | expr LTE expr { CompOp($1, Leq, $3) }
     | expr GT expr { CompOp($1, Gt, $3) }
-    | expr GTE expr { CompOp($1, Gte, $3) }
+    | expr GTE expr { CompOp($1, Geq, $3) }
 
 logical_expression:
     | expr AND expr { LogOp($1, And, $3) }
