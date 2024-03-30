@@ -200,8 +200,8 @@ literal_expression:
 assignment_expression:
     | ID ASSIGN expr { Assign($1, $3) }
     | LBRACE id_list RBRACE ASSIGN expr { StructExplode($2, $5) }
-    | ID ASSIGN ID PERIOD expr { StructAssign($1, $2, $3) }
-    | ID ASSIGN ID ARROW expr { RefStructAssign($1, $2, $3) }
+    | ID ASSIGN ID PERIOD expr { StructAssign($1, $3, $5) }
+    | ID ASSIGN ID ARROW expr { RefStructAssign($1, $3, $5) }
 
 id_list:
     | ID { [$1] }
