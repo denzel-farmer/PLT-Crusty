@@ -1,4 +1,4 @@
-/* Ocamlyacc parser for MicroC */
+(* Ocamlyacc Parser for Crusty *)
 
 %{
 open Ast
@@ -14,8 +14,8 @@ open Ast
 %token PLUST MINUS TIMES DIVIDE MOD INCR DECR
 %token EQ NEQ LT LTE GT GTE
 %token AND OR NOT
-%token DOT 
-%token BORROW DEREF ARROW 
+%token DOT
+%token BORROW DEREF ARROW
 
 %token IF ELSE WHILE BREAK CONTINUE RETURN
 
@@ -25,7 +25,6 @@ open Ast
 %start program
 %type <Ast.program> program
 
-(* TODO add comma operator here? *)
 %right ASSIGN
 %left OR
 %left AND
@@ -35,61 +34,122 @@ open Ast
 %left TIMES DIVIDE MOD
 
 %right INCR DECR NOT
-%left DOT BORROW 
+%left DOT BORROW
 (*TODO Prefix and postfix increment and decrement operators *)
 (*TODO: unary plus and minus *)
-(*TODO: type casting? *)
+(*TODO: type casting *)
 (*TODO: more complex assignment operators *)
+(*TODO: comma operator *)
+(*TODO: arrays *)
 
 %%
-// TODO REMOVE BELOW
-/* add function declarations*/
 program:
   decls EOF { $1}
 
+(* Returns record of globals, structs, and functions *)
 decls:
-   /* nothing */ { ([], [])               }
- | vdecl SEMI decls { (($1 :: fst $3), snd $3) }
- | fdecl decls { (fst $2, ($1 :: snd $2)) }
+   /* nothing */ { ([], [])}
+| struct_decl SEMI decls {
+    {
+        globals = $3.globals;
+        structs = $1 :: $3.structs;
+        funcs = $3.funcs
+    }
+}
+ | var_decl SEMI decls {
+    {
+        globals = $1 :: $3.globals;
+        structs = $3.structs;
+        funcs = $3.funcs
+    }
+ }
+ | func_decl decls {
+    {
+        globals = $2.globals;
+        structs = $2.structs;
+        funcs = $1 :: $2.funcs
+    }
+}
 
-vdecl_list:
+(* Returns record of struct name and member declarations *)
+struct_decl:
+  STRUCT ID LBRACE var_decl_list RBRACE {
+    {
+        sname = $2;
+        fields = $4
+    }
+   }
+
+(* Returns list of variable declarations *)
+var_decl_list:
   /*nothing*/ { [] }
-  | vdecl SEMI vdecl_list  {  $1 :: $3 }
+  | var_decl SEMI vdecl_list  {  $1 :: $3 }
 
-/* int x */
-vdecl:
-  typ ID { ($1, $2) }
+(* Returns record of qualifiers, type, and name for variable declaration *)
+var_decl:
+  const_qual lin_qual primtyp ID { ($1, $2, $3, $4) }
+  | const_qual lin_qual STRUCT ID ID { ($1, $2, Struct($4), $5) }
+  | const_qual primtyp ID { ($1, Unrestricted, $2, $3) }
+  | const_qual STRUCT ID ID { ($1, Linear, Struct($3), $4) }
 
-typ:
+
+(* Qualifiers for variable declaration *)
+const_qual:
+/* nothing */ { Var }
+    | CONST { Const }
+
+lin_qual:
+      UNRESTRICTED { Unrestricted }
+    | LINEAR { Linear }
+
+(* Primative types *)
+primtyp:
     INT   { Int   }
   | BOOL  { Bool  }
+  | CHAR  { Char  }
+  | FLOAT { Float }
 
-/* fdecl */
+(* Function return type (includes void) *)
+ret_typ :
+    | primtyp { $1}
+    | STRUCT { $1}
+    | VOID { Void }
+
+(*TODO allow declaring structs in function body *)
+(*TODO allow mixed declaration and assignment *)
+
+(* Returns record of function return type, name, arguments, local variables, and body *)
 fdecl:
-  vdecl LPAREN formals_opt RPAREN LBRACE vdecl_list stmt_list RBRACE
+  ret_typ ID LPAREN args_opt RPAREN LBRACE var_decl_list stmt_list RBRACE
   {
     {
-      rtyp=fst $1;
-      fname=snd $1;
-      formals=$3;
-      locals=$6;
-      body=$7
+      rtyp=$1;
+      fname=$2;
+      args=$4;
+      locals=$7;
+      body=$8
     }
   }
 
-/* formals_opt */
-formals_opt:
-  /*nothing*/ { [] }
-  | formals_list { $1 }
+(* Returns list of arguments OR empty list *)
+args_opt :
+  VOID { [] }
+  | args { $1 }
 
-formals_list:
-  vdecl { [$1] }
-  | vdecl COMMA formals_list { $1::$3 }
+(* Returns list of arguments *)
+args :
+  vdecl { [(Val, $1)] }
+  | REF vdecl { [(Ref, $2)] }
+  | vdecl COMMA args { (Val, $1) :: $3 }
+  | REF vdecl COMMA args { (Ref, $2) :: $4 }
 
+
+(* Returns list of statements OR empty list *)
 stmt_list:
   /* nothing */ { [] }
   | stmt stmt_list  { $1::$2 }
 
+(* Statements *)
 stmt:
     expr SEMI                               { Expr $1      }
   | LBRACE stmt_list RBRACE                 { Block $2 }
@@ -97,40 +157,78 @@ stmt:
   /* if (condition) stmt else stmt */
   | IF LPAREN expr RPAREN stmt ELSE stmt    { If($3, $5, $7) }
   | WHILE LPAREN expr RPAREN stmt           { While ($3, $5)  }
-  /* return */
+  | BREAK SEMI                              { Break          }
+  | CONTINUE SEMI                           { Continue       }
   | RETURN expr SEMI                        { Return $2      }
 
+(* Expressions *)
 expr:
-    LITERAL          { Literal($1)            }
-  | BLIT             { BoolLit($1)            }
-  | ID               { Id($1)                 }
-  | expr PLUS   expr { Binop($1, Add,   $3)   }
-  | expr MINUS  expr { Binop($1, Sub,   $3)   }
-  | expr EQ     expr { Binop($1, Equal, $3)   }
-  | expr NEQ    expr { Binop($1, Neq, $3)     }
-  | expr LT     expr { Binop($1, Less,  $3)   }
-  | expr AND    expr { Binop($1, And,   $3)   }
-  | expr OR     expr { Binop($1, Or,    $3)   }
+    ID               { Id($1)                 }
   | ID ASSIGN expr   { Assign($1, $3)         }
   | LPAREN expr RPAREN { $2                   }
-  /* call */
-  | ID LPAREN args_opt RPAREN { Call ($1, $3)  }
+  | assignment_expression { Assignment $1 }
+  | arithmetic_expression { Operation $1 }
+  | comparison_expression { Operation $1 }
+  | logical_expression { Operation $1 }
+  | access_expression { AccessOp($1, Dot, $3) }
+  | ID LPAREN call_args_opt RPAREN { Call ($1, $3)  }
 
-/* args_opt*/
-args_opt:
+(* Call arguments (allows borrowing) *)
+call_args_opt:
   /*nothing*/ { [] }
-  | args { $1 }
+  | call_args { $1 }
 
-args:
+call_args:
   expr  { [$1] }
-  | expr COMMA args { $1::$3 }
+  | BORROW expr { [Borrow($2)] }
+  | expr COMMA call_args { $1::$3 }
+  | BORROW expr COMMA call_args { Borrow($2) :: $4 }
 
+(* Expression Subcomponents *)
+literal_expression:
+    | INTLIT { IntLit($1) }
+    | BOOLLIT { BoolLit($1) }
+    | FLOATLIT { FloatLit($1) }
+    | CHARLIT { CharLit($1) }
+    | STRINGLIT { StringLit($1) }
+    | LBRACE expr_list RBRACE { StructLit($2) }
 
+assignment_expression:
+    | ID ASSIGN expr { Assign($1, $3) }
+    | LBRACE id_list RBRACE ASSIGN expr { StructExplode($2, $5) }
+    | ID ASSIGN ID PERIOD expr { StructAssign($1, $2, $3) }
+    | ID ASSIGN ID ARROW expr { RefStructAssign($1, $2, $3) }
 
+id_list:
+    | ID { [$1] }
+    | ID COMMA id_list { $1 :: $3 }
 
+arithmetic_expression:
+    | expr PLUS expr { ArithOp($1, Add, $3) }
+    | expr MINUS expr { ArithOp($1, Sub, $3) }
+    | expr TIMES expr { ArithOp($1, Mul, $3) }
+    | expr DIVIDE expr { ArithOp($1, Div, $3) }
+    | expr MOD expr { ArithOp($1, Mod, $3) }
+    | expr INCR { UnArithOp(PreIncr, $1) }
+    | expr DECR { UnArithOp(PreDecr, $1) }
+    | INCR expr { UnArithOp(PostIncr, $2) }
+    | DECR expr { UnArithOp(PostDecr, $2) }
 
+comparison_expression:
+    | expr EQ expr { CompOp($1, Eq, $3) }
+    | expr NEQ expr { CompOp($1, Neq, $3) }
+    | expr LT expr { CompOp($1, Lt, $3) }
+    | expr LTE expr { CompOp($1, Lte, $3) }
+    | expr GT expr { CompOp($1, Gt, $3) }
+    | expr GTE expr { CompOp($1, Gte, $3) }
 
-(* Weird constructs 
-    - immediate assignments (string literals, structs)
-    - struct explosion 
-*)
+logical_expression:
+    | expr AND expr { LogOp($1, And, $3) }
+    | expr OR expr { LogOp($1, Or, $3) }
+    | NOT expr { UnLogOp(Not, $2) }
+
+access_expression:
+    | ID PERIOD ID { AccessOp($1, Dot, $3) }
+    | ID ARROW ID { AccessOp($1, Arrow, $3) }
+    | DEREF ID { UnOp(Deref, $2) }
+
