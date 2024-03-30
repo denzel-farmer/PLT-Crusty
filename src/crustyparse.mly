@@ -6,7 +6,11 @@ open Ast
 
 %token LPAREN RPAREN LBRACE RBRACE SEMI COLON COMMA
 %token INT BOOL CHAR FLOAT VOID
-%token INTLIT<int> FLOATLIT<float> BOOLLIT<bool> CHARLIT<char> STRINGLIT<string>
+%token <int> INTLIT
+%token <float> FLOATLIT
+%token <bool> BOOLLIT
+%token <char> CHARLIT
+%token <string> STRINGLIT
 %token REF LINEAR UNRESTRICTED CONST
 %token STRUCT
 
@@ -19,7 +23,7 @@ open Ast
 
 %token IF ELSE WHILE BREAK CONTINUE RETURN
 
-%token ID<string>
+%token <string> ID
 %token EOF
 
 %start program
