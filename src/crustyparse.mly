@@ -116,7 +116,7 @@ primtyp:
 /* Function return type (includes void) */
 ret_typ :
     | primtyp { $1}
-    | STRUCT { $1}
+    | STRUCT ID { $2}
     | VOID { Void }
 
 /*TODO allow declaring structs in function body */
