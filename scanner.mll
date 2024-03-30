@@ -9,7 +9,7 @@ let newline = ['\n']
 let digit = ['0'-'9']
 let int = digit+ | '-'digit+ | '+'digit+
 
-let float_base = digit* '.' digit+ | digit+ '.' digit* 
+let float_base = digit* '.' digit+ | digit+ '.' digit*
 let float_exp = ['e' 'E'] ['+' '-']? digit+
 let float = float_base float_exp? | digit+float_exp
 
@@ -17,9 +17,9 @@ let single_enclosed = "'" _ "'"
 let double_enclosed = '"' _ '"'
 
 rule token = parse
-  whitespace { token lexbuf } 
-| "/*"     { comment lexbuf }    
-| "//"     { line_comment lexbuf } 
+  whitespace { token lexbuf }
+| "/*"     { comment lexbuf }
+| "//"     { line_comment lexbuf }
 
 (* Grouping/Separating *)
 | '('      { LPAREN }
@@ -42,7 +42,7 @@ rule token = parse
 | int as lem  { INTLIT(int_of_string lem) }
 | float as lem { FLOATLIT(float_of_string lem) }
 | "true"   { BOOLLIT(true)  }
-| "false"  { BOOLLIT(false) } 
+| "false"  { BOOLLIT(false) }
 | single_enclosed as lem { CHARLIT(Char.code lem.[1]) } (* TODO ensure this includes special characters like /0 *)
 | double_enclosed as lem { STRINGLIT(String.sub lem 1 ((String.length lem) - 2)) } (*TODO escape sequences *)
 
@@ -106,7 +106,7 @@ rule token = parse
 
 (* Identifier *)
 | letter (digit | letter | '_')* as lem { ID(lem) }
-  
+
   (* End of File *)
 | eof { EOF }
 | _ as char { raise (Failure("illegal character " ^ Char.escaped char)) }
