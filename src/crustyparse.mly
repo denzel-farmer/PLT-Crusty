@@ -206,8 +206,8 @@ literal_expression:
 assignment_expression:
     | ID ASSIGN expr { Assign($1, $3) }
     | LBRACE id_list RBRACE ASSIGN expr { StructExplode($2, $5) }
-    | ID ASSIGN ID PERIOD expr { StructAssign($1, $3, $5) }
-    | ID ASSIGN ID ARROW expr { RefStructAssign($1, $3, $5) }
+    | ID DOT ID ASSIGN expr { StructAssign($1, $3, $5) }
+    | ID DOT ID ARROW expr { RefStructAssign($1, $3, $5) }
 
 id_list:
     | ID { [$1] }
@@ -238,7 +238,7 @@ logical_expression:
     | NOT expr { UnLogOp(Not, $2) }
 
 access_expression:
-    | ID PERIOD ID { AccessOp($1, Dot, $3) }
+    | ID DOT ID { AccessOp($1, Dot, $3) }
     | ID ARROW ID { AccessOp($1, Arrow, $3) }
     | DEREF ID { UnOp(Deref, $2) }
 
