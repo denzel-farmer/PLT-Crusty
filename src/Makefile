@@ -19,17 +19,21 @@ all : scanner.ml parser.ml parser.mli
 # calc : parser.cmo scanner.cmo calc.cmo
 # 	ocamlc -w A -o calc $^
 
-%.cmo : %.ml
-	ocamlc -w A -c $<
+# %.cmo : %.ml
+# 	ocamlc -w A -c $<
 
-%.cmi : %.mli
-	ocamlc -w A -c $<
+# %.cmi : %.mli
+# 	ocamlc -w A -c $<
 
 scanner.ml : scanner.mll
 	ocamllex $^
+parser.ml parser.mli : crustyparse.mly ast.cmi ast.cmo
+	menhir --infer --ocamlc 'ocamlfind ocamlc' $<
 
-parser.ml parser.mli : crustyparse.mly
-	menhir --infer --ocamlc 'ocamlfind ocamlc' $^
+ast.cmi ast.cmo : ast.ml
+	ocamlc -w A -c $<
+
+
 
 # calc.out : calc calc.tb
 # 	./calc < calc.tb > calc.out
