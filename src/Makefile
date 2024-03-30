@@ -29,7 +29,7 @@ scanner.ml : scanner.mll
 	ocamllex $^
 
 parser.ml parser.mli : crustyparse.mly
-	ocamlyacc $^
+	menhir --infer --ocamlc 'ocamlfind ocamlc' $^
 
 # calc.out : calc calc.tb
 # 	./calc < calc.tb > calc.out
