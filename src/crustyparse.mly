@@ -250,7 +250,7 @@ logical_expression:
     | NOT expr { UnLogOp(Not, $2) }
 
 access_expression:
-    | ID DOT ID { AccessOp($1, Dot, $3) }
-    | ID ARROW ID { AccessOp($1, Arrow, $3) }
-    | DEREF ID { UnOp(Deref, $2) }
+    | ID DOT ID { AccessOp(Id($1), Dot, $3) }
+    | ID ARROW ID { AccessOp(Id($1), Arrow, $3) }
+    | DEREF ID { Deref(Id($2)) }
 
