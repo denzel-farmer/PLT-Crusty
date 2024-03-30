@@ -231,10 +231,10 @@ arithmetic_expression:
     | expr TIMES expr { ArithOp($1, Mul, $3) }
     | expr DIVIDE expr { ArithOp($1, Div, $3) }
     | expr MOD expr { ArithOp($1, Mod, $3) }
-    | expr INCR { UnArithOp(PreIncr, $1) }
-    | expr DECR { UnArithOp(PreDecr, $1) }
-    | INCR expr { UnArithOp(PostIncr, $2) }
-    | DECR expr { UnArithOp(PostDecr, $2) }
+    | expr INCR { UnArithOp(PreInc, $1) }
+    | expr DECR { UnArithOp(PreDec, $1) }
+    | INCR expr { UnArithOp(PostInc, $2) }
+    | DECR expr { UnArithOp(PostDec, $2) }
 
 comparison_expression:
     | expr EQ expr { CompOp($1, Eq, $3) }
