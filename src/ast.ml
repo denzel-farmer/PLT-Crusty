@@ -15,7 +15,7 @@ type typ =
 type binArithOp =
   | Add
   | Sub
-  | Mult
+  | Mul
   | Div
   | Mod
 
