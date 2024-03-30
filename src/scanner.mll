@@ -8,6 +8,7 @@ let newline = ['\n']
 
 let digit = ['0'-'9']
 let int = digit+ | '-'digit+ | '+'digit+
+let letter = ['a'-'z' 'A'-'Z']
 
 let float_base = digit* '.' digit+ | digit+ '.' digit*
 let float_exp = ['e' 'E'] ['+' '-']? digit+
