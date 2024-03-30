@@ -174,7 +174,7 @@ expr:
   | arithmetic_expression { Operation $1 }
   | comparison_expression { Operation $1 }
   | logical_expression { Operation $1 }
-  | access_expression { AccessOp($1, Dot, $3) }
+  | access_expression { AccessOp $1 }
   | ID LPAREN call_args_opt RPAREN { Call ($1, $3)  }
 
 /* Call arguments (allows borrowing) */
