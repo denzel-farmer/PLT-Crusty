@@ -123,7 +123,7 @@ ret_typ :
 /*TODO allow mixed declaration and assignment */
 
 /* Returns record of function return type, name, arguments, local variables, and body */
-fdecl:
+func_decl:
   ret_typ ID LPAREN args_opt RPAREN LBRACE var_decl_list stmt_list RBRACE
   {
     {
