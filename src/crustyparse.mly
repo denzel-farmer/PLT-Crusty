@@ -1,4 +1,4 @@
-(* Ocamlyacc Parser for Crusty *)
+/* Ocamlyacc Parser for Crusty */
 
 %{
 open Ast
@@ -35,18 +35,18 @@ open Ast
 
 %right INCR DECR NOT
 %left DOT BORROW
-(*TODO Prefix and postfix increment and decrement operators *)
-(*TODO: unary plus and minus *)
-(*TODO: type casting *)
-(*TODO: more complex assignment operators *)
-(*TODO: comma operator *)
-(*TODO: arrays *)
+/*TODO Prefix and postfix increment and decrement operators */
+/*TODO: unary plus and minus */
+/*TODO: type casting */
+/*TODO: more complex assignment operators */
+/*TODO: comma operator */
+/*TODO: arrays */
 
 %%
 program:
   decls EOF { $1}
 
-(* Returns record of globals, structs, and functions *)
+/* Returns record of globals, structs, and functions */
 decls:
    /* nothing */ { ([], [])}
 | struct_decl SEMI decls {
@@ -71,7 +71,7 @@ decls:
     }
 }
 
-(* Returns record of struct name and member declarations *)
+/* Returns record of struct name and member declarations */
 struct_decl:
   STRUCT ID LBRACE var_decl_list RBRACE {
     {
@@ -80,12 +80,12 @@ struct_decl:
     }
    }
 
-(* Returns list of variable declarations *)
+/* Returns list of variable declarations */
 var_decl_list:
   /*nothing*/ { [] }
   | var_decl SEMI vdecl_list  {  $1 :: $3 }
 
-(* Returns record of qualifiers, type, and name for variable declaration *)
+/* Returns record of qualifiers, type, and name for variable declaration */
 var_decl:
   const_qual lin_qual primtyp ID { ($1, $2, $3, $4) }
   | const_qual lin_qual STRUCT ID ID { ($1, $2, Struct($4), $5) }
@@ -93,7 +93,7 @@ var_decl:
   | const_qual STRUCT ID ID { ($1, Linear, Struct($3), $4) }
 
 
-(* Qualifiers for variable declaration *)
+/* Qualifiers for variable declaration */
 const_qual:
 /* nothing */ { Var }
     | CONST { Const }
@@ -102,23 +102,23 @@ lin_qual:
       UNRESTRICTED { Unrestricted }
     | LINEAR { Linear }
 
-(* Primative types *)
+/* Primative types */
 primtyp:
     INT   { Int   }
   | BOOL  { Bool  }
   | CHAR  { Char  }
   | FLOAT { Float }
 
-(* Function return type (includes void) *)
+/* Function return type (includes void) */
 ret_typ :
     | primtyp { $1}
     | STRUCT { $1}
     | VOID { Void }
 
-(*TODO allow declaring structs in function body *)
-(*TODO allow mixed declaration and assignment *)
+/*TODO allow declaring structs in function body */
+/*TODO allow mixed declaration and assignment */
 
-(* Returns record of function return type, name, arguments, local variables, and body *)
+/* Returns record of function return type, name, arguments, local variables, and body */
 fdecl:
   ret_typ ID LPAREN args_opt RPAREN LBRACE var_decl_list stmt_list RBRACE
   {
@@ -131,12 +131,12 @@ fdecl:
     }
   }
 
-(* Returns list of arguments OR empty list *)
+/* Returns list of arguments OR empty list */
 args_opt :
   VOID { [] }
   | args { $1 }
 
-(* Returns list of arguments *)
+/* Returns list of arguments */
 args :
   vdecl { [(Val, $1)] }
   | REF vdecl { [(Ref, $2)] }
@@ -144,12 +144,12 @@ args :
   | REF vdecl COMMA args { (Ref, $2) :: $4 }
 
 
-(* Returns list of statements OR empty list *)
+/* Returns list of statements OR empty list */
 stmt_list:
   /* nothing */ { [] }
   | stmt stmt_list  { $1::$2 }
 
-(* Statements *)
+/* Statements */
 stmt:
     expr SEMI                               { Expr $1      }
   | LBRACE stmt_list RBRACE                 { Block $2 }
@@ -161,7 +161,7 @@ stmt:
   | CONTINUE SEMI                           { Continue       }
   | RETURN expr SEMI                        { Return $2      }
 
-(* Expressions *)
+/* Expressions */
 expr:
     ID               { Id($1)                 }
   | ID ASSIGN expr   { Assign($1, $3)         }
@@ -173,7 +173,7 @@ expr:
   | access_expression { AccessOp($1, Dot, $3) }
   | ID LPAREN call_args_opt RPAREN { Call ($1, $3)  }
 
-(* Call arguments (allows borrowing) *)
+/* Call arguments (allows borrowing) */
 call_args_opt:
   /*nothing*/ { [] }
   | call_args { $1 }
@@ -184,7 +184,7 @@ call_args:
   | expr COMMA call_args { $1::$3 }
   | BORROW expr COMMA call_args { Borrow($2) :: $4 }
 
-(* Expression Subcomponents *)
+/* Expression Subcomponents */
 literal_expression:
     | INTLIT { IntLit($1) }
     | BOOLLIT { BoolLit($1) }
