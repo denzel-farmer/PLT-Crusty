@@ -52,7 +52,13 @@ program:
 
 /* Returns record of globals, structs, and functions */
 decls:
-   /* nothing */ { ([], [])}
+   /* nothing */ { 
+    {
+        globals = [];
+        structs = [];
+        funcs = []
+    }
+   }
 | struct_decl SEMI decls {
     {
         globals = $3.globals;
