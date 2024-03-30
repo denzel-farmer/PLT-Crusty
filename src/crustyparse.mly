@@ -202,9 +202,9 @@ call_args_opt:
 
 call_args:
   expr  { [$1] }
-  | BORROW expr { [Borrow($2)] }
+  | BORROW expr { [Operation(Borrow($2))] }
   | expr COMMA call_args { $1::$3 }
-  | BORROW expr COMMA call_args { Borrow($2) :: $4 }
+  | BORROW expr COMMA call_args { Operation(Borrow($2)) :: $4 }
 
 /* Expression Subcomponents */
 literal_expression:
