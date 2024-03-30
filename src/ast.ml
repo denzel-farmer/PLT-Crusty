@@ -78,6 +78,7 @@ and literal =
   | CharLit of char
   | FloatLit of float
   | StructLit of expr list
+  | StringLit of string
 
 (* Statement Types *)
 type stmt =
