@@ -174,7 +174,6 @@ expr_list:
 /* Expressions */
 expr:
     ID               { Id($1)                 }
-  | ID ASSIGN expr   { Assign($1, $3)         }
   | LPAREN expr RPAREN { $2                   }
   | assignment_expression { Assignment $1 }
   | arithmetic_expression { Operation $1 }
