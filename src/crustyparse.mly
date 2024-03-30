@@ -165,6 +165,12 @@ stmt:
   | CONTINUE SEMI                           { Continue       }
   | RETURN expr SEMI                        { Return $2      }
 
+/* Comma-separated list of expressions */
+expr_list:
+  /* nothing */ { [] }
+  | expr { [$1] }
+  | expr COMMA expr_list { $1 :: $3 }
+
 /* Expressions */
 expr:
     ID               { Id($1)                 }
