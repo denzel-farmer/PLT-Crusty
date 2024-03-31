@@ -28,8 +28,11 @@ rule token = parse
 | '{'      { LBRACE }
 | '}'      { RBRACE }
 | ';'      { SEMI }
-| ':'      { COLON }
+(*| ':'      { COLON } *)
 | ','      { COMMA }
+| ':'      { EXPLODE }
+
+(* Keywords *)
 
 (* Primitive Types *)
 | "int"   { INT }
