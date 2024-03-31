@@ -47,9 +47,8 @@ rule token = parse
 | float as lem { FLOATLIT(float_of_string lem) }
 | "true"   { BOOLLIT(true)  }
 | "false"  { BOOLLIT(false) }
-| single_enclosed as lem { CHARLIT(Char.code lem.[1]) } (* TODO ensure this includes special characters like /0 *)
+| single_enclosed as lem { CHARLIT(lem.[1]) } (* TODO ensure this includes special characters like /0 *)
 | double_enclosed as lem { STRINGLIT(String.sub lem 1 ((String.length lem) - 2)) } (*TODO escape sequences *)
-
 
 (* Type Qualifiers *)
 | "ref"   { REF }
