@@ -1,4 +1,4 @@
-all : scanner.ml parser.ml
+all : test
 
 ##############################
 #
@@ -16,40 +16,38 @@ all : scanner.ml parser.ml
 # generate automatically in a file named calc.out
 
 
-# calc : parser.cmo scanner.cmo calc.cmo
-# 	ocamlc -w A -o calc $^
+test : crustyparse.cmo scanner.cmo ast.cmo test.cmo
+	ocamlc -w A -o test $^
 
-# %.cmo : %.ml
-# 	ocamlc -w A -c $<
+%.cmo : %.ml
+	ocamlc -w A -c $<
 
-# %.cmi : %.mli
-# 	ocamlc -w A -c $<
+%.cmi : %.mli
+	ocamlc -w A -c $<
 
 scanner.ml : scanner.mll
 	ocamllex $^
-parser.ml parser.mli : crustyparse.mly ast.cmi ast.cmo
-	menhir --infer --ocamlc 'ocamlfind ocamlc' $<
 
-ast.cmi ast.cmo : ast.ml
-	ocamlc -w A -c $<
+crustyparse.ml crustyparse.mli : crustyparse.mly ast.cmo
+	menhir --infer $<
+
+# Dependencies from ocamldep
+test.cmo : scanner.cmo crustyparse.cmi ast.cmo
+test.cmx : scanner.cmx crustyparse.cmx ast.cmx
+
+crustyparse.cmo : ast.cmo crustyparse.cmi
+crustyparse.cmx : ast.cmx crustyparse.cmi
+
+scanner.cmo : crustyparse.cmi
+scanner.cmx : crustyparse.cmx
 
 
-
-# calc.out : calc calc.tb
-# 	./calc < calc.tb > calc.out
-
-# Depedencies from ocamldep
-# calc.cmo : scanner.cmo parser.cmi ast.cmi
-# calc.cmx : scanner.cmx parser.cmx ast.cmi
-parser.cmo : ast.cmi parser.cmi
-parser.cmx : ast.cmi parser.cmi
-scanner.cmo : parser.cmi
-scanner.cmx : parser.cmx
-
+# ast.cmi ast.cmo : ast.ml
+# 	ocamlc -w A -c $<
 
 ##############################
 
 
 .PHONY : clean
 clean :
-	rm -rf *.cmi *.cmo parser.ml parser.mli scanner.ml calc.out calc
+	rm -rf *.cmi *.cmo crustyparse.ml crustyparse.mli crustyparse.output scanner.ml test
