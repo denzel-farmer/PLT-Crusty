@@ -4,7 +4,8 @@
 open Ast
 %}
 
-%token LPAREN RPAREN LBRACE RBRACE SEMI COLON COMMA
+// TODO do we need colon?
+%token LPAREN RPAREN LBRACE RBRACE SEMI COMMA
 %token INT BOOL CHAR FLOAT VOID
 %token <int> INTLIT
 %token <float> FLOATLIT
@@ -12,7 +13,7 @@ open Ast
 %token <char> CHARLIT
 %token <string> STRINGLIT
 %token REF LINEAR UNRESTRICTED CONST
-%token STRUCT
+%token STRUCT EXPLODE
 
 %token ASSIGN
 %token PLUS MINUS TIMES DIVIDE MOD INCR DECR
@@ -38,7 +39,7 @@ open Ast
 %left TIMES DIVIDE MOD
 
 %right INCR DECR NOT
-%left DOT BORROW
+// %left DOT BORROW TODO why doesnt this matter
 /*TODO Prefix and postfix increment and decrement operators */
 /*TODO: unary plus and minus */
 /*TODO: type casting */
@@ -66,7 +67,7 @@ decls:
         funcs = $3.funcs
     }
 }
- | var_decl SEMI decls {
+ | const_qualified_var_decl SEMI decls {
     {
         globals = $1 :: $3.globals;
         structs = $3.structs;
@@ -93,20 +94,19 @@ struct_decl:
 /* Returns list of variable declarations */
 var_decl_list:
   /*nothing*/ { [] }
-  | var_decl SEMI var_decl_list  {  $1 :: $3 }
+  | const_qualified_var_decl SEMI var_decl_list  {  $1 :: $3 }
 
-/* Returns record of qualifiers, type, and name for variable declaration */
+const_qualified_var_decl: 
+  var_decl { Var($1) }
+  | CONST var_decl { Const($2) }
+
+/* Returns record of linear qualifier, type, and name for variable declaration */
 var_decl:
-  const_qual lin_qual primtyp ID { ($1, $2, $3, $4) }
-  | const_qual lin_qual STRUCT ID ID { ($1, $2, Struct($4), $5) }
-  | const_qual primtyp ID { ($1, Unrestricted, $2, $3) }
-  | const_qual STRUCT ID ID { ($1, Linear, Struct($3), $4) }
+  lin_qual primtyp ID { ($1, $2, $3) }
+  | lin_qual STRUCT ID ID { ($1, Struct($3), $4) }
+  | primtyp ID { (Unrestricted, $1, $2) }
+  | STRUCT ID ID { (Linear, Struct($2), $3) }
 
-
-/* Qualifiers for variable declaration */
-const_qual:
-/* nothing */ { Var }
-    | CONST { Const }
 
 lin_qual:
       UNRESTRICTED { Unrestricted }
@@ -177,11 +177,14 @@ stmt:
   | CONTINUE SEMI                           { Continue       }
   | RETURN expr SEMI                        { Return $2      }
 
-/* Comma-separated list of expressions */
-expr_list:
-  /* nothing */ { [] }
+// option 1
+
+
+
+/* Comma-separated list of expressions for a struct literal (can't be empty) */
+struct_literal_exprs:
   | expr { [$1] }
-  | expr COMMA expr_list { $1 :: $3 }
+  | expr COMMA struct_literal_exprs { $1 :: $3 }
 
 /* Expressions */
 expr:
@@ -213,15 +216,16 @@ literal_expression:
     | FLOATLIT { FloatLit($1) }
     | CHARLIT { CharLit($1) }
     | STRINGLIT { StringLit($1) }
-    | LBRACE expr_list RBRACE { StructLit($2) }
+    | LBRACE struct_literal_exprs RBRACE { StructLit($2) }
 
+// TODO make a really cool explode snytax (consume?)
 assignment_expression:
     | ID ASSIGN expr { Assign($1, $3) }
-    | LBRACE id_list RBRACE ASSIGN expr { StructExplode($2, $5) }
+    | EXPLODE LBRACE id_list RBRACE ASSIGN expr { StructExplode($3, $6) }
     | ID DOT ID ASSIGN expr { StructAssign($1, $3, $5) }
-    | ID DOT ID ARROW expr { RefStructAssign($1, $3, $5) }
+    | ID ARROW ID ASSIGN expr { RefStructAssign($1, $3, $5) }
 
-id_list:
+id_list: /* TODO a struct explosion id list always needs a trailing comma*/
     | ID { [$1] }
     | ID COMMA id_list { $1 :: $3 }
 
