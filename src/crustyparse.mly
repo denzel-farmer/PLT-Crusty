@@ -177,9 +177,6 @@ stmt:
   | CONTINUE SEMI                           { Continue       }
   | RETURN expr SEMI                        { Return $2      }
 
-// option 1
-
-
 
 /* Comma-separated list of expressions for a struct literal (can't be empty) */
 struct_literal_exprs:
