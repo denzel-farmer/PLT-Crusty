@@ -16,7 +16,7 @@ all : test
 # generate automatically in a file named calc.out
 
 
-test : crustyparse.cmo scanner.cmo ast.cmo test.cmo
+test : crustyparse.cmo scanner.cmo astprint.cmo test.cmo
 	ocamlc -w A -o test $^
 
 %.cmo : %.ml
@@ -28,15 +28,15 @@ test : crustyparse.cmo scanner.cmo ast.cmo test.cmo
 scanner.ml : scanner.mll
 	ocamllex $^
 
-crustyparse.ml crustyparse.mli : crustyparse.mly ast.cmo
+crustyparse.ml crustyparse.mli : crustyparse.mly ast.cmi
 	menhir --infer $<
 
 # Dependencies from ocamldep
-test.cmo : scanner.cmo crustyparse.cmi ast.cmo
-test.cmx : scanner.cmx crustyparse.cmx ast.cmx
+test.cmo : scanner.cmo crustyparse.cmi ast.cmi
+test.cmx : scanner.cmx crustyparse.cmx ast.cmi
 
-crustyparse.cmo : ast.cmo crustyparse.cmi
-crustyparse.cmx : ast.cmx crustyparse.cmi
+crustyparse.cmo : ast.cmi crustyparse.cmi
+crustyparse.cmx : ast.cmi crustyparse.cmi
 
 scanner.cmo : crustyparse.cmi
 scanner.cmx : crustyparse.cmx
