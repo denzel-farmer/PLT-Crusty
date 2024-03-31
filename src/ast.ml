@@ -91,9 +91,9 @@ type stmt =
   | Return of expr
 
 (* Type Qualifiers *)
-type const_qual =
-  | Const
-  | Var
+(* type const_qual =
+   | Const
+   | Var *)
 
 type linear_qual =
   | Unrestricted
@@ -104,7 +104,12 @@ type ref_qual =
   | Val
 
 (* Declaration Types *)
-type var_decl = const_qual * linear_qual * typ * string
+type var_decl = linear_qual * typ * string
+
+type const_qualified_var_decl =
+  | Const of var_decl
+  | Var of var_decl
+
 type arg_decl = ref_qual * var_decl
 
 (* Function Definition Type *)
@@ -112,19 +117,19 @@ type func_def =
   { rtyp : typ
   ; fname : string
   ; args : arg_decl list
-  ; locals : var_decl list
+  ; locals : const_qualified_var_decl list
   ; body : stmt list
   }
 
 (* Struct Definition Type *)
 type struct_def =
   { sname : string
-  ; fields : var_decl list
+  ; fields : const_qualified_var_decl list
   }
 
 (* Program Type *)
 type program =
-  { globals : var_decl list
+  { globals : const_qualified_var_decl list
   ; structs : struct_def list
   ; funcs : func_def list
   }
