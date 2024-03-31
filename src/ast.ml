@@ -106,7 +106,7 @@ type ref_qual =
 (* Declaration Types *)
 type var_decl =  linear_qual * typ * string
 
-type const_qualified_var_decl = 
+type const_qualified_var_decl =
   | Const of var_decl
   | Var of var_decl
 
@@ -253,5 +253,9 @@ type program =
   let string_of_program program =
     let globals_str = String.concat ";\n" (List.map string_of_const_qualified_var_decl program.globals) in
     let structs_str = String.concat ";\n" (List.map string_of_struct_def program.structs) in
-    let funcs_str = String.concat ";\n" (List.map string_of_func_def program.funcs) in
-    globals_str ^ ";\n" ^ structs_str ^ ";\n" ^ funcs_str
+    let funcs_str = String.concat "" (List.map string_of_func_def program.funcs) in
+
+    let globals_end = if (String.length globals_str) > 0 then ";\n" else "" in
+    let structs_end = if (String.length structs_str) > 0 then ";\n" else "" in
+
+    globals_str ^ globals_end ^ structs_str ^ structs_end ^ funcs_str
