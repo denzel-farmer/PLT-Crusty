@@ -182,9 +182,17 @@ stmt:
 
 
 /* Comma-separated list of expressions for a struct literal (can't be empty) */
-struct_literal_exprs:
+exprs_list:
   | expr { [$1] }
-  | expr COMMA struct_literal_exprs { $1 :: $3 }
+  | expr COMMA exprs_list { $1 :: $3 }
+
+// literal_list:
+//   | literal { [$1] }
+//   | literal COMMA literal_list { $1 :: $3 }
+
+// literals_list:
+//   | literal_expression { [$1] }
+//   | literal_expression COMMA literal_expression { $1 :: $3 }
 
 /* Expressions */
 expr:
@@ -197,6 +205,9 @@ expr:
   | literal_expression { Literal $1 }
   | access_expression { Operation $1 }
   | ID LPAREN call_args_opt RPAREN { Call ($1, $3)  }
+
+  // struct_expr:
+  //   STRUCT expr { StructLit([$2]) }
 
 /* Call arguments (allows borrowing) */
 call_args_opt:
@@ -216,7 +227,11 @@ literal_expression:
     | FLOATLIT { FloatLit($1) }
     | CHARLIT { CharLit($1) }
     | STRINGLIT { StringLit($1) }
-    | LBRACE struct_literal_exprs RBRACE { StructLit($2) }
+    | LBRACE exprs_list RBRACE { StructLit($2) }
+    | LBRACK exprs_list RBRACK { ArrayLit($2) }
+    (*TODO: figure out a way to differentiate struct and arraylit, 
+    do we need to?, or just have arrays take only literals? *)
+    // | LBRACE literal_exprs RBRACE { ArrayLit($2) }
 
 // TODO make a really cool explode snytax (consume?)
 assignment_expression:

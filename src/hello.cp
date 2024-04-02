@@ -5,5 +5,6 @@ int main(void) {
 
     a = 2;
     b = 3; 
+    c = [1, 2, 3, 4];
     return 0;
 } 

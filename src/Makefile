@@ -29,7 +29,7 @@ scanner.ml : scanner.mll
 	ocamllex $^
 
 crustyparse.ml crustyparse.mli : crustyparse.mly ast.cmi
-	menhir --infer $<
+	menhir --infer --explain $<
 
 hello.out: test hello.cp 
 	./test < hello.cp > hello.out
@@ -53,4 +53,4 @@ scanner.cmx : crustyparse.cmx
 
 .PHONY : clean
 clean :
-	rm -rf *.cmi *.cmo crustyparse.ml crustyparse.mli crustyparse.output scanner.ml test hello.out
+	rm -rf *.cmi *.cmo crustyparse.ml crustyparse.mli crustyparse.output scanner.ml test hello.out crustyparse.conflicts

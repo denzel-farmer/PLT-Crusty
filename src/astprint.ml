@@ -58,6 +58,7 @@ let rec string_of_literal = function
   | FloatLit f -> string_of_float f
   | StructLit exprs -> "{" ^ String.concat ", " (List.map string_of_expr exprs) ^ "}"
   | StringLit s -> "\"" ^ s ^ "\""
+  | ArrayLit exprs -> "[" ^ String.concat ", " (List.map string_of_expr exprs) ^ "]"
 
 and string_of_expr = function
   | Id s -> s
