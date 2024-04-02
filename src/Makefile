@@ -53,4 +53,4 @@ scanner.cmx : crustyparse.cmx
 
 .PHONY : clean
 clean :
-	rm -rf *.cmi *.cmo crustyparse.ml crustyparse.mli crustyparse.output scanner.ml test
+	rm -rf *.cmi *.cmo crustyparse.ml crustyparse.mli crustyparse.output scanner.ml test hello.out

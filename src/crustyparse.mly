@@ -5,7 +5,7 @@ open Ast
 %}
 
 // TODO do we need colon?
-%token LPAREN RPAREN LBRACE RBRACE SEMI COMMA
+%token LPAREN RPAREN LBRACE RBRACE LBRACK RBRACK SEMI COMMA
 %token INT BOOL CHAR FLOAT VOID
 %token <int> INTLIT
 %token <float> FLOATLIT
@@ -95,6 +95,7 @@ struct_decl:
 var_decl_list:
   /*nothing*/ { [] }
   | const_qualified_var_decl SEMI var_decl_list  {  $1 :: $3 }
+  // | const_array_decl SEMI var_decl_list { $1 :: $3 }
 
 const_qualified_var_decl: 
   var_decl { Var($1) }
@@ -106,7 +107,7 @@ var_decl:
   | lin_qual STRUCT ID ID { ($1, Struct($3), $4) }
   | primtyp ID { (Unrestricted, $1, $2) }
   | STRUCT ID ID { (Linear, Struct($2), $3) }
-
+  | lin_qual primtyp ID LBRACK INTLIT RBRACK { ($1, Arr($2, $5), $3) }
 
 lin_qual:
       UNRESTRICTED { Unrestricted }
@@ -158,6 +159,9 @@ args :
   | REF var_decl { [(Ref, $2)] }
   | var_decl COMMA args { (Val, $1) :: $3 }
   | REF var_decl COMMA args { (Ref, $2) :: $4 }
+
+// const_array_decl : 
+//   | lin_qual primtyp ID LBRACK INTLIT RBRACK { ($1, Arr($5), $3) }
 
 /* Returns list of statements OR empty list */
 stmt_list:

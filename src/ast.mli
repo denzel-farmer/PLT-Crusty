@@ -8,6 +8,7 @@ type typ =
   | Char
   | Float
   | Struct of string
+  | Arr of typ * int
 
 (* TODO add VOID function return type *)
 
@@ -103,12 +104,16 @@ type ref_qual =
   | Val
 
 (* Declaration Types *)
-type var_decl =  linear_qual * typ * string
+type var_decl = linear_qual * typ * string
+
+(* type array_decl = string * int
+
+type const_array_decl = 
+  | Arr of var_decl *)
 
 type const_qualified_var_decl =
   | Const of var_decl
   | Var of var_decl
-
 
 type arg_decl = ref_qual * var_decl
 

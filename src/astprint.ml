@@ -1,12 +1,13 @@
 open Ast
 
 (* AST Pretty Printer *)
-let string_of_typ = function
+let rec string_of_typ = function
   | Int -> "int"
   | Bool -> "bool"
   | Char -> "char"
   | Float -> "float"
   | Struct s -> "struct " ^ s
+  | Arr (t, s) -> string_of_typ t ^ "[" ^ string_of_int s ^ "]"
 ;;
 
 let string_of_binArithOp = function
