@@ -1,4 +1,4 @@
-all : test
+all : test hello.out
 
 ##############################
 #
@@ -30,6 +30,9 @@ scanner.ml : scanner.mll
 
 crustyparse.ml crustyparse.mli : crustyparse.mly ast.cmi
 	menhir --infer $<
+
+hello.out: test hello.cp 
+	./test < hello.cp > hello.out
 
 # Dependencies from ocamldep
 test.cmo : scanner.cmo crustyparse.cmi ast.cmi

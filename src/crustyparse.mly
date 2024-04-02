@@ -159,7 +159,6 @@ args :
   | var_decl COMMA args { (Val, $1) :: $3 }
   | REF var_decl COMMA args { (Ref, $2) :: $4 }
 
-
 /* Returns list of statements OR empty list */
 stmt_list:
   /* nothing */ { [] }

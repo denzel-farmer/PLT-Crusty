@@ -1,6 +1,5 @@
 open Ast
 
-
 (* AST Pretty Printer *)
 let string_of_typ = function
   | Int -> "int"
@@ -89,8 +88,8 @@ and string_of_assignment = function
 ;;
 
 let rec string_of_stmt = function
-  | Block stmts -> "{\n" ^ String.concat ";\n" (List.map string_of_stmt stmts) ^ ";\n}"
-  | Expr e -> string_of_expr e ^ ";"
+  | Block stmts -> "{\n" ^ String.concat "\n" (List.map string_of_stmt stmts) ^ "\n}"
+  | Expr e -> string_of_expr e 
   | If (cond, stmt1, stmt2) ->
     "if ("
     ^ string_of_expr cond
@@ -101,7 +100,7 @@ let rec string_of_stmt = function
   | While (cond, stmt) -> "while (" ^ string_of_expr cond ^ ")\n" ^ string_of_stmt stmt
   | Break -> "break;"
   | Continue -> "continue;"
-  | Return e -> "return " ^ string_of_expr e ^ ";"
+  | Return e -> "return " ^ string_of_expr e
 ;;
 
 let string_of_var_decl (qual, typ, name) =
