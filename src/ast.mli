@@ -1,4 +1,4 @@
-(* First Draft Abstract Syntax Tree  for Crusty *)
+(* First Draft Abstract Syntax Tree for Crusty *)
 (* TODO arrays and strings *)
 
 (* Type Types *)
