@@ -2,18 +2,16 @@
 
 { open Crustyparse }
 
-
-
 let whitespace = [' ' '\t' '\r' '\n']
-let newline = ['\n']
+let newline = '\r' | '\n' | "\r\n"
 
-let digit = ['0'-'9']
-let int = digit+ | '-'digit+ | '+'digit+
 let letter = ['a'-'z' 'A'-'Z']
+let digit = ['0'-'9']
+let int = ['+' '-']? digit+
 
 let float_base = digit* '.' digit+ | digit+ '.' digit*
 let float_exp = ['e' 'E'] ['+' '-']? digit+
-let float = float_base float_exp? | digit+float_exp
+let float = float_base float_exp? | digit+ float_exp
 
 let single_enclosed = "'" _ "'"
 let double_enclosed = '"' _ '"'
@@ -44,7 +42,6 @@ rule token = parse
 | "float" { FLOAT }
 | "void"  { VOID }
 
-
 (* Literals *)
 | int as lem  { INTLIT(int_of_string lem) }
 | float as lem { FLOATLIT(float_of_string lem) }
@@ -59,7 +56,6 @@ rule token = parse
 | "unrestricted" { UNRESTRICTED }
 | "const" { CONST }
 
-
 (* Compount Types *)
 | "struct" { STRUCT }
 
@@ -72,7 +68,6 @@ rule token = parse
 | '*'      { TIMES }
 | '/'      { DIVIDE }
 | '%'      { MOD }
-
 | "++"     { INCR }
 | "--"     { DECR }
 
@@ -91,7 +86,6 @@ rule token = parse
 | "||"     { OR }
 | "!"      { NOT }
 
-
 (* Struct Operators *)
 | '.'      { DOT }
 
@@ -103,17 +97,15 @@ rule token = parse
 (* Control Flow *)
 | "if"     { IF }
 | "else"   { ELSE }
-
 | "while"  { WHILE }
 | "break"  { BREAK }
 | "continue" { CONTINUE }
-
 | "return" { RETURN }
 
 (* Identifier *)
 | letter (digit | letter | '_')* as lem { ID(lem) }
 
-  (* End of File *)
+(* End of File *)
 | eof { EOF }
 | _ as char { raise (Failure("illegal character " ^ Char.escaped char)) }
 
@@ -123,4 +115,4 @@ and comment = parse
 
 and line_comment = parse
   newline { token lexbuf }
-  | _ { line_comment lexbuf }
+| _ { line_comment lexbuf }
