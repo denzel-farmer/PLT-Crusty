@@ -102,7 +102,7 @@ let rec string_of_stmt = function
   | While (cond, stmt) -> "while (" ^ string_of_expr cond ^ ")\n" ^ string_of_stmt stmt
   | Break -> "break;"
   | Continue -> "continue;"
-  | Return e -> "return " ^ string_of_expr e
+  (* | Return e -> "return " ^ string_of_expr e *)
 ;;
 
 let string_of_var_decl (qual, typ, name) =
@@ -128,6 +128,9 @@ let string_of_arg_decl (qual, var_decl) =
   qual_str ^ string_of_var_decl var_decl
 ;;
 
+let string_of_return = function 
+  | Return e -> "return " ^ string_of_expr e
+
 let string_of_func_def func_def =
   let rtyp_str = string_of_typ func_def.rtyp in
   let args_str = String.concat ", " (List.map string_of_arg_decl func_def.args) in
@@ -135,6 +138,7 @@ let string_of_func_def func_def =
     String.concat ";\n" (List.map string_of_const_qualified_var_decl func_def.locals)
   in
   let body_str = String.concat ";\n" (List.map string_of_stmt func_def.body) in
+  let return_str = string_of_return func_def.return in
   rtyp_str
   ^ " "
   ^ func_def.fname
@@ -144,6 +148,8 @@ let string_of_func_def func_def =
   ^ locals_str
   ^ ";\n"
   ^ body_str
+  ^ ";\n"
+  ^ return_str
   ^ ";\n}"
 ;;
 

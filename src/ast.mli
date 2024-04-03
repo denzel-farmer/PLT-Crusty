@@ -89,7 +89,6 @@ type stmt =
   | While of expr * stmt
   | Break
   | Continue
-  | Return of expr
 
 (* Type Qualifiers *)
 (* type const_qual =
@@ -118,6 +117,9 @@ type const_qualified_var_decl =
 
 type arg_decl = ref_qual * var_decl
 
+type return_stmt = 
+  | Return of expr
+
 (* Function Definition Type *)
 type func_def =
   { rtyp : typ
@@ -125,6 +127,7 @@ type func_def =
   ; args : arg_decl list
   ; locals : const_qualified_var_decl list
   ; body : stmt list
+  ; return: return_stmt
   }
 
 (* Struct Definition Type *)

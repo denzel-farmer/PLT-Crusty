@@ -121,30 +121,34 @@ primtyp:
   | CHAR  { Char  }
   | FLOAT { Float }
 
+return_stmt : 
+  RETURN expr SEMI { Return($2) }
 /*TODO allow declaring structs in function body */
 /*TODO allow mixed declaration and assignment */
 
 /* Returns record of function return type, name, arguments, local variables, and body */
 /* TODO add returning void */
 func_decl:
-  | primtyp ID LPAREN args_opt RPAREN LBRACE var_decl_list stmt_list RBRACE
+  | primtyp ID LPAREN args_opt RPAREN LBRACE var_decl_list stmt_list return_stmt RBRACE
   {
     {
       rtyp=$1;
       fname=$2;
       args=$4;
       locals=$7;
-      body=$8
+      body=$8;
+      return=$9;
     }
   }
-  | STRUCT ID ID LPAREN args_opt RPAREN LBRACE var_decl_list stmt_list RBRACE
+  | STRUCT ID ID LPAREN args_opt RPAREN LBRACE var_decl_list stmt_list return_stmt RBRACE
   {
     {
       rtyp=Struct($2);
       fname=$3;
       args=$5;
       locals=$8;
-      body=$9
+      body=$9;
+      return=$10
     }
   }
 
@@ -178,7 +182,6 @@ stmt:
   | WHILE LPAREN expr RPAREN stmt           { While ($3, $5)  }
   | BREAK SEMI                              { Break          }
   | CONTINUE SEMI                           { Continue       }
-  | RETURN expr SEMI                        { Return $2      }
 
 
 /* Comma-separated list of expressions for a struct literal (can't be empty) */
