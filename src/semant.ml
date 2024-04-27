@@ -52,13 +52,28 @@ let check (globals, structs, functions) =
   in
   let _ = find_func "main" in (* Ensure "main" is defined *)
 
-  (* TODO: Add checking for structs to make sure no duplicate variables *)
-  let check_struct struct = 
-    (* struct.name *)
-    (* struct.fields *)
+  let add_struct map st = 
+    let dup_err = "duplicate struct " ^ st.sname
+    and make_err er = raise (Failure er)
+    and n = st.sname (* Name of the function *)
+    in match st with (* No duplicate functions or redefinitions of built-ins *)
+    | _ when StringMap.mem n map -> make_err dup_err
+    | _ ->  
+    (* Make sure no duplicate fields in same struct*)
+    let add_struct_field map field =
+      let dup_err = "duplicate field " ^ field
+      and make_err er = raise (Failure er)
+      and n = field 
+      in match field with
+      | _ when StringMap.mem n map -> make_err dup_err
+      | _ ->  StringMap.add n field map
+    in
+    List.fold_left add_struct_field StringMap.empty st.fields
+  in
 
-  in 
-
+  (* Collect all struct declarations *)
+  let struct_decls = List.fold_left add_struct StringMap.empty structs in  
+  
   let check_fun func = 
     check_binds "arg" func.args;
     check_binds "local" func.locals;
@@ -113,8 +128,14 @@ let check (globals, structs, functions) =
     in 
     (* Check assignments*) 
     let check_all_assignment = function 
-        Assign (var, e) -> ()
-      | StructAssign (var1, var2, e) -> ()
+        Assign (var, e) -> 
+        let lt = type_of_identifier var
+        and (rt, e') = check_expr e in
+        let err = "illegal assignment " ^ string_of_typ lt ^ " = " ^
+                  string_of_typ rt ^ " in " ^ string_of_expr ex
+        in
+        (check_assign lt rt err, SAssign(var, (rt, e')))
+      | StructAssign (var1, var2, e) -> 
       | RefStructAssign (var1, var2, e) -> ()
       (* | StructExplode (var, e) *)
     in 
