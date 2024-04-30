@@ -1,15 +1,19 @@
 open Ast
 
-type sexpr = typ * expr 
-and expr =   
+(* type styp = 
+    STyp of linear_qual * typ *)
+type var_type = linear_qual * typ 
+
+type sexpr = var_type * sx
+and sx =   
       SId of string
     | SLiteral of literal
-    | SOperation of operation
-    | SAssignment of assignment
+    | SOperation of soperation
+    | SAssignment of sassignment
     | SCall of string * sexpr list
 
 (* Operation Types *)
-and operation =
+and soperation =
     | SArithOp of sexpr * binArithOp * sexpr
     | SUnArithOp of unArithOp * sexpr
     | SCompOp of sexpr * compOp * sexpr
@@ -20,13 +24,13 @@ and operation =
     | SBorrow of sexpr
   
 (* Assignment Types *)
-and assignment =
+and sassignment =
     | SAssign of string * sexpr
     | SStructAssign of string * string * sexpr
     | SRefStructAssign of string * string * sexpr
     | SStructExplode of string list * sexpr
 
-and literal =
+and sliteral =
   | SIntLit of int
   | SBoolLit of bool
   | SCharLit of char

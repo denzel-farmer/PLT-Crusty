@@ -61,8 +61,8 @@ and operation =
   | LogOp of expr * binLogOp * expr
   | UnLogOp of unLogOp * expr
   | AccessOp of expr * accessOp * string
-  | Deref of expr
-  | Borrow of expr
+  | Deref of string
+  | Borrow of string
 
 (* Assignment Types *)
 and assignment =
