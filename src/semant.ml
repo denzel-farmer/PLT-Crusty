@@ -7,17 +7,29 @@ open Astprint
 module StringMap = Map.Make(String)
 
 let check (globals, structs, functions) =
-  let check_binds (kind : string) (binds : (typ * string) list) =
-    let rec dups = function
-        [] -> ()
-      |	((_,n1) :: (_,n2) :: _) when n1 = n2 ->
-        raise (Failure ("duplicate " ^ kind ^ " " ^ n1))
-      | _ :: t -> dups t
-    in dups (List.sort (fun (_,a) (_,b) -> compare a b) binds)
-  in
-
-  (* Make sure no globals duplicate *)
-  check_binds "global" globals;
+  let check_binds_dup (kind: string) (binds : var_decl list) =
+    let check_member n bs = 
+      List.fold_left (fun flag (_, _, n') -> if n = n' then true else flag) false bs
+  in 
+    let rec check_dup bs = 
+      match bs with 
+      | [] -> () 
+      | (_, _, n) :: sl -> if check_member n sl then raise (Failure ("duplicate variable " ^ n ^ "in" ^ kind )) else check_dup sl
+    in check_dup binds
+  in 
+  (* check argument binds *)
+  let check_arg_binds_dup (king: string) (binds : (ref_qual * var_decl) list) =
+    let check_member n bs = 
+      List.fold_left (fun flag (_, (_, _, n')) -> if n = n' then true else flag) false bs
+  in 
+    let rec check_dup bs = 
+      match bs with 
+      | [] -> () 
+      | (_, (_, _, n)) :: sl -> if check_member n sl then raise (Failure ("duplicate variable " ^ n ^ "in" ^ kind)) else check_dup sl
+    in check_dup binds 
+  in 
+  
+  check_binds_dup "global" globals;
 
   (* Collect function declarations for built-in functions: no bodies *)
   let built_in_decls =
@@ -76,8 +88,8 @@ let check (globals, structs, functions) =
   let struct_decls = List.fold_left add_struct StringMap.empty structs in  
   
   let check_fun func = 
-    check_binds "arg" func.args;
-    check_binds "local" func.locals;
+    check_arg_binds_dup "arg" func.args;
+    check_binds_dup "local" func.locals;
 
     (* Raise an exception if the given rvalue type cannot be assigned to
     the given lvalue type *)
@@ -182,9 +194,10 @@ let check (globals, structs, functions) =
         (* All compare operators require operands of the same type*)
         if t1 = t2 then
           let t = match op with
-              Eq | Neq -> Bool 
-            | Lt | Gt | Leq | Geq when t1 = (Unrestricted, Int) -> (Unrestricted, Int) 
-            | Lt | Gt | Leq | Geq when t1 = (Unrestricted, Float) -> (Unrestricted, Float)
+              Eq | Neq -> (Unrestricted, Bool)
+            (* can this apply to other types besides int and float ? *)
+            | Lt | Gt | Leq | Geq when t1 = (Unrestricted, Int) -> (Unrestricted, Bool) 
+            | Lt | Gt | Leq | Geq when t1 = (Unrestricted, Float) -> (Unrestricted, Bool)
             | _ -> raise (Failure err)
           in
           (t, SOperation(SCompOp((t1, e1'), op, (t2, e2'))))
@@ -225,8 +238,7 @@ in
           try StringMap.find s symbols
           with Not_found -> raise (Failure ("undeclared identifier " ^ s))
         in 
-        if t != SStruct then 
-
+        (* if t != (, SStruct)  *)
         (t, SOperation(SDeref(s)))
       | Borrow (e) -> 
         (t, SOperation(SBorrow(s)))
@@ -235,14 +247,14 @@ in
     let check_bool_expr e =
       let (t, e') = check_expr e in
       match t with
-      | Bool -> (t, e')
+      | (Unrestricted, Bool) -> (t, e')
       |  _ -> raise (Failure ("expected Boolean expression in " ^ string_of_expr e))
-    in
 
     let rec check_stmt_list l = 
     match l with 
     [] -> [] 
     | s :: sl -> check_stmt s :: check_stmt_list sl
+    (* return a statement *)
     and check_stmt s = 
       match s with 
       Block sl -> SBlock (check_stmt_list sl)
