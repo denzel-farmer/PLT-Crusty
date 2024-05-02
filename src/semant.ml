@@ -7,17 +7,29 @@ open Astprint
 module StringMap = Map.Make(String)
 
 let check (globals, structs, functions) =
-  let check_binds (kind : string) (binds : (typ * string) list) =
-    let rec dups = function
-        [] -> ()
-      |	((_,n1) :: (_,n2) :: _) when n1 = n2 ->
-        raise (Failure ("duplicate " ^ kind ^ " " ^ n1))
-      | _ :: t -> dups t
-    in dups (List.sort (fun (_,a) (_,b) -> compare a b) binds)
-  in
-
-  (* Make sure no globals duplicate *)
-  check_binds "global" globals;
+  let check_binds_dup (kind: string) (binds : var_decl list) =
+    let check_member n bs = 
+      List.fold_left (fun flag (_, _, n') -> if n = n' then true else flag) false bs
+  in 
+    let rec check_dup bs = 
+      match bs with 
+      | [] -> () 
+      | (_, _, n) :: sl -> if check_member n sl then raise (Failure ("duplicate variable " ^ n ^ "in" ^ kind )) else check_dup sl
+    in check_dup binds
+  in 
+  (* check argument binds *)
+  let check_arg_binds_dup (king: string) (binds : (ref_qual * var_decl) list) =
+    let check_member n bs = 
+      List.fold_left (fun flag (_, (_, _, n')) -> if n = n' then true else flag) false bs
+  in 
+    let rec check_dup bs = 
+      match bs with 
+      | [] -> () 
+      | (_, (_, _, n)) :: sl -> if check_member n sl then raise (Failure ("duplicate variable " ^ n ^ "in" ^ kind)) else check_dup sl
+    in check_dup binds 
+  in 
+  
+  check_binds_dup "global" globals;
 
   (* Collect function declarations for built-in functions: no bodies *)
   let built_in_decls =
@@ -69,14 +81,15 @@ let check (globals, structs, functions) =
       | _ ->  StringMap.add n field map
     in
     List.fold_left add_struct_field StringMap.empty st.fields
+    StringMap.add n st map
   in
 
   (* Collect all struct declarations *)
   let struct_decls = List.fold_left add_struct StringMap.empty structs in  
   
   let check_fun func = 
-    check_binds "arg" func.args;
-    check_binds "local" func.locals;
+    check_arg_binds_dup "arg" func.args;
+    check_binds_dup "local" func.locals;
 
     (* Raise an exception if the given rvalue type cannot be assigned to
     the given lvalue type *)
@@ -118,14 +131,16 @@ let check (globals, structs, functions) =
     in 
     (* Check literals*)
     let check_literal = function 
-        IntLit l -> (Int, SIntLit l)
-      | BoolLit l -> (Bool, SBoolLit l)
-      | CharLit l -> (Char, SCharLit l)
-      | FloatLit l -> (Float, SFloatLit l)
-      (* | StructLit l -> (Struct, ) *)
-      | StringLit l -> (String, SStringLit l)
-      (* | ArrayLit l -> () *)
+        IntLit l -> ((Unrestricted, Int), SIntLit l)
+      | BoolLit l -> ((Unrestricted, Bool), SBoolLit l)
+      | CharLit l -> ((Unrestricted, Char), SCharLit l)
+      | FloatLit l -> ((Unrestricted, Float), SFloatLit l)
+      | StructLit l -> ((Unrestricted, Struct), SStructLit l)
+      | StringLit l -> ((Unrestricted, String), SStringLit l)
+      (* | ArrayLit l -> (Array, ) *)
     in 
+    let ref_qual = function 
+        Ref l 
     (* Check assignments*) 
     let check_all_assignment = function 
         Assign (var, e) -> 
@@ -134,10 +149,10 @@ let check (globals, structs, functions) =
         let err = "illegal assignment " ^ string_of_typ lt ^ " = " ^
                   string_of_typ rt ^ " in " ^ string_of_expr ex
         in
-        (check_assign lt rt err, SAssign(var, (rt, e')))
-      | StructAssign (var1, var2, e) -> 
+        (check_assign lt rt err, SAssignment(SAssign(var, (rt, e'))))
+      | StructAssign (var1, var2, e) -> ()
       | RefStructAssign (var1, var2, e) -> ()
-      (* | StructExplode (var, e) *)
+      | StructExplode (var, e) -> ()
     in 
     (* Check operations *)
     let check_operation = function 
@@ -152,20 +167,23 @@ let check (globals, structs, functions) =
         if t1 = t2 then
           (* Determine expression type based on operator and operand types *)
           let t = match op with
-              Add | Sub | Mul | Div when t1 = Int -> Int
-              Add | Sub | Mul | Div when t1 = Float -> Float
+              Add | Sub | Mul | Div when t1 = (Unrestricted, Int) -> (Unrestricted, Int)
+            | Add | Sub | Mul | Div when t1 = (Unrestricted, Float) -> (Unrestricted, Float)
             | _ -> raise (Failure err)
           in
-          (t, SArithop((t1, e1'), op, (t2, e2')))
+          (t, SOperation(SArithop((t1, e1'), op, (t2, e2'))))
         else raise (Failure err)
       | UnArithOp (op, e) -> 
         let (t, e) = check_expr e1 in 
         let err = "illegal unary operation " ^ string_of_typ t 
         in  
         let t = match op with 
-           
-        in 
-        (t, SUnArithop(op, (t, e))
+          Neg when t = Int -> Int
+          | Neg when t = Bool -> Bool 
+          | PreInc | PreDec | PostInc | PostDec when t = (Unrestricted, Int) -> (Unrestricted, Int)
+          | _ -> raise (Failure err)
+        in  
+        (t, SOperation(SUnArithop(op, (t, e))))
       | CompOp (e1, op, e2) -> 
         let (t1, e1') = check_expr e1
         and (t2, e2') = check_expr e2 in
@@ -176,12 +194,13 @@ let check (globals, structs, functions) =
         (* All compare operators require operands of the same type*)
         if t1 = t2 then
           let t = match op with
-              Eq | Neq -> Bool 
-            | Lt | Gt | Leq | Geq when t1 = Int -> Bool 
-            | Lt | Gt | Leq | Geq when t1 = Float -> Bool 
+              Eq | Neq -> (Unrestricted, Bool)
+            (* can this apply to other types besides int and float ? *)
+            | Lt | Gt | Leq | Geq when t1 = (Unrestricted, Int) -> (Unrestricted, Bool) 
+            | Lt | Gt | Leq | Geq when t1 = (Unrestricted, Float) -> (Unrestricted, Bool)
             | _ -> raise (Failure err)
           in
-          (t, SCompOp((t1, e1'), op, (t2, e2')))
+          (t, SOperation(SCompOp((t1, e1'), op, (t2, e2'))))
         else raise (Failure err)
       | LogOp (e1, op, e2) -> 
         let (t1, e1') = check_expr e1
@@ -193,43 +212,49 @@ let check (globals, structs, functions) =
         (* Both must be bools *)
         if t1 = t2 then
           let t = match op with
-              And | Or when t1 = Bool -> Bool
+              And | Or when t1 = (Unrestricted, Bool) -> (Unrestricted, Bool)
             | _ -> raise (Failure err)
           in
-          (t, SLogOp((t1, e1'), op, (t2, e2')))
+          (t, SOperation(SLogOp((t1, e1'), op, (t2, e2'))))
         else raise (Failure err)
       | UnLogOp (op, e) -> 
         let (t, e') = check_expr e in 
         let err = "illegal unary logical operator " ^
                   string_of_typ t
         in 
-        if t != Bool -> raise (Failure err)
+        if t != (Unrestricted, SBool) then raise (Failure err)
         in
         (t, SUnLogOp(op, (t, e')))
       | AccessOp (e, op, var) -> 
         let (t, e') = check_expr e in
         let err = "illegal access operator " ^
-        string_of_typ t1 ^ " " ^ string_of_op op ^ " " ^
-        string_of_typ t2 ^ " in " ^ string_of_expr e
+        string_of_typ t ^ " " ^ string_of_op op
 in 
-        if t != Struct 
-
-      | Deref (e) -> () 
-      | Borrow (e) -> ()
+        if t != SStruct then raise (Failure err)
+        in
+        (t, SAccessOp(e, op, var))
+      | Deref (s) -> 
+        let type_of_identifier t =
+          try StringMap.find s symbols
+          with Not_found -> raise (Failure ("undeclared identifier " ^ s))
+        in 
+        (* if t != (, SStruct)  *)
+        (t, SOperation(SDeref(s)))
+      | Borrow (e) -> 
+        (t, SOperation(SBorrow(s)))
     in 
-
-      
+    
     let check_bool_expr e =
       let (t, e') = check_expr e in
       match t with
-      | Bool -> (t, e')
+      | (Unrestricted, Bool) -> (t, e')
       |  _ -> raise (Failure ("expected Boolean expression in " ^ string_of_expr e))
-    in
 
     let rec check_stmt_list l = 
     match l with 
     [] -> [] 
     | s :: sl -> check_stmt s :: check_stmt_list sl
+    (* return a statement *)
     and check_stmt s = 
       match s with 
       Block sl -> SBlock (check_stmt_list sl)
