@@ -2,12 +2,12 @@
 linear struct lin_point {
     int x;
     int y;
-}
+};
 
-unrestircted struct point {
+unrestricted struct point {
     int x;
     int y;
-}
+};
 
 int main(void) {
     struct lin_point a;
@@ -20,7 +20,7 @@ int main(void) {
     b.x = 3;
     b.y = 4;
 
-    {c, d} = a;
+    :{c, d} = a;
     
     return (c + b.x + b.x) * (b.y + b.y + d);
 } 

@@ -2,12 +2,12 @@
 linear struct lin_point {
     int x;
     int y;
-}
+};
 
-unrestircted struct point {
+unrestricted struct point {
     int x;
     int y;
-}
+};
 
 int sum_points(ref struct lin_point a, ref struct point b) {
 
