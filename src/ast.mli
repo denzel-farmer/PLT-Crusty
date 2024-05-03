@@ -2,13 +2,28 @@
 (* TODO arrays and strings *)
 
 (* Type Types *)
-type typ =
+type lin_qual =
+  | Unrestricted
+  | Linear
+
+type primType =
   | Int
   | Bool
   | Char
   | Float
+
+type typ = 
+  | Prim of lin_qual * primType 
   | Struct of string
   | Arr of typ * int
+  | Ref of typ
+  
+   
+type ret_typ = 
+  | Nonvoid of typ
+  | Void
+
+
 
 (* TODO add VOID function return type *)
 
@@ -91,54 +106,47 @@ type stmt =
   | Continue
 
 (* Type Qualifiers *)
-(* type const_qual =
-  | Const
-  | Var  *)
 
-type linear_qual =
-  | Unrestricted
-  | Linear
-
-type ref_qual =
-  | Ref
-  | Val
+(*TODO re add const?*)
 
 (* Declaration Types *)
-type var_decl = linear_qual * typ * string
+type var_decl =  typ * string
 
 (* type array_decl = string * int
 
-type const_array_decl = 
-  | Arr of var_decl *)
+   type const_array_decl =
+   | Arr of var_decl *)
 
-type const_qualified_var_decl =
+(* type const_qualified_var_decl =
   | Const of var_decl
-  | Var of var_decl
-
-type arg_decl = ref_qual * var_decl
-
+  | Var of var_decl *)
+(* 
+type arg_decl = ref_qual * var_decl *)
 type return_stmt = 
   | Return of expr
+  | VoidReturn
+
 
 (* Function Definition Type *)
 type func_def =
-  { rtyp : typ
+  { rtyp : ret_typ
   ; fname : string
-  ; args : arg_decl list
-  ; locals : const_qualified_var_decl list
+  ; args : var_decl list
+  ; locals : var_decl list
   ; body : stmt list
-  ; return: return_stmt
+  ; return : return_stmt
   }
 
 (* Struct Definition Type *)
 type struct_def =
-  { sname : string
-  ; fields : const_qualified_var_decl list
+  { lin_qual : lin_qual
+  ; sname : string
+  ; fields : var_decl list
   }
 
 (* Program Type *)
 type program =
-  { globals : const_qualified_var_decl list
+  { globals : var_decl list
   ; structs : struct_def list
   ; funcs : func_def list
   }
