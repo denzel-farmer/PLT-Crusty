@@ -20,6 +20,7 @@
     - Assigning it to another variable (must be linear)
         - If it is a struct, this means using the struct explosion operator
     - Passing it as a function parameter (non-borrowed)
+    - Returning it from the current function 
 
 - A linear value cannot be assigned to a nonlinear variable 
 
@@ -48,6 +49,8 @@
 
 
 ## Structures and Linearity
+- Structure definitions do not contain linearity information--an instance of a structure gains linearity properties when it is declared, and its components gain linearity when they are assigned 
+
 - Linear structures can contain both linear and nonlinear components
     - Can even contain no linear components 
 - Nonlinear structures cannot be assigned with linear components 
