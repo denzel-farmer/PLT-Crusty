@@ -207,13 +207,12 @@ stmt_list:
   /* nothing */ { [] }
   | stmt stmt_list  { $1::$2 }
 
-/* TODO: add elseif */
+/* TODO: make sure else if actually binds correctly */
 
 /* TODO: resolve shift/reduce conflict (not really needed) */
 ifstmt:
   | IF LPAREN expr RPAREN stmt { If($3, $5, Block []) }
   | IF LPAREN expr RPAREN stmt ELSE stmt { If($3, $5, $7) } 
-
 /* Statements */
 stmt:
   | LBRACE stmt_list RBRACE { Block $2 }
