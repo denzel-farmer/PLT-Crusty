@@ -78,6 +78,7 @@ and operation =
   | AccessOp of expr * accessOp * string
   | Deref of string
   | Borrow of string
+  | Index of string * expr
 
 (* Assignment Types *)
 and assignment =

@@ -92,6 +92,7 @@ and string_of_operation = function
   | AccessOp (e, op, s) -> string_of_expr e ^ string_of_accessOp op ^ s
   | Deref s -> "*" ^ s
   | Borrow s -> "&" ^ s
+  | Index (s, e2) -> s ^ "[" ^ string_of_expr e2 ^ "]"
 
 and string_of_assignment = function
   | Assign (s, e) -> s ^ " = " ^ string_of_expr e

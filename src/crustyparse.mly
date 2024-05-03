@@ -278,7 +278,7 @@ literal_expression:
 
 // TODO make a really cool explode snytax (consume?)
 assignment_expression:
-    | ID ASSIGN expr { Assign($1, $3) }
+    | ID ASSIGN expr { Assign($1, $3) } /* Syntax: : {a,b}*/
     | EXPLODE LBRACE id_list RBRACE ASSIGN expr { StructExplode($3, $6) }
     | ID DOT ID ASSIGN expr { StructAssign($1, $3, $5) }
     | ID ARROW ID ASSIGN expr { RefStructAssign($1, $3, $5) }
@@ -315,4 +315,5 @@ access_expression:
     | ID DOT ID { AccessOp(Id($1), Dot, $3) }
     | ID ARROW ID { AccessOp(Id($1), Arrow, $3) }
     | STAR ID { Deref($2) }
+    | ID LBRACK expr RBRACK { Index($1, $3) }
 
