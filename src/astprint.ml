@@ -98,7 +98,7 @@ and string_of_assignment = function
   | StructAssign (s1, s2, e) -> s1 ^ "." ^ s2 ^ " = " ^ string_of_expr e
   | RefStructAssign (s1, s2, e) -> s1 ^ "->" ^ s2 ^ " = " ^ string_of_expr e
   | StructExplode (fields, e) ->
-    "{" ^ String.concat ", " fields ^ "} = " ^ string_of_expr e
+    ":{" ^ String.concat ", " fields ^ "} = " ^ string_of_expr e
 ;;
 
 let rec string_of_stmt = function
