@@ -1,4 +1,4 @@
-all : test hello.out
+all : scanparse helloworld
 
 ##############################
 #
@@ -16,8 +16,8 @@ all : test hello.out
 # generate automatically in a file named calc.out
 
 
-test : crustyparse.cmo scanner.cmo astprint.cmo test.cmo
-	ocamlc -w A -o test $^
+scanparse : crustyparse.cmo scanner.cmo astprint.cmo scanparse.cmo
+	ocamlc -w A -o scanparse $^
 
 %.cmo : %.ml
 	ocamlc -w A -c $<
@@ -31,12 +31,12 @@ scanner.ml : scanner.mll
 crustyparse.ml crustyparse.mli : crustyparse.mly ast.cmi
 	menhir --infer --explain $<
 
-hello.out: test hello.cp 
-	./test < hello.cp > hello.out
+helloworld: scanparse hello.cp 
+	./scanparse < hello.cp > hello.out
 
 # Dependencies from ocamldep
-test.cmo : scanner.cmo crustyparse.cmi ast.cmi
-test.cmx : scanner.cmx crustyparse.cmx ast.cmi
+scanparse.cmo : scanner.cmo crustyparse.cmi ast.cmi
+scanparse.cmx : scanner.cmx crustyparse.cmx ast.cmi
 
 crustyparse.cmo : ast.cmi crustyparse.cmi
 crustyparse.cmx : ast.cmi crustyparse.cmi
@@ -53,4 +53,4 @@ scanner.cmx : crustyparse.cmx
 
 .PHONY : clean
 clean :
-	rm -rf *.cmi *.cmo crustyparse.ml crustyparse.mli crustyparse.output scanner.ml test hello.out crustyparse.conflicts
+	rm -rf *.cmi *.cmo crustyparse.ml crustyparse.mli crustyparse.output scanner.ml scanparse hello.out crustyparse.conflicts
