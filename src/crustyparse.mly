@@ -67,7 +67,7 @@ decls:
         funcs = $3.funcs
     }
 }
- | const_qualified_var_decl SEMI decls {
+ | var_decl SEMI decls {
     {
         globals = $1 :: $3.globals;
         structs = $3.structs;
@@ -84,30 +84,42 @@ decls:
 
 /* Returns record of struct name and member declarations */
 struct_decl:
-  STRUCT ID LBRACE var_decl_list RBRACE {
+  lin_qual STRUCT ID LBRACE var_decl_list RBRACE {
     {
-        sname = $2;
-        fields = $4
+        lin_qual = $1;
+        sname = $3;
+        fields = $5
     }
    }
 
 /* Returns list of variable declarations */
 var_decl_list:
   /*nothing*/ { [] }
-  | const_qualified_var_decl SEMI var_decl_list  {  $1 :: $3 }
+  | var_decl SEMI var_decl_list  {  $1 :: $3 }
   // | const_array_decl SEMI var_decl_list { $1 :: $3 }
 
-const_qualified_var_decl: 
-  var_decl { Var($1) }
-  | CONST var_decl { Const($2) }
+// const_qualified_var_decl: 
+//   var_decl { Var($1) }
+//   | CONST var_decl { Const($2) }
 
-/* Returns record of linear qualifier, type, and name for variable declaration */
+/* All types except for arrays */
+single_type:
+  | lin_qual primtype { Prim($1, $2) }
+  | primtype { Prim(Unrestricted, $1) }
+  | STRUCT ID { Struct($2) }
+  | REF single_type { Ref($2) }
+
+/* Returns record of type (lin qual + base) and name for variable declaration */
 var_decl:
-  lin_qual primtyp ID { ($1, $2, $3) }
-  | lin_qual STRUCT ID ID { ($1, Struct($3), $4) }
-  | primtyp ID { (Unrestricted, $1, $2) }
-  | STRUCT ID ID { (Linear, Struct($2), $3) }
-  | lin_qual primtyp ID LBRACK INTLIT RBRACK { ($1, Arr($2, $5), $3) }
+  | single_type ID { ($1, $2) }
+  | single_type ID LBRACK INTLIT RBRACK { (Arr($1, $4), $2) }
+
+// var_decl:
+//   lin_qual primtyp ID { (Prim($1, $2), $3) }
+//  /* | lin_qual STRUCT ID ID { ($1, Struct($3), $4) } */
+//   | primtyp ID { (Prim(Unrestricted, $1), $2) }
+//   | STRUCT ID ID { (Struct($2), $3) }
+//   | lin_qual primtyp ID LBRACK INTLIT RBRACK { (Arr(Prim($2))       ($1, Arr($2, $5), $3) }
 
 lin_qual:
       UNRESTRICTED { Unrestricted }
@@ -115,11 +127,17 @@ lin_qual:
 
 /* Primative types */
 /* TODO integrade struct into primtyp? */
-primtyp:
+primtype:
     INT   { Int   }
   | BOOL  { Bool  }
   | CHAR  { Char  }
   | FLOAT { Float }
+
+/* Can return a normal type, an array type, or void */
+// return_type : 
+//   | single_type { Nonvoid($1) }
+//   | single_type LBRACK INTLIT RBRACK { Nonvoid(Arr($1, $3)) }
+//   | VOID { Void }
 
 return_stmt : 
   RETURN expr SEMI { Return($2) }
@@ -129,10 +147,10 @@ return_stmt :
 /* Returns record of function return type, name, arguments, local variables, and body */
 /* TODO add returning void */
 func_decl:
-  | primtyp ID LPAREN args_opt RPAREN LBRACE var_decl_list stmt_list return_stmt RBRACE
+  | single_type ID LPAREN args_opt RPAREN LBRACE var_decl_list stmt_list return_stmt RBRACE
   {
     {
-      rtyp=$1;
+      rtyp=Nonvoid($1);
       fname=$2;
       args=$4;
       locals=$7;
@@ -140,17 +158,29 @@ func_decl:
       return=$9;
     }
   }
-  | STRUCT ID ID LPAREN args_opt RPAREN LBRACE var_decl_list stmt_list return_stmt RBRACE
+  | VOID ID LPAREN args_opt RPAREN LBRACE var_decl_list stmt_list RBRACE
   {
     {
-      rtyp=Struct($2);
-      fname=$3;
-      args=$5;
-      locals=$8;
-      body=$9;
-      return=$10
+      rtyp=Void;
+      fname=$2;
+      args=$4;
+      locals=$7;
+      body=$8;
+      return=VoidReturn;
     }
   }
+
+  // | STRUCT ID ID LPAREN args_opt RPAREN LBRACE var_decl_list stmt_list return_stmt RBRACE
+  // {
+  //   {
+  //     rtyp=Struct($2);
+  //     fname=$3;
+  //     args=$5;
+  //     locals=$8;
+  //     body=$9;
+  //     return=$10
+  //   }
+  // }
 
 /* Returns list of arguments OR empty list */
 args_opt :
@@ -159,10 +189,10 @@ args_opt :
 
 /* Returns list of arguments */
 args :
-  var_decl { [(Val, $1)] }
-  | REF var_decl { [(Ref, $2)] }
-  | var_decl COMMA args { (Val, $1) :: $3 }
-  | REF var_decl COMMA args { (Ref, $2) :: $4 }
+  var_decl { [$1] }
+  // | REF var_decl { [(Ref, $2)] }
+  | var_decl COMMA args { $1 :: $3 }
+  // | REF var_decl COMMA args { (Ref, $2) :: $4 }
 
 // const_array_decl : 
 //   | lin_qual primtyp ID LBRACK INTLIT RBRACK { ($1, Arr($5), $3) }
@@ -215,13 +245,14 @@ expr:
 /* Call arguments (allows borrowing) */
 call_args_opt:
   /*nothing*/ { [] }
+  | VOID { [] }
   | call_args { $1 }
 
 call_args:
   expr  { [$1] }
-  | BORROW expr { [Operation(Borrow($2))] }
+  | BORROW ID { [Operation(Borrow($2))] }
   | expr COMMA call_args { $1::$3 }
-  | BORROW expr COMMA call_args { Operation(Borrow($2)) :: $4 }
+  | BORROW ID COMMA call_args { Operation(Borrow($2)) :: $4 }
 
 /* Expression Subcomponents */
 literal_expression:
@@ -274,5 +305,5 @@ logical_expression:
 access_expression:
     | ID DOT ID { AccessOp(Id($1), Dot, $3) }
     | ID ARROW ID { AccessOp(Id($1), Arrow, $3) }
-    | DEREF ID { Deref(Id($2)) }
+    | DEREF ID { Deref($2) }
 
