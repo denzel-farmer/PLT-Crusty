@@ -2,7 +2,7 @@
 unrestricted struct point {
     int x;
     int y;
-}
+};
 
 int main(void) {
     struct point a;
@@ -16,7 +16,7 @@ int main(void) {
     b.x = 3;
     b.y = 4;
 
-    {c, d} = a;
+    :{c, d} = a;
     
     return c + d;
 } 
