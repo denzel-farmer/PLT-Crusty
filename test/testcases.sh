@@ -5,14 +5,14 @@ check_test() {
 
     # also redirect stderr so that error messages from invalid 
     # programs are not shown 
-    echo "$case" | ../src/./test > /dev/null 2>&1
+    echo "$case" | ../src/./scanparse > /dev/null 2>&1
     exit=$? 
     
     if [ $exit -ne 0 ] && [ $expected = "invalid" ]; then 
         echo "Correct Output for Test Case" 
     elif [ $exit -eq 0 ] && [ $expected = "valid" ]; then 
         echo "Correct Output for Test Case" 
-    elif [ $exit -ne 0]; then
+    elif [ $exit -ne 0 ]; then
         echo "Outputted Valid for Invalid Test Case"
     else 
         echo "Outputted Invalid for Valid Test Case"
