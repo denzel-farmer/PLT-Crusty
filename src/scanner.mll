@@ -1,7 +1,33 @@
 (* Ocamllex scanner for Crusty *)
 
-{ open Crustyparse
+{
+  open Crustyparse
   let printf = Format.eprintf
+  let unescape_char c =
+    match c with
+    | "\\n" -> '\n'
+    | "\\t" -> '\t'
+    | "\\'" -> '\''
+    | "\\\\" -> '\\'
+    | _ -> if String.length c = 1 then c.[0] else failwith "Invalid character literal"
+    
+  let process_escapes s =
+    let buffer = Buffer.create (String.length s) in
+    let rec aux i =
+      if i >= String.length s then Buffer.contents buffer
+      else match s.[i] with
+        | '\\' when i+1 < String.length s -> (
+          match s.[i+1] with
+          | 'n' -> Buffer.add_char buffer '\n'; aux (i+2)
+          | 't' -> Buffer.add_char buffer '\t'; aux (i+2)
+          | 'r' -> Buffer.add_char buffer '\r'; aux (i+2)
+          | '"' -> Buffer.add_char buffer '"'; aux (i+2)
+          | '\\' -> Buffer.add_char buffer '\\'; aux (i+2)
+          | _ -> Buffer.add_char buffer s.[i]; aux (i+1)
+        )
+        | c -> Buffer.add_char buffer c; aux (i+1)
+    in
+    aux 0
 }
 
 let whitespace = [' ' '\t' '\r' '\n']
@@ -15,8 +41,9 @@ let float_base = digit* '.' digit+ | digit+ '.' digit*
 let float_exp = ['e' 'E'] ['+' '-']? digit+
 let float = float_base float_exp? | digit+ float_exp
 
-let single_enclosed = "'" _ "'"
-let double_enclosed = '"' _ '"'
+let ascii = [^'\'' '\\'] | '\\' ['\\' '\'' 'n' 't' 'r']
+let char = '\'' ascii '\''
+let string = '"' (ascii)* '"'
 
 rule token = parse
   whitespace { token lexbuf }
@@ -35,7 +62,6 @@ rule token = parse
 | ':'      { printf "EXPLODE "; EXPLODE }
 
 (* Keywords *)
-
 (* Primitive Types *)
 | "int"   { printf "INT "; INT }
 | "bool"  { printf "BOOL "; BOOL }
@@ -49,9 +75,17 @@ rule token = parse
 | float as lem { printf "%s " ("FLOATLIT(" ^ lem ^ ")"); FLOATLIT(float_of_string lem) }
 | "true"   { printf "BOOLLIT(true) "; BOOLLIT(true)  }
 | "false"  { printf "BOOLLIT(false) "; BOOLLIT(false) }
-| single_enclosed as lem { printf "%s " ("CHARLIT(" ^ lem ^ ")"); CHARLIT(lem.[1]) }
-(* TODO this doesn't actually work--need more complex regex *)
-| double_enclosed as lem { printf "%s " ("CHARLIT(" ^ lem ^ ")"); STRINGLIT(String.sub lem 1 ((String.length lem) - 2)) }
+| char as lem { 
+    let char_val = process_escapes (String.sub lem 1 (String.length lem - 2)) in
+    printf "%s " ("CHARLIT('" ^ Char.escaped char_val.[0] ^ "')");
+    CHARLIT(char_val.[0])
+  }
+| string as lem {
+    let string_val = String.sub lem 1 (String.length lem - 2) in
+    let processed_string = process_escapes string_val in
+    printf "%s " ("STRINGLIT(\"" ^ String.escaped processed_string ^ "\")");
+    STRINGLIT(processed_string)
+  }
 
 (* Type Qualifiers *)
 | "ref"   { printf "REF "; REF }
