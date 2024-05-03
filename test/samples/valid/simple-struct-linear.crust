@@ -1,0 +1,26 @@
+
+linear struct lin_point {
+    int x;
+    int y;
+};
+
+unrestricted struct point {
+    int x;
+    int y;
+};
+
+int main(void) {
+    struct lin_point a;
+    struct point b;
+    int c;
+    int d;
+
+    a = {1, 2};
+
+    b.x = 3;
+    b.y = 4;
+
+    :{c, d} = a;
+    
+    return (c + b.x + b.x) * (b.y + b.y + d);
+} 

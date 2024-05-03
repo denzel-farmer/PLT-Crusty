@@ -1,6 +1,7 @@
 (* Ocamllex scanner for Crusty *)
 
-{ open Crustyparse }
+{ open Crustyparse 
+}
 
 let whitespace = [' ' '\t' '\r' '\n']
 let newline = '\r' | '\n' | "\r\n"
@@ -15,6 +16,8 @@ let float = float_base float_exp? | digit+ float_exp
 
 let single_enclosed = "'" _ "'"
 let double_enclosed = '"' _ '"'
+(* 
+let Format.eprintf str = Format.eprintf str  *)
 
 rule token = parse
   whitespace { token lexbuf }
@@ -22,91 +25,91 @@ rule token = parse
 | "//"     { line_comment lexbuf }
 
 (* Grouping/Separating *)
-| '('      { LPAREN }
-| ')'      { RPAREN }
-| '{'      { LBRACE }
-| '}'      { RBRACE }
-| '['      { LBRACK }
-| ']'      { RBRACK }
-| ';'      { SEMI }
-(*| ':'      { COLON } *)
-| ','      { COMMA }
-| ':'      { EXPLODE }
+| '('      { Format.eprintf " LPAREN"; LPAREN }
+| ')'      { Format.eprintf " RPAREN"; RPAREN }
+| '{'      { Format.eprintf " LBRACE"; LBRACE }
+| '}'      { Format.eprintf " RBRACE"; RBRACE }
+| '['      { Format.eprintf " LBRACK"; LBRACK }
+| ']'      { Format.eprintf " RBRACK"; RBRACK }
+| ';'      { Format.eprintf " SEMI"; SEMI }
+| ','      { Format.eprintf " COMMA"; COMMA }
+| ':'      { Format.eprintf " EXPLODE"; EXPLODE }
 
 (* Keywords *)
 
 (* Primitive Types *)
-| "int"   { INT }
-| "bool"  { BOOL }
-| "char"  { CHAR }
-| "float" { FLOAT }
-| "void"  { VOID }
+| "int"   { Format.eprintf " INT"; INT }
+| "bool"  { Format.eprintf " BOOL"; BOOL }
+| "char"  { Format.eprintf " CHAR"; CHAR }
+| "float" { Format.eprintf " FLOAT"; FLOAT }
+| "void"  { Format.eprintf " VOID"; VOID }
+| "string" { Format.eprintf " STRING"; STRING }
 
 (* Literals *)
-| int as lem  { INTLIT(int_of_string lem) }
-| float as lem { FLOATLIT(float_of_string lem) }
-| "true"   { BOOLLIT(true)  }
-| "false"  { BOOLLIT(false) }
-| single_enclosed as lem { CHARLIT(lem.[1]) } (* TODO ensure this includes special characters like /0 *)
-| double_enclosed as lem { STRINGLIT(String.sub lem 1 ((String.length lem) - 2)) } (*TODO escape sequences *)
+| int as lem  { Format.eprintf " %s" ("INTLIT(" ^ lem ^ ")"); INTLIT(int_of_string lem) }
+| float as lem { Format.eprintf " %s" ("FLOATLIT(" ^ lem ^ ")"); FLOATLIT(float_of_string lem) }
+| "true"   { Format.eprintf " BOOLLIT(true)"; BOOLLIT(true)  }
+| "false"  { Format.eprintf " BOOLLIT(false)"; BOOLLIT(false) }
+| single_enclosed as lem { Format.eprintf " %s" ("CHARLIT(" ^ lem ^ ")"); CHARLIT(lem.[1]) }
+(* TODO this doesn't actually work--need more complex regex *)
+| double_enclosed as lem { Format.eprintf " %s" ("CHARLIT(" ^ lem ^ ")"); STRINGLIT(String.sub lem 1 ((String.length lem) - 2)) }
 
 (* Type Qualifiers *)
-| "ref"   { REF }
-| "linear" { LINEAR }
-| "unrestricted" { UNRESTRICTED }
-| "const" { CONST }
-
-(* Compount Types *)
-| "struct" { STRUCT }
+| "ref"   { Format.eprintf " REF"; REF }
+| "linear" { Format.eprintf " LINEAR"; LINEAR }
+| "unrestricted" { Format.eprintf " UNRESTRICTED"; UNRESTRICTED }
+| "const" { Format.eprintf " CONST"; CONST }
+(* Compound Types *)
+| "struct" { Format.eprintf " STRUCT"; STRUCT }
 
 (* Operators *)
-| '='      { ASSIGN }
+| '='      { Format.eprintf " ASSIGN"; ASSIGN }
 
 (* Arithmetic Operators *)
-| '+'      { PLUS }
-| '-'      { MINUS }
-| '*'      { TIMES }
-| '/'      { DIVIDE }
-| '%'      { MOD }
-| "++"     { INCR }
-| "--"     { DECR }
+| '+'      { Format.eprintf " PLUS"; PLUS }
+| '-'      { Format.eprintf " MINUS"; MINUS }
+| '*'      { Format.eprintf " STAR"; STAR }
+| '/'      { Format.eprintf " DIVIDE"; DIVIDE }
+| '%'      { Format.eprintf " MOD"; MOD }
+| "++"     { Format.eprintf " INCR"; INCR }
+| "--"     { Format.eprintf " DECR"; DECR }
 
 (* TODO Bitwise Operators *)
 
 (* Comparison Operators*)
-| "=="     { EQ }
-| "!="     { NEQ }
-| '<'      { LT }
-| "<="     { LTE }
-| '>'      { GT }
-| ">="     { GTE }
+| "=="     { Format.eprintf " EQ"; EQ }
+| "!="     { Format.eprintf " NEQ"; NEQ }
+| '<'      { Format.eprintf " LT"; LT }
+| "<="     { Format.eprintf " LTE"; LTE }
+| '>'      { Format.eprintf " GT"; GT }
+| ">="     { Format.eprintf " GTE"; GTE }
 
 (* Logical Operators *)
-| "&&"     { AND }
-| "||"     { OR }
-| "!"      { NOT }
+| "&&"     { Format.eprintf " AND"; AND }
+| "||"     { Format.eprintf " OR"; OR }
+| "!"      { Format.eprintf " NOT"; NOT }
 
 (* Struct Operators *)
-| '.'      { DOT }
+| '.'      { Format.eprintf " DOT"; DOT }
 
 (* Borrowing Operators *)
-| '&'      { BORROW }
-| '*'      { DEREF }
-| "->"     { ARROW }
+| '&'      { Format.eprintf " BORROW"; BORROW }
+(* | '*'      { Format.eprintf " DEREF"; DEREF } *)
+| "->"     { Format.eprintf " ARROW"; ARROW }
 
 (* Control Flow *)
-| "if"     { IF }
-| "else"   { ELSE }
-| "while"  { WHILE }
-| "break"  { BREAK }
-| "continue" { CONTINUE }
-| "return" { RETURN }
+| "if"     { Format.eprintf " IF"; IF }
+| "else"   { Format.eprintf " ELSE"; ELSE }
+| "while"  { Format.eprintf " WHILE"; WHILE }
+| "break"  { Format.eprintf " BREAK"; BREAK }
+| "continue" { Format.eprintf " CONTINUE"; CONTINUE }
+| "return" { Format.eprintf " RETURN"; RETURN }
 
 (* Identifier *)
-| letter (digit | letter | '_')* as lem { ID(lem) }
+| letter (digit | letter | '_')* as lem { Format.eprintf " %s" ("ID(" ^ lem ^ ")"); ID(lem) }
 
 (* End of File *)
-| eof { EOF }
+| eof { Format.eprintf " EOF"; EOF }
 | _ as char { raise (Failure("illegal character " ^ Char.escaped char)) }
 
 and comment = parse

@@ -4,9 +4,8 @@
 open Ast
 %}
 
-// TODO do we need colon?
 %token LPAREN RPAREN LBRACE RBRACE LBRACK RBRACK SEMI COMMA
-%token INT BOOL CHAR FLOAT VOID
+%token INT BOOL CHAR FLOAT VOID STRING
 %token <int> INTLIT
 %token <float> FLOATLIT
 %token <bool> BOOLLIT
@@ -15,12 +14,13 @@ open Ast
 %token REF LINEAR UNRESTRICTED CONST
 %token STRUCT EXPLODE
 
+/* TODO: Keep an eye on deref versus times and precedence now that they are combined as 'star' */
 %token ASSIGN
-%token PLUS MINUS TIMES DIVIDE MOD INCR DECR
+%token PLUS MINUS DIVIDE MOD INCR DECR STAR (*TIMES*)
 %token EQ NEQ LT LTE GT GTE
 %token AND OR NOT
 %token DOT
-%token BORROW DEREF ARROW
+%token BORROW (*DEREF*) ARROW
 
 %token IF ELSE WHILE BREAK CONTINUE RETURN
 
@@ -36,152 +36,85 @@ open Ast
 %left EQ NEQ
 %left LT GT LTE GTE
 %left PLUS MINUS
-%left TIMES DIVIDE MOD
+%left (*TIMES*) DIVIDE MOD
+%left STAR /* TODO is deref left associative? Probably should enforce this 'by hand' for deref/times */
 
 %right INCR DECR NOT
 // %left DOT BORROW TODO why doesnt this matter
+
 /*TODO Prefix and postfix increment and decrement operators */
 /*TODO: unary plus and minus */
 /*TODO: type casting */
 /*TODO: more complex assignment operators */
 /*TODO: comma operator */
-/*TODO: arrays */
+/*TODO: re-add const */
 
 %%
 program:
   decls EOF { $1}
 
-/* Returns record of globals, structs, and functions */
-decls:
-   /* nothing */ { 
-    {
-        globals = [];
-        structs = [];
-        funcs = []
-    }
-   }
-| struct_decl SEMI decls {
-    {
-        globals = $3.globals;
-        structs = $1 :: $3.structs;
-        funcs = $3.funcs
-    }
-}
- | const_qualified_var_decl SEMI decls {
-    {
-        globals = $1 :: $3.globals;
-        structs = $3.structs;
-        funcs = $3.funcs
-    }
- }
- | func_decl decls {
-    {
-        globals = $2.globals;
-        structs = $2.structs;
-        funcs = $1 :: $2.funcs
-    }
-}
 
-/* Returns record of struct name and member declarations */
-struct_decl:
-  STRUCT ID LBRACE var_decl_list RBRACE {
-    {
-        sname = $2;
-        fields = $4
-    }
-   }
-
-/* Returns list of variable declarations */
-var_decl_list:
-  /*nothing*/ { [] }
-  | const_qualified_var_decl SEMI var_decl_list  {  $1 :: $3 }
-  // | const_array_decl SEMI var_decl_list { $1 :: $3 }
-
-const_qualified_var_decl: 
-  var_decl { Var($1) }
-  | CONST var_decl { Const($2) }
-
-/* Returns record of linear qualifier, type, and name for variable declaration */
-var_decl:
-  lin_qual primtyp ID { ($1, $2, $3) }
-  | lin_qual STRUCT ID ID { ($1, Struct($3), $4) }
-  | primtyp ID { (Unrestricted, $1, $2) }
-  | STRUCT ID ID { (Linear, Struct($2), $3) }
-  | lin_qual primtyp ID LBRACK INTLIT RBRACK { ($1, Arr($2, $5), $3) }
-
+/* Linear Qualifier */
 lin_qual:
       UNRESTRICTED { Unrestricted }
     | LINEAR { Linear }
 
 /* Primative types */
-/* TODO integrade struct into primtyp? */
-primtyp:
+primtype:
     INT   { Int   }
   | BOOL  { Bool  }
   | CHAR  { Char  }
   | FLOAT { Float }
+  | STRING { String }
 
-return_stmt : 
-  RETURN expr SEMI { Return($2) }
-/*TODO allow declaring structs in function body */
-/*TODO allow mixed declaration and assignment */
+/* All types except for arrays: primatives, structs, references */
+single_type:
+  | lin_qual primtype { Prim($1, $2) }
+  | primtype { Prim(Unrestricted, $1) }
+  | STRUCT ID { Struct($2) } /* the linear qualifier for a struct is stored in the struct definition */
+  | REF single_type { Ref($2) } /* type checking now must guarantee REF used only in call args */
 
-/* Returns record of function return type, name, arguments, local variables, and body */
-/* TODO add returning void */
-func_decl:
-  | primtyp ID LPAREN args_opt RPAREN LBRACE var_decl_list stmt_list return_stmt RBRACE
-  {
+/* Returns record of type (lin qual + base) and name for variable declaration */
+var_decl:
+  | single_type ID { ($1, $2) }
+  | single_type ID LBRACK INTLIT RBRACK { (Arr($1, $4), $2) }
+
+
+/* Returns semicolon-separated list of variable declarations */
+var_decl_list:
+  /*nothing*/ { [] }
+  | var_decl SEMI var_decl_list  {  $1 :: $3 }
+
+
+/* Returns record of linearity qualifier, struct name, and member declarations */
+struct_decl:
+   | lin_qual STRUCT ID LBRACE var_decl_list RBRACE {
     {
-      rtyp=$1;
-      fname=$2;
-      args=$4;
-      locals=$7;
-      body=$8;
-      return=$9;
+        lin_qual = $1;
+        sname = $3;
+        fields = $5
     }
-  }
-  | STRUCT ID ID LPAREN args_opt RPAREN LBRACE var_decl_list stmt_list return_stmt RBRACE
-  {
+   }
+   | STRUCT ID LBRACE var_decl_list RBRACE {
     {
-      rtyp=Struct($2);
-      fname=$3;
-      args=$5;
-      locals=$8;
-      body=$9;
-      return=$10
+        lin_qual = Linear;
+        sname = $2;
+        fields = $4
     }
-  }
+   }
+
+
+
 
 /* Returns list of arguments OR empty list */
 args_opt :
   VOID { [] }
   | args { $1 }
 
-/* Returns list of arguments */
+/* Returns list of arguments (comma-separated var_decls) */
 args :
-  var_decl { [(Val, $1)] }
-  | REF var_decl { [(Ref, $2)] }
-  | var_decl COMMA args { (Val, $1) :: $3 }
-  | REF var_decl COMMA args { (Ref, $2) :: $4 }
-
-// const_array_decl : 
-//   | lin_qual primtyp ID LBRACK INTLIT RBRACK { ($1, Arr($5), $3) }
-
-/* Returns list of statements OR empty list */
-stmt_list:
-  /* nothing */ { [] }
-  | stmt stmt_list  { $1::$2 }
-
-/* Statements */
-stmt:
-    expr SEMI                               { Expr $1      }
-  | LBRACE stmt_list RBRACE                 { Block $2 }
-  /* if (condition) { block1} else {block2} */
-  /* if (condition) stmt else stmt */
-  | IF LPAREN expr RPAREN stmt ELSE stmt    { If($3, $5, $7) }
-  | WHILE LPAREN expr RPAREN stmt           { While ($3, $5)  }
-  | BREAK SEMI                              { Break          }
-  | CONTINUE SEMI                           { Continue       }
+  var_decl { [$1] }
+  | var_decl COMMA args { $1 :: $3 }
 
 
 /* Comma-separated list of expressions for a struct literal (can't be empty) */
@@ -189,68 +122,37 @@ exprs_list:
   | expr { [$1] }
   | expr COMMA exprs_list { $1 :: $3 }
 
-// literal_list:
-//   | literal { [$1] }
-//   | literal COMMA literal_list { $1 :: $3 }
 
-// literals_list:
-//   | literal_expression { [$1] }
-//   | literal_expression COMMA literal_expression { $1 :: $3 }
-
-/* Expressions */
-expr:
-    ID               { Id($1)                 }
-  | LPAREN expr RPAREN { $2                   }
-  | assignment_expression { Assignment $1 }
-  | arithmetic_expression { Operation $1 }
-  | comparison_expression { Operation $1 }
-  | logical_expression { Operation $1 }
-  | literal_expression { Literal $1 }
-  | access_expression { Operation $1 }
-  | ID LPAREN call_args_opt RPAREN { Call ($1, $3)  }
-
-  // struct_expr:
-  //   STRUCT expr { StructLit([$2]) }
-
-/* Call arguments (allows borrowing) */
+/* Call arguments or nothing */
 call_args_opt:
   /*nothing*/ { [] }
+  | VOID { [] } /* TODO should this be here? */
   | call_args { $1 }
 
+/* Comma-separated list of expressions for arguments of a function call (allow borrowing) */
 call_args:
   expr  { [$1] }
-  | BORROW expr { [Operation(Borrow($2))] }
+  | BORROW ID { [Operation(Borrow($2))] }
   | expr COMMA call_args { $1::$3 }
-  | BORROW expr COMMA call_args { Operation(Borrow($2)) :: $4 }
+  | BORROW ID COMMA call_args { Operation(Borrow($2)) :: $4 }
 
-/* Expression Subcomponents */
-literal_expression:
-    | INTLIT { IntLit($1) }
-    | BOOLLIT { BoolLit($1) }
-    | FLOATLIT { FloatLit($1) }
-    | CHARLIT { CharLit($1) }
-    | STRINGLIT { StringLit($1) }
-    | LBRACE exprs_list RBRACE { StructLit($2) }
-    | LBRACK exprs_list RBRACK { ArrayLit($2) }
-    (*TODO: figure out a way to differentiate struct and arraylit, 
-    do we need to?, or just have arrays take only literals? *)
-    // | LBRACE literal_exprs RBRACE { ArrayLit($2) }
+
+/* A list of identifiers to be the LHS of struct explosion */
+id_list:
+    | ID { [$1] }
+    | ID COMMA id_list { $1 :: $3 }
 
 // TODO make a really cool explode snytax (consume?)
 assignment_expression:
-    | ID ASSIGN expr { Assign($1, $3) }
+    | ID ASSIGN expr { Assign($1, $3) } /* Syntax: : {a,b}*/
     | EXPLODE LBRACE id_list RBRACE ASSIGN expr { StructExplode($3, $6) }
     | ID DOT ID ASSIGN expr { StructAssign($1, $3, $5) }
     | ID ARROW ID ASSIGN expr { RefStructAssign($1, $3, $5) }
 
-id_list: /* TODO a struct explosion id list always needs a trailing comma*/
-    | ID { [$1] }
-    | ID COMMA id_list { $1 :: $3 }
-
 arithmetic_expression:
     | expr PLUS expr { ArithOp($1, Add, $3) }
     | expr MINUS expr { ArithOp($1, Sub, $3) }
-    | expr TIMES expr { ArithOp($1, Mul, $3) }
+    | expr STAR expr { ArithOp($1, Mul, $3) }
     | expr DIVIDE expr { ArithOp($1, Div, $3) }
     | expr MOD expr { ArithOp($1, Mod, $3) }
     | expr INCR { UnArithOp(PreInc, $1) }
@@ -271,8 +173,116 @@ logical_expression:
     | expr OR expr { LogOp($1, Or, $3) }
     | NOT expr { UnLogOp(Not, $2) }
 
+/* Literals */
+literal_expression:
+    | INTLIT { IntLit($1) }
+    | BOOLLIT { BoolLit($1) }
+    | FLOATLIT { FloatLit($1) }
+    | CHARLIT { CharLit($1) }
+    | STRINGLIT { StringLit($1) }
+    | LBRACE exprs_list RBRACE { StructLit($2) }
+    | LBRACK exprs_list RBRACK { ArrayLit($2) }
+
+/* Accesses: struct.field, (ref struct)->field, *ref, array[index] */
 access_expression:
     | ID DOT ID { AccessOp(Id($1), Dot, $3) }
     | ID ARROW ID { AccessOp(Id($1), Arrow, $3) }
-    | DEREF ID { Deref(Id($2)) }
+    | STAR ID { Deref($2) }
+    | ID LBRACK expr RBRACK { Index($1, $3) }
 
+/* Expressions */
+expr:
+    ID               { Id($1)                 }
+  | LPAREN expr RPAREN { $2                   }
+  | assignment_expression { Assignment $1 }
+  | arithmetic_expression { Operation $1 }
+  | comparison_expression { Operation $1 }
+  | logical_expression { Operation $1 }
+  | literal_expression { Literal $1 }
+  | access_expression { Operation $1 }
+  | ID LPAREN call_args_opt RPAREN { Call ($1, $3)  }
+
+
+/* Returns list of statements OR empty list */
+stmt_list:
+  /* nothing */ { [] }
+  | stmt stmt_list  { $1::$2 }
+
+/* TODO: make sure else if actually binds correctly */
+
+/* TODO: resolve shift/reduce conflict (not really needed) */
+ifstmt:
+  | IF LPAREN expr RPAREN stmt { If($3, $5, Block []) }
+  | IF LPAREN expr RPAREN stmt ELSE stmt { If($3, $5, $7) } 
+/* Statements */
+stmt:
+  | LBRACE stmt_list RBRACE { Block $2 }
+  | expr SEMI                               { Expr $1      }
+  | ifstmt                                 { $1 }
+  | WHILE LPAREN expr RPAREN stmt           { While ($3, $5)  }
+  | BREAK SEMI                              { Break          }
+  | CONTINUE SEMI                           { Continue       }
+
+
+return_stmt : 
+  RETURN expr SEMI { Return($2) }
+
+
+/*TODO allow declaring structs in function body? */
+/*TODO allow mixed declaration and assignment? */
+
+/* Returns record of function return type, name, arguments, local variables, and body */
+func_decl:
+  | single_type ID LPAREN args_opt RPAREN LBRACE var_decl_list stmt_list return_stmt RBRACE
+  {
+    {
+      rtyp=Nonvoid($1);
+      fname=$2;
+      args=$4;
+      locals=$7;
+      body=$8;
+      return=$9;
+    }
+  }
+  | VOID ID LPAREN args_opt RPAREN LBRACE var_decl_list stmt_list RBRACE
+  {
+    {
+      rtyp=Void;
+      fname=$2;
+      args=$4;
+      locals=$7;
+      body=$8;
+      return=VoidReturn;
+    }
+  }
+
+/* Returns record of globals, structs, and functions */
+decls:
+   /* nothing */ { 
+    {
+        globals = [];
+        structs = [];
+        funcs = []
+    }
+   }
+| struct_decl SEMI decls {
+    {
+        globals = $3.globals;
+        structs = $1 :: $3.structs;
+        funcs = $3.funcs
+    }
+}
+ | var_decl SEMI decls {
+    {
+        globals = $1 :: $3.globals;
+        structs = $3.structs;
+        funcs = $3.funcs
+    }
+ }
+ | func_decl decls {
+    {
+        globals = $2.globals;
+        structs = $2.structs;
+        funcs = $1 :: $2.funcs
+    }
+}
