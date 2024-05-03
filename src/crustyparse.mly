@@ -16,11 +16,11 @@ open Ast
 %token STRUCT EXPLODE
 
 %token ASSIGN
-%token PLUS MINUS TIMES DIVIDE MOD INCR DECR
+%token PLUS MINUS DIVIDE MOD INCR DECR STAR (*TIMES*)
 %token EQ NEQ LT LTE GT GTE
 %token AND OR NOT
 %token DOT
-%token BORROW DEREF ARROW
+%token BORROW (*DEREF*) ARROW
 
 %token IF ELSE WHILE BREAK CONTINUE RETURN
 
@@ -36,7 +36,8 @@ open Ast
 %left EQ NEQ
 %left LT GT LTE GTE
 %left PLUS MINUS
-%left TIMES DIVIDE MOD
+%left (*TIMES*) DIVIDE MOD
+%left STAR
 
 %right INCR DECR NOT
 // %left DOT BORROW TODO why doesnt this matter
@@ -84,13 +85,21 @@ decls:
 
 /* Returns record of struct name and member declarations */
 struct_decl:
-  lin_qual STRUCT ID LBRACE var_decl_list RBRACE {
+   | lin_qual STRUCT ID LBRACE var_decl_list RBRACE {
     {
         lin_qual = $1;
         sname = $3;
         fields = $5
     }
    }
+   | STRUCT ID LBRACE var_decl_list RBRACE {
+    {
+        lin_qual = Linear;
+        sname = $2;
+        fields = $4
+    }
+   }
+
 
 /* Returns list of variable declarations */
 var_decl_list:
@@ -281,7 +290,7 @@ id_list: /* TODO a struct explosion id list always needs a trailing comma*/
 arithmetic_expression:
     | expr PLUS expr { ArithOp($1, Add, $3) }
     | expr MINUS expr { ArithOp($1, Sub, $3) }
-    | expr TIMES expr { ArithOp($1, Mul, $3) }
+    | expr STAR expr { ArithOp($1, Mul, $3) }
     | expr DIVIDE expr { ArithOp($1, Div, $3) }
     | expr MOD expr { ArithOp($1, Mod, $3) }
     | expr INCR { UnArithOp(PreInc, $1) }
@@ -305,5 +314,5 @@ logical_expression:
 access_expression:
     | ID DOT ID { AccessOp(Id($1), Dot, $3) }
     | ID ARROW ID { AccessOp(Id($1), Arrow, $3) }
-    | DEREF ID { Deref($2) }
+    | STAR ID { Deref($2) }
 
