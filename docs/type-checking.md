@@ -11,9 +11,9 @@
     - struct variable declarations implicitly include a linear annotation
     - constant variables cannot be linear
 
-- Linear variables must be assigned once in the scope in which they are defined 
+- Linear variables must be assigned once in the scope in which they are defined, until they are consumed
 
-- A linear value must always be consumed exactly once in the scope in which it was defined
+- A linear value must always be consumed exactly once in the scope in which it was defined after it is assigned
     - Function calls which return linear values must assigned to linear variables 
 
 - Consuming a linear variable means:
@@ -23,12 +23,11 @@
 
 - A linear value cannot be assigned to a nonlinear variable 
 
-## If and Case statements
-- linear variables delcared outside case or if statements must be consumed the same 
-number of times (either 0 or once) in all branches
+- A linear value may only be assigned when in the 'unassigned' or 'used' states
 
-## Loops 
-- linear variables must enter and exit a loop with the same ??
+## If, Case, and Loop statements
+- linear variables delcared outside case, if, and loop statements must exit all branches of the program in the same state (unassigned, assigned, borrowed?, used)
+    - So, variables delcared outside loops must be in the 'assigned but unconsumed' state when they exit (either because they were never consumed, or they were consumed an then assigned)
 
 ## Borrowing and Ref Types
 - The 'borrow' operator (&) may only be used as an argument at a function call site 
@@ -37,16 +36,20 @@ number of times (either 0 or once) in all branches
 
 - Only function arguments can be given reference types
 
-- Unrestricted references can be accessed any number of times either with the deref (*) operator 
-or the arrow (->) operator 
+- A linear variable can only be borrowed if it is in the 'assigned but not consumed' state 
+
+- Unrestricted references can be accessed any number of times either with the deref (*) operator or the arrow (->) operator 
 
 
 - A ref type cannot be borrowed (i.e. can't 'double borrow')
 - A reference to a linear type cannot be dereferenced (with * operator)
-- A reference to a linear structure cannot access elements with the -> operator
+- A reference to a linear structure cannot access linear elements with the -> operator
+    - However, nonlinear elements of a linear structure may be accessed with the -> operator 
+
+
 ## Structures and Linearity
 - Linear structures can contain both linear and nonlinear components
     - Can even contain no linear components 
 - Nonlinear structures cannot be assigned with linear components 
-- Linear structures cannot  
+- Nonlinear components of linear structures can be accessed with the dot operator (".")
 
