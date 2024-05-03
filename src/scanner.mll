@@ -1,6 +1,7 @@
 (* Ocamllex scanner for Crusty *)
 
-{ open Crustyparse 
+{ open Crustyparse
+  let printf = Format.eprintf
 }
 
 let whitespace = [' ' '\t' '\r' '\n']
@@ -16,8 +17,6 @@ let float = float_base float_exp? | digit+ float_exp
 
 let single_enclosed = "'" _ "'"
 let double_enclosed = '"' _ '"'
-(* 
-let Format.eprintf str = Format.eprintf str  *)
 
 rule token = parse
   whitespace { token lexbuf }
@@ -25,91 +24,91 @@ rule token = parse
 | "//"     { line_comment lexbuf }
 
 (* Grouping/Separating *)
-| '('      { Format.eprintf " LPAREN"; LPAREN }
-| ')'      { Format.eprintf " RPAREN"; RPAREN }
-| '{'      { Format.eprintf " LBRACE"; LBRACE }
-| '}'      { Format.eprintf " RBRACE"; RBRACE }
-| '['      { Format.eprintf " LBRACK"; LBRACK }
-| ']'      { Format.eprintf " RBRACK"; RBRACK }
-| ';'      { Format.eprintf " SEMI"; SEMI }
-| ','      { Format.eprintf " COMMA"; COMMA }
-| ':'      { Format.eprintf " EXPLODE"; EXPLODE }
+| '('      { printf "LPAREN "; LPAREN }
+| ')'      { printf "RPAREN "; RPAREN }
+| '{'      { printf "LBRACE "; LBRACE }
+| '}'      { printf "RBRACE "; RBRACE }
+| '['      { printf "LBRACK "; LBRACK }
+| ']'      { printf "RBRACK "; RBRACK }
+| ';'      { printf "SEMI "; SEMI }
+| ','      { printf "COMMA "; COMMA }
+| ':'      { printf "EXPLODE "; EXPLODE }
 
 (* Keywords *)
 
 (* Primitive Types *)
-| "int"   { Format.eprintf " INT"; INT }
-| "bool"  { Format.eprintf " BOOL"; BOOL }
-| "char"  { Format.eprintf " CHAR"; CHAR }
-| "float" { Format.eprintf " FLOAT"; FLOAT }
-| "void"  { Format.eprintf " VOID"; VOID }
-| "string" { Format.eprintf " STRING"; STRING }
+| "int"   { printf "INT "; INT }
+| "bool"  { printf "BOOL "; BOOL }
+| "char"  { printf "CHAR "; CHAR }
+| "float" { printf "FLOAT "; FLOAT }
+| "void"  { printf "VOID "; VOID }
+| "string" { printf "STRING "; STRING }
 
 (* Literals *)
-| int as lem  { Format.eprintf " %s" ("INTLIT(" ^ lem ^ ")"); INTLIT(int_of_string lem) }
-| float as lem { Format.eprintf " %s" ("FLOATLIT(" ^ lem ^ ")"); FLOATLIT(float_of_string lem) }
-| "true"   { Format.eprintf " BOOLLIT(true)"; BOOLLIT(true)  }
-| "false"  { Format.eprintf " BOOLLIT(false)"; BOOLLIT(false) }
-| single_enclosed as lem { Format.eprintf " %s" ("CHARLIT(" ^ lem ^ ")"); CHARLIT(lem.[1]) }
+| int as lem  { printf "%s " ("INTLIT(" ^ lem ^ ")"); INTLIT(int_of_string lem) }
+| float as lem { printf "%s " ("FLOATLIT(" ^ lem ^ ")"); FLOATLIT(float_of_string lem) }
+| "true"   { printf "BOOLLIT(true) "; BOOLLIT(true)  }
+| "false"  { printf "BOOLLIT(false) "; BOOLLIT(false) }
+| single_enclosed as lem { printf "%s " ("CHARLIT(" ^ lem ^ ")"); CHARLIT(lem.[1]) }
 (* TODO this doesn't actually work--need more complex regex *)
-| double_enclosed as lem { Format.eprintf " %s" ("CHARLIT(" ^ lem ^ ")"); STRINGLIT(String.sub lem 1 ((String.length lem) - 2)) }
+| double_enclosed as lem { printf "%s " ("CHARLIT(" ^ lem ^ ")"); STRINGLIT(String.sub lem 1 ((String.length lem) - 2)) }
 
 (* Type Qualifiers *)
-| "ref"   { Format.eprintf " REF"; REF }
-| "linear" { Format.eprintf " LINEAR"; LINEAR }
-| "unrestricted" { Format.eprintf " UNRESTRICTED"; UNRESTRICTED }
-| "const" { Format.eprintf " CONST"; CONST }
+| "ref"   { printf "REF "; REF }
+| "linear" { printf "LINEAR "; LINEAR }
+| "unrestricted" { printf "UNRESTRICTED "; UNRESTRICTED }
+| "const" { printf "CONST "; CONST }
 (* Compound Types *)
-| "struct" { Format.eprintf " STRUCT"; STRUCT }
+| "struct" { printf "STRUCT "; STRUCT }
 
 (* Operators *)
-| '='      { Format.eprintf " ASSIGN"; ASSIGN }
+| '='      { printf "ASSIGN "; ASSIGN }
 
 (* Arithmetic Operators *)
-| '+'      { Format.eprintf " PLUS"; PLUS }
-| '-'      { Format.eprintf " MINUS"; MINUS }
-| '*'      { Format.eprintf " STAR"; STAR }
-| '/'      { Format.eprintf " DIVIDE"; DIVIDE }
-| '%'      { Format.eprintf " MOD"; MOD }
-| "++"     { Format.eprintf " INCR"; INCR }
-| "--"     { Format.eprintf " DECR"; DECR }
+| '+'      { printf "PLUS "; PLUS }
+| '-'      { printf "MINUS "; MINUS }
+| '*'      { printf "STAR "; STAR }
+| '/'      { printf "DIVIDE "; DIVIDE }
+| '%'      { printf "MOD "; MOD }
+| "++"     { printf "INCR "; INCR }
+| "--"     { printf "DECR "; DECR }
 
 (* TODO Bitwise Operators *)
 
 (* Comparison Operators*)
-| "=="     { Format.eprintf " EQ"; EQ }
-| "!="     { Format.eprintf " NEQ"; NEQ }
-| '<'      { Format.eprintf " LT"; LT }
-| "<="     { Format.eprintf " LTE"; LTE }
-| '>'      { Format.eprintf " GT"; GT }
-| ">="     { Format.eprintf " GTE"; GTE }
+| "=="     { printf "EQ "; EQ }
+| "!="     { printf "NEQ "; NEQ }
+| '<'      { printf "LT "; LT }
+| "<="     { printf "LTE "; LTE }
+| '>'      { printf "GT "; GT }
+| ">="     { printf "GTE "; GTE }
 
 (* Logical Operators *)
-| "&&"     { Format.eprintf " AND"; AND }
-| "||"     { Format.eprintf " OR"; OR }
-| "!"      { Format.eprintf " NOT"; NOT }
+| "&&"     { printf "AND "; AND }
+| "||"     { printf "OR "; OR }
+| "!"      { printf "NOT "; NOT }
 
 (* Struct Operators *)
-| '.'      { Format.eprintf " DOT"; DOT }
+| '.'      { printf "DOT "; DOT }
 
 (* Borrowing Operators *)
-| '&'      { Format.eprintf " BORROW"; BORROW }
-(* | '*'      { Format.eprintf " DEREF"; DEREF } *)
-| "->"     { Format.eprintf " ARROW"; ARROW }
+| '&'      { printf "BORROW "; BORROW }
+(* | '*'      { printf " DEREF"; DEREF } *)
+| "->"     { printf "ARROW "; ARROW }
 
 (* Control Flow *)
-| "if"     { Format.eprintf " IF"; IF }
-| "else"   { Format.eprintf " ELSE"; ELSE }
-| "while"  { Format.eprintf " WHILE"; WHILE }
-| "break"  { Format.eprintf " BREAK"; BREAK }
-| "continue" { Format.eprintf " CONTINUE"; CONTINUE }
-| "return" { Format.eprintf " RETURN"; RETURN }
+| "if"     { printf "IF "; IF }
+| "else"   { printf "ELSE "; ELSE }
+| "while"  { printf "WHILE "; WHILE }
+| "break"  { printf "BREAK "; BREAK }
+| "continue" { printf "CONTINUE "; CONTINUE }
+| "return" { printf "RETURN "; RETURN }
 
 (* Identifier *)
-| letter (digit | letter | '_')* as lem { Format.eprintf " %s" ("ID(" ^ lem ^ ")"); ID(lem) }
+| letter (digit | letter | '_')* as lem { printf "%s " ("ID(" ^ lem ^ ")"); ID(lem) }
 
 (* End of File *)
-| eof { Format.eprintf " EOF"; EOF }
+| eof { printf "EOF "; EOF }
 | _ as char { raise (Failure("illegal character " ^ Char.escaped char)) }
 
 and comment = parse
