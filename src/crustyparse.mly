@@ -207,19 +207,21 @@ stmt_list:
   /* nothing */ { [] }
   | stmt stmt_list  { $1::$2 }
 
-/* TODO: add if-elseif-else and if-else */
+/* TODO: add elseif */
+
+/* TODO: resolve shift/reduce conflict (not really needed) */
+ifstmt:
+  | IF LPAREN expr RPAREN stmt { If($3, $5, Block []) }
+  | IF LPAREN expr RPAREN stmt ELSE stmt { If($3, $5, $7) } 
 
 /* Statements */
 stmt:
-    expr SEMI                               { Expr $1      }
-  | LBRACE stmt_list RBRACE                 { Block $2 }
-  /* if (condition) { block1} else {block2} */
-  /* if (condition) stmt else stmt */
-  | IF LPAREN expr RPAREN stmt ELSE stmt    { If($3, $5, $7) }
+  | LBRACE stmt_list RBRACE { Block $2 }
+  | expr SEMI                               { Expr $1      }
+  | ifstmt                                 { $1 }
   | WHILE LPAREN expr RPAREN stmt           { While ($3, $5)  }
   | BREAK SEMI                              { Break          }
   | CONTINUE SEMI                           { Continue       }
-
 
 
 return_stmt : 
