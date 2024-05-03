@@ -1,0 +1,22 @@
+
+unrestricted struct point {
+    int x;
+    int y;
+}
+
+int main(void) {
+    struct point a;
+    struct point b;
+    int c;
+    int d;
+
+    a.x = 1;
+    a.y = 2;
+
+    b.x = 3;
+    b.y = 4;
+
+    {c, d} = a;
+    
+    return c + d;
+} 
