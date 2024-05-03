@@ -1,14 +1,20 @@
 int main(void) {
-    int a; 
-    int b;
-    unrestricted int c[4];
+    // single line comment
+    int x;
+    unrestricted int y[4];
+    float f;
+    bool b;
     char c;
     char newline;
     string s;
 
-    a = 2;
-    b = 3; 
-    c = [1, 2, 3, 4];
+    /* 
+     * multi line comment
+     */
+    x = 2;
+    y = [1, 2, 3, 4];
+    f = 3.14;
+    b = true;
     c = 'c';
     newline = '\n';
     s = "hello\n";

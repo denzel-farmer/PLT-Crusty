@@ -2,7 +2,10 @@
 
 {
   open Crustyparse
+
+  (* Helper functions *)
   let printf = Format.eprintf
+
   let unescape_char c =
     match c with
     | "\\n" -> '\n'
@@ -33,6 +36,7 @@
 let whitespace = [' ' '\t' '\r' '\n']
 let newline = '\r' | '\n' | "\r\n"
 
+let ascii = [^'\'' '\\'] | '\\' ['\\' '\'' 'n' 't' 'r']
 let letter = ['a'-'z' 'A'-'Z']
 let digit = ['0'-'9']
 let int = ['+' '-']? digit+
@@ -40,10 +44,6 @@ let int = ['+' '-']? digit+
 let float_base = digit* '.' digit+ | digit+ '.' digit*
 let float_exp = ['e' 'E'] ['+' '-']? digit+
 let float = float_base float_exp? | digit+ float_exp
-
-let ascii = [^'\'' '\\'] | '\\' ['\\' '\'' 'n' 't' 'r']
-let char = '\'' ascii '\''
-let string = '"' (ascii)* '"'
 
 rule token = parse
   whitespace { token lexbuf }
@@ -70,28 +70,12 @@ rule token = parse
 | "void"  { printf "VOID "; VOID }
 | "string" { printf "STRING "; STRING }
 
-(* Literals *)
-| int as lem  { printf "%s " ("INTLIT(" ^ lem ^ ")"); INTLIT(int_of_string lem) }
-| float as lem { printf "%s " ("FLOATLIT(" ^ lem ^ ")"); FLOATLIT(float_of_string lem) }
-| "true"   { printf "BOOLLIT(true) "; BOOLLIT(true)  }
-| "false"  { printf "BOOLLIT(false) "; BOOLLIT(false) }
-| char as lem { 
-    let char_val = process_escapes (String.sub lem 1 (String.length lem - 2)) in
-    printf "%s " ("CHARLIT('" ^ Char.escaped char_val.[0] ^ "')");
-    CHARLIT(char_val.[0])
-  }
-| string as lem {
-    let string_val = String.sub lem 1 (String.length lem - 2) in
-    let processed_string = process_escapes string_val in
-    printf "%s " ("STRINGLIT(\"" ^ String.escaped processed_string ^ "\")");
-    STRINGLIT(processed_string)
-  }
-
 (* Type Qualifiers *)
 | "ref"   { printf "REF "; REF }
 | "linear" { printf "LINEAR "; LINEAR }
 | "unrestricted" { printf "UNRESTRICTED "; UNRESTRICTED }
 | "const" { printf "CONST "; CONST }
+
 (* Compound Types *)
 | "struct" { printf "STRUCT "; STRUCT }
 
@@ -140,6 +124,23 @@ rule token = parse
 
 (* Identifier *)
 | letter (digit | letter | '_')* as lem { printf "%s " ("ID(" ^ lem ^ ")"); ID(lem) }
+
+(* Literals *)
+| int as lem  { printf "%s " ("INTLIT(" ^ lem ^ ")"); INTLIT(int_of_string lem) }
+| float as lem { printf "%s " ("FLOATLIT(" ^ lem ^ ")"); FLOATLIT(float_of_string lem) }
+| "true"   { printf "BOOLLIT(true) "; BOOLLIT(true)  }
+| "false"  { printf "BOOLLIT(false) "; BOOLLIT(false) }
+| '\'' ascii '\'' as lem { 
+    let char_val = process_escapes (String.sub lem 1 (String.length lem - 2)) in
+    printf "%s " ("CHARLIT('" ^ Char.escaped char_val.[0] ^ "')");
+    CHARLIT(char_val.[0])
+  }
+| '"' (ascii)* '"' as lem {
+    let string_val = String.sub lem 1 (String.length lem - 2) in
+    let processed_string = process_escapes string_val in
+    printf "%s " ("STRINGLIT(\"" ^ String.escaped processed_string ^ "\")");
+    STRINGLIT(processed_string)
+  }
 
 (* End of File *)
 | eof { printf "EOF "; EOF }
