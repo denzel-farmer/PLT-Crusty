@@ -5,6 +5,7 @@ let string_of_prim_typ = function
   | Bool -> "bool"
   | Char -> "char"
   | Float -> "float"
+  | String -> "string"
 
 let string_of_lin = function
   | Unrestricted -> "unrestricted"

@@ -111,7 +111,7 @@ rule token = parse
 
 (* Borrowing Operators *)
 | '&'      { printf "BORROW "; BORROW }
-(* | '*'      { printf " DEREF"; DEREF } *)
+(* | '*'      { printf " DEREF"; DEREF }  *) (* TODO: *)
 | "->"     { printf "ARROW "; ARROW }
 
 (* Control Flow *)

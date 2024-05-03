@@ -51,13 +51,43 @@ open Ast
 
 %%
 program:
-  decls EOF { $1}
+  decls EOF { $1 }
 
+/* Returns record of globals, structs, and functions */
+decls:
+  /* nothing */ { 
+    {
+        globals = [];
+        structs = [];
+        funcs = []
+    }
+  }
+  | struct_decl SEMI decls {
+      {
+          globals = $3.globals;
+          structs = $1 :: $3.structs;
+          funcs = $3.funcs
+      }
+    }
+  | var_decl SEMI decls {
+      {
+          globals = $1 :: $3.globals;
+          structs = $3.structs;
+          funcs = $3.funcs
+      }
+    }
+  | func_decl decls {
+      {
+          globals = $2.globals;
+          structs = $2.structs;
+          funcs = $1 :: $2.funcs
+      }
+    }
 
 /* Linear Qualifier */
 lin_qual:
-      UNRESTRICTED { Unrestricted }
-    | LINEAR { Linear }
+    UNRESTRICTED { Unrestricted }
+  | LINEAR { Linear }
 
 /* Primative types */
 primtype:
@@ -79,32 +109,52 @@ var_decl:
   | single_type ID { ($1, $2) }
   | single_type ID LBRACK INTLIT RBRACK { (Arr($1, $4), $2) }
 
-
 /* Returns semicolon-separated list of variable declarations */
 var_decl_list:
   /*nothing*/ { [] }
   | var_decl SEMI var_decl_list  {  $1 :: $3 }
 
-
 /* Returns record of linearity qualifier, struct name, and member declarations */
 struct_decl:
-   | lin_qual STRUCT ID LBRACE var_decl_list RBRACE {
-    {
-        lin_qual = $1;
-        sname = $3;
-        fields = $5
+  lin_qual STRUCT ID LBRACE var_decl_list RBRACE {
+      {
+          lin_qual = $1;
+          sname = $3;
+          fields = $5
+      }
     }
-   }
-   | STRUCT ID LBRACE var_decl_list RBRACE {
-    {
-        lin_qual = Linear;
-        sname = $2;
-        fields = $4
+  | STRUCT ID LBRACE var_decl_list RBRACE {
+      {
+          lin_qual = Linear;
+          sname = $2;
+          fields = $4
+      }
     }
-   }
 
-
-
+/* Returns record of function return type, name, arguments, local variables, and body */
+func_decl:
+  single_type ID LPAREN args_opt RPAREN LBRACE var_decl_list stmt_list return_stmt RBRACE
+    {
+      {
+        rtyp=Nonvoid($1);
+        fname=$2;
+        args=$4;
+        locals=$7;
+        body=$8;
+        return=$9;
+      }
+    }
+  | VOID ID LPAREN args_opt RPAREN LBRACE var_decl_list stmt_list RBRACE
+    {
+      {
+        rtyp=Void;
+        fname=$2;
+        args=$4;
+        locals=$7;
+        body=$8;
+        return=VoidReturn;
+      }
+    }
 
 /* Returns list of arguments OR empty list */
 args_opt :
@@ -116,12 +166,10 @@ args :
   var_decl { [$1] }
   | var_decl COMMA args { $1 :: $3 }
 
-
 /* Comma-separated list of expressions for a struct literal (can't be empty) */
 exprs_list:
   | expr { [$1] }
   | expr COMMA exprs_list { $1 :: $3 }
-
 
 /* Call arguments or nothing */
 call_args_opt:
@@ -135,7 +183,6 @@ call_args:
   | BORROW ID { [Operation(Borrow($2))] }
   | expr COMMA call_args { $1::$3 }
   | BORROW ID COMMA call_args { Operation(Borrow($2)) :: $4 }
-
 
 /* A list of identifiers to be the LHS of struct explosion */
 id_list:
@@ -202,7 +249,6 @@ expr:
   | access_expression { Operation $1 }
   | ID LPAREN call_args_opt RPAREN { Call ($1, $3)  }
 
-
 /* Returns list of statements OR empty list */
 stmt_list:
   /* nothing */ { [] }
@@ -223,66 +269,8 @@ stmt:
   | BREAK SEMI                              { Break          }
   | CONTINUE SEMI                           { Continue       }
 
-
 return_stmt : 
   RETURN expr SEMI { Return($2) }
 
-
 /*TODO allow declaring structs in function body? */
 /*TODO allow mixed declaration and assignment? */
-
-/* Returns record of function return type, name, arguments, local variables, and body */
-func_decl:
-  | single_type ID LPAREN args_opt RPAREN LBRACE var_decl_list stmt_list return_stmt RBRACE
-  {
-    {
-      rtyp=Nonvoid($1);
-      fname=$2;
-      args=$4;
-      locals=$7;
-      body=$8;
-      return=$9;
-    }
-  }
-  | VOID ID LPAREN args_opt RPAREN LBRACE var_decl_list stmt_list RBRACE
-  {
-    {
-      rtyp=Void;
-      fname=$2;
-      args=$4;
-      locals=$7;
-      body=$8;
-      return=VoidReturn;
-    }
-  }
-
-/* Returns record of globals, structs, and functions */
-decls:
-   /* nothing */ { 
-    {
-        globals = [];
-        structs = [];
-        funcs = []
-    }
-   }
-| struct_decl SEMI decls {
-    {
-        globals = $3.globals;
-        structs = $1 :: $3.structs;
-        funcs = $3.funcs
-    }
-}
- | var_decl SEMI decls {
-    {
-        globals = $1 :: $3.globals;
-        structs = $3.structs;
-        funcs = $3.funcs
-    }
- }
- | func_decl decls {
-    {
-        globals = $2.globals;
-        structs = $2.structs;
-        funcs = $1 :: $2.funcs
-    }
-}
