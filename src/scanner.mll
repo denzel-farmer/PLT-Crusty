@@ -51,7 +51,8 @@ rule token = parse
 | "true"   { Format.eprintf " BOOLLIT(true)"; BOOLLIT(true)  }
 | "false"  { Format.eprintf " BOOLLIT(false)"; BOOLLIT(false) }
 | single_enclosed as lem { Format.eprintf " %s" ("CHARLIT(" ^ lem ^ ")"); CHARLIT(lem.[1]) }
-| double_enclosed as lem { Format.eprintf " %s" ("STRINGLIT(" ^ lem ^ ")"); STRINGLIT(String.sub lem 1 ((String.length lem) - 2)) }
+(* TODO this doesn't actually work--need more complex regex *)
+| double_enclosed as lem { Format.eprintf " %s" ("CHARLIT(" ^ lem ^ ")"); STRINGLIT(String.sub lem 1 ((String.length lem) - 2)) }
 
 (* Type Qualifiers *)
 | "ref"   { Format.eprintf " REF"; REF }
