@@ -1,5 +1,5 @@
-(* First Draft Abstract Syntax Tree for Crusty *)
-(* TODO arrays and strings *)
+(* Abstract Syntax Tree for Crusty *)
+(* TODO strings *)
 
 (* Type Types *)
 type lin_qual =
@@ -12,20 +12,15 @@ type primType =
   | Char
   | Float
 
-type typ = 
-  | Prim of lin_qual * primType 
+type typ =
+  | Prim of lin_qual * primType
   | Struct of string
   | Arr of typ * int
   | Ref of typ
-  
-   
-type ret_typ = 
+
+type ret_typ =
   | Nonvoid of typ
   | Void
-
-
-
-(* TODO add VOID function return type *)
 
 (* Operator Types *)
 type binArithOp =
@@ -106,27 +101,14 @@ type stmt =
   | Break
   | Continue
 
-(* Type Qualifiers *)
-
 (*TODO re add const?*)
 
 (* Declaration Types *)
-type var_decl =  typ * string
+type var_decl = typ * string
 
-(* type array_decl = string * int
-
-   type const_array_decl =
-   | Arr of var_decl *)
-
-(* type const_qualified_var_decl =
-  | Const of var_decl
-  | Var of var_decl *)
-(* 
-type arg_decl = ref_qual * var_decl *)
-type return_stmt = 
+type return_stmt =
   | Return of expr
   | VoidReturn
-
 
 (* Function Definition Type *)
 type func_def =
