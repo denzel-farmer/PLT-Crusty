@@ -1,0 +1,7 @@
+int main(void) {
+    string a; 
+
+    a = "abc";
+
+    return a[2];
+} 

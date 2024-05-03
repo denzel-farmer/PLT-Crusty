@@ -43,6 +43,7 @@ rule token = parse
 | "char"  { Format.eprintf " CHAR"; CHAR }
 | "float" { Format.eprintf " FLOAT"; FLOAT }
 | "void"  { Format.eprintf " VOID"; VOID }
+| "string" { Format.eprintf " STRING"; STRING }
 
 (* Literals *)
 | int as lem  { Format.eprintf " %s" ("INTLIT(" ^ lem ^ ")"); INTLIT(int_of_string lem) }

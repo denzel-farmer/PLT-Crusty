@@ -5,7 +5,7 @@ open Ast
 %}
 
 %token LPAREN RPAREN LBRACE RBRACE LBRACK RBRACK SEMI COMMA
-%token INT BOOL CHAR FLOAT VOID
+%token INT BOOL CHAR FLOAT VOID STRING
 %token <int> INTLIT
 %token <float> FLOATLIT
 %token <bool> BOOLLIT
@@ -65,6 +65,7 @@ primtype:
   | BOOL  { Bool  }
   | CHAR  { Char  }
   | FLOAT { Float }
+  | STRING { String }
 
 /* All types except for arrays: primatives, structs, references */
 single_type:

@@ -11,6 +11,7 @@ type primType =
   | Bool
   | Char
   | Float
+  | String
 
 type typ =
   | Prim of lin_qual * primType
@@ -22,7 +23,12 @@ type ret_typ =
   | Nonvoid of typ
   | Void
 
-(* Operator Types *)
+(* Operations *)
+
+(* TODO add string operations? concat, split, etc. (probably too much work)*)
+(* TODO add array operations? index (have it), concat, slice *)
+(* Could alternatively make strings into arrays *)
+
 type binArithOp =
   | Add
   | Sub
