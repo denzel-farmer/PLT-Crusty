@@ -194,16 +194,16 @@ let check (globals, structs, functions) =
                   string_of_typ t1 ^ " " ^ string_of_op op ^ " " ^
                   string_of_typ t2 ^ " in " ^ string_of_expr e
         in
+        (* TODO: allow compare operator to work for non-primitives ? *)
+        let q1, t1' = match_primitive t1 in
+        let q2, t2' = match_primitive t2 in 
         (* All compare operators require operands of the same type*)
-        if t1 = t2 then
+        if t1' = t2' then
           let t = match op with
-              Eq | Neq when t1 =  -> (Unrestricted, Bool)
-            (* can this apply to other types besides int and float ? *)
-            | Lt | Gt | Leq | Geq when t1 = (Unrestricted, Int) -> (Unrestricted, Bool) 
-            | Lt | Gt | Leq | Geq when t1 = (Unrestricted, Float) -> (Unrestricted, Bool)
+              Eq | Neq | Lt | Gt | Leq | Geq when t1' = Int or t1' = Float -> Bool
             | _ -> raise (Failure err)
           in
-          (* (Prim(tq, e), SOperation(SCompOp((t1, e1'), op, (t2, e2')))) *)
+          (Prim(q1, t), SOperation(SCompOp((t1, e1'), op, (t2, e2'))))
         else raise (Failure err)
       | LogOp (e1, op, e2) -> 
         let (t1, e1') = check_expr e1
@@ -227,9 +227,9 @@ let check (globals, structs, functions) =
                   string_of_typ t
         in 
         let q, t' = match t with 
-          | Prim (q, p) -> q, p
+          | Prim (q, p) when p = Bool -> q, p
           | _ -> raise (Failure err)
-        if t != Bool then raise (Failure err)
+        (* if t != Bool then raise (Failure err) *)
         in
         (t, SUnLogOp(op, (t, e')))
       | AccessOp (e, op, var) -> 
@@ -271,12 +271,13 @@ let check (globals, structs, functions) =
         match t with 
         | Arr (t, i) -> t, i
         | _ -> raise (Failure "")
+    in 
     let check_bool_expr e =
       let (t, e') = check_expr e in
       match t with
       | (Unrestricted, Bool) -> (t, e')
       |  _ -> raise (Failure ("expected Boolean expression in " ^ string_of_expr e))
-
+    in 
     let rec check_stmt_list l = 
     match l with 
     [] -> [] 
