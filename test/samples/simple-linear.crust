@@ -1,4 +1,4 @@
-int main(void) {
+int main() {
     linear int a; 
 
     a = 1;

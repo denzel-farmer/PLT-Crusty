@@ -9,7 +9,7 @@ unrestricted struct point {
     int y;
 };
 
-int main(void) {
+int main() {
     struct lin_point a;
     struct point b;
     int c;
