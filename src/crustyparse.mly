@@ -40,10 +40,11 @@ open Ast
 %left STAR /* TODO is deref left associative? Probably should enforce this 'by hand' for deref/times */
 
 %right INCR DECR NOT
+
+%nonassoc LOWER_THAN_ELSE
+%nonassoc ELSE
 // %left DOT BORROW TODO why doesnt this matter
 
-/*TODO Prefix and postfix increment and decrement operators */
-/*TODO: unary plus and minus */
 /*TODO: type casting */
 /*TODO: more complex assignment operators */
 /*TODO: comma operator */
@@ -156,10 +157,6 @@ func_decl:
       }
     }
 
-func_return_type:
-  | single_type { Nonvoid $1 }
-  | VOID { Void }
-
 /* Returns list of arguments OR empty list */
 args_opt :
   /* nothing */ { [] }
@@ -223,6 +220,7 @@ arithmetic_expression:
   | expr DECR { UnArithOp(PreDec, $1) }
   | INCR expr { UnArithOp(PostInc, $2) }
   | DECR expr { UnArithOp(PostDec, $2) }
+  | MINUS expr { UnArithOp(Neg, $2) }
 
 comparison_expression:
   | expr EQ expr { CompOp($1, Eq, $3) }
@@ -268,11 +266,8 @@ stmt:
   | BREAK SEMI                              { Break          }
   | CONTINUE SEMI                           { Continue       }
 
-/* TODO: make sure else if actually binds correctly */
-
-/* TODO: resolve shift/reduce conflict (not really needed) */
 ifstmt:
-  | IF LPAREN expr RPAREN stmt { If($3, $5, Block []) }
+  | IF LPAREN expr RPAREN stmt %prec LOWER_THAN_ELSE { If($3, $5, Block []) }
   | IF LPAREN expr RPAREN stmt ELSE stmt { If($3, $5, $7) } 
 
 return_stmt : 

@@ -1,4 +1,4 @@
-int main(void) {
+int main() {
     // single line comment
     int x;
     unrestricted int y[4];
