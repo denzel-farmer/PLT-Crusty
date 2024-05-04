@@ -156,9 +156,13 @@ func_decl:
       }
     }
 
+func_return_type:
+  | single_type { Nonvoid $1 }
+  | VOID { Void }
+
 /* Returns list of arguments OR empty list */
 args_opt :
-  VOID { [] }
+  /* nothing */ { [] }
   | args { $1 }
 
 /* Returns list of arguments (comma-separated var_decls) */
@@ -174,85 +178,95 @@ exprs_list:
 /* Call arguments or nothing */
 call_args_opt:
   /*nothing*/ { [] }
-  | VOID { [] } /* TODO should this be here? */
   | call_args { $1 }
 
 /* Comma-separated list of expressions for arguments of a function call (allow borrowing) */
 call_args:
-  expr  { [$1] }
-  | BORROW ID { [Operation(Borrow($2))] }
-  | expr COMMA call_args { $1::$3 }
-  | BORROW ID COMMA call_args { Operation(Borrow($2)) :: $4 }
+  expr_with_borrow  { [$1] }
+  | expr_with_borrow COMMA call_args { $1::$3 }
 
-/* A list of identifiers to be the LHS of struct explosion */
-id_list:
-    | ID { [$1] }
-    | ID COMMA id_list { $1 :: $3 }
-
-// TODO make a really cool explode snytax (consume?)
-assignment_expression:
-    | ID ASSIGN expr { Assign($1, $3) } /* Syntax: : {a,b}*/
-    | EXPLODE LBRACE id_list RBRACE ASSIGN expr { StructExplode($3, $6) }
-    | ID DOT ID ASSIGN expr { StructAssign($1, $3, $5) }
-    | ID ARROW ID ASSIGN expr { RefStructAssign($1, $3, $5) }
-
-arithmetic_expression:
-    | expr PLUS expr { ArithOp($1, Add, $3) }
-    | expr MINUS expr { ArithOp($1, Sub, $3) }
-    | expr STAR expr { ArithOp($1, Mul, $3) }
-    | expr DIVIDE expr { ArithOp($1, Div, $3) }
-    | expr MOD expr { ArithOp($1, Mod, $3) }
-    | expr INCR { UnArithOp(PreInc, $1) }
-    | expr DECR { UnArithOp(PreDec, $1) }
-    | INCR expr { UnArithOp(PostInc, $2) }
-    | DECR expr { UnArithOp(PostDec, $2) }
-
-comparison_expression:
-    | expr EQ expr { CompOp($1, Eq, $3) }
-    | expr NEQ expr { CompOp($1, Neq, $3) }
-    | expr LT expr { CompOp($1, Lt, $3) }
-    | expr LTE expr { CompOp($1, Leq, $3) }
-    | expr GT expr { CompOp($1, Gt, $3) }
-    | expr GTE expr { CompOp($1, Geq, $3) }
-
-logical_expression:
-    | expr AND expr { LogOp($1, And, $3) }
-    | expr OR expr { LogOp($1, Or, $3) }
-    | NOT expr { UnLogOp(Not, $2) }
-
-/* Literals */
-literal_expression:
-    | INTLIT { IntLit($1) }
-    | BOOLLIT { BoolLit($1) }
-    | FLOATLIT { FloatLit($1) }
-    | CHARLIT { CharLit($1) }
-    | STRINGLIT { StringLit($1) }
-    | LBRACE exprs_list RBRACE { StructLit($2) }
-    | LBRACK exprs_list RBRACK { ArrayLit($2) }
-
-/* Accesses: struct.field, (ref struct)->field, *ref, array[index] */
-access_expression:
-    | ID DOT ID { AccessOp(Id($1), Dot, $3) }
-    | ID ARROW ID { AccessOp(Id($1), Arrow, $3) }
-    | STAR ID { Deref($2) }
-    | ID LBRACK expr RBRACK { Index($1, $3) }
+/* Expressions with addition of borrow for call arguments*/
+expr_with_borrow:
+  | expr { $1 }
+  | BORROW ID { Operation(Borrow($2)) }
 
 /* Expressions */
 expr:
-    ID               { Id($1)                 }
-  | LPAREN expr RPAREN { $2                   }
+    ID                    { Id($1) }
+  | LPAREN expr RPAREN    { $2 }
   | assignment_expression { Assignment $1 }
   | arithmetic_expression { Operation $1 }
   | comparison_expression { Operation $1 }
-  | logical_expression { Operation $1 }
-  | literal_expression { Literal $1 }
-  | access_expression { Operation $1 }
+  | logical_expression    { Operation $1 }
+  | literal_expression    { Literal $1 }
+  | access_expression     { Operation $1 }
   | ID LPAREN call_args_opt RPAREN { Call ($1, $3)  }
+
+assignment_expression:
+  | ID ASSIGN expr { Assign($1, $3) }
+  | EXPLODE LBRACE id_list RBRACE ASSIGN expr { StructExplode($3, $6) } /* Syntax: : {a,b}*/ // TODO make a really cool explode snytax (consume?)
+  | ID DOT ID ASSIGN expr { StructAssign($1, $3, $5) }
+  | ID ARROW ID ASSIGN expr { RefStructAssign($1, $3, $5) }
+
+/* A list of identifiers to be the LHS of struct explosion */
+id_list:
+  | ID { [$1] }
+  | ID COMMA id_list { $1 :: $3 }
+
+arithmetic_expression:
+  | expr PLUS expr { ArithOp($1, Add, $3) }
+  | expr MINUS expr { ArithOp($1, Sub, $3) }
+  | expr STAR expr { ArithOp($1, Mul, $3) }
+  | expr DIVIDE expr { ArithOp($1, Div, $3) }
+  | expr MOD expr { ArithOp($1, Mod, $3) }
+  | expr INCR { UnArithOp(PreInc, $1) }
+  | expr DECR { UnArithOp(PreDec, $1) }
+  | INCR expr { UnArithOp(PostInc, $2) }
+  | DECR expr { UnArithOp(PostDec, $2) }
+
+comparison_expression:
+  | expr EQ expr { CompOp($1, Eq, $3) }
+  | expr NEQ expr { CompOp($1, Neq, $3) }
+  | expr LT expr { CompOp($1, Lt, $3) }
+  | expr LTE expr { CompOp($1, Leq, $3) }
+  | expr GT expr { CompOp($1, Gt, $3) }
+  | expr GTE expr { CompOp($1, Geq, $3) }
+
+logical_expression:
+  | expr AND expr { LogOp($1, And, $3) }
+  | expr OR expr { LogOp($1, Or, $3) }
+  | NOT expr { UnLogOp(Not, $2) }
+
+/* Literals */
+literal_expression:
+  | INTLIT { IntLit($1) }
+  | BOOLLIT { BoolLit($1) }
+  | FLOATLIT { FloatLit($1) }
+  | CHARLIT { CharLit($1) }
+  | STRINGLIT { StringLit($1) }
+  | LBRACE exprs_list RBRACE { StructLit($2) }
+  | LBRACK exprs_list RBRACK { ArrayLit($2) }
+
+/* Accesses: struct.field, (ref struct)->field, *ref, array[index] */
+access_expression:
+  | ID DOT ID { AccessOp(Id($1), Dot, $3) }
+  | ID ARROW ID { AccessOp(Id($1), Arrow, $3) }
+  | STAR ID { Deref($2) }
+  | ID LBRACK expr RBRACK { Index($1, $3) }
 
 /* Returns list of statements OR empty list */
 stmt_list:
   /* nothing */ { [] }
   | stmt stmt_list  { $1::$2 }
+
+/* Statements */
+stmt:
+  | LBRACE stmt_list RBRACE                 { Block $2 }
+  | expr SEMI                               { Expr $1      }
+  | ifstmt                                  { $1 }
+  | WHILE LPAREN expr RPAREN stmt           { While ($3, $5)  }
+  | BREAK SEMI                              { Break          }
+  | CONTINUE SEMI                           { Continue       }
 
 /* TODO: make sure else if actually binds correctly */
 
@@ -260,17 +274,10 @@ stmt_list:
 ifstmt:
   | IF LPAREN expr RPAREN stmt { If($3, $5, Block []) }
   | IF LPAREN expr RPAREN stmt ELSE stmt { If($3, $5, $7) } 
-/* Statements */
-stmt:
-  | LBRACE stmt_list RBRACE { Block $2 }
-  | expr SEMI                               { Expr $1      }
-  | ifstmt                                 { $1 }
-  | WHILE LPAREN expr RPAREN stmt           { While ($3, $5)  }
-  | BREAK SEMI                              { Break          }
-  | CONTINUE SEMI                           { Continue       }
 
 return_stmt : 
   RETURN expr SEMI { Return($2) }
+  | RETURN SEMI { VoidReturn }
 
 /*TODO allow declaring structs in function body? */
 /*TODO allow mixed declaration and assignment? */
