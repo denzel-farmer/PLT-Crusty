@@ -51,6 +51,14 @@ let rec linear_check_func (lin_map : linear_map) (func : sfunc_def) : linear_map
   linear_check_stmt_list lin_map func.sbody >>= fun lin_map ->
   linear_check_stmt_list lin_map func.sret >>= fun lin_map (* stmt or expr? *)
 
+let rec linear_check_struct (lin_map : linear_map) (sstruct : sstruct_def) : linear_map result =
+  (* check lin_qual of struct *)
+  match sstruct.lin_qual with
+  | Unrestricted ->
+    (* check that sstruct.sfields doesn't have linear types else LinError *)
+  | Linear ->
+    (* add structdef to lin_map, then check sstruct.sfields for any linear types *)
+    Hashtbl.add lin_map arg_name (_, Assigned, typ);
 
 
 (* 
@@ -95,6 +103,8 @@ in
 let rec linear_check (program : sprogram): linear_result = LinPass
   (* Initialize the linear map object *)
   let lin_map = Hashtbl.create 0 in 
+
+  let struct_results = List.map (linear_check_struct lin_map) program.sstructs in
 
   (* Call linearity checking on each function, passing linear vars object to each (probably not needed) *)
   let func_results = List.map (linear_check_func lin_map) program.sfuncs in
