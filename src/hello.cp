@@ -1,8 +1,12 @@
 // TODO: support programs where we have references to integers
-int sum(int a, int b) {
+struct a {
+    int a;
+    int b;
+};
+
+int sum(ref int a, ref int b) {
     int c;
-    c = 3;
-   //c = *a + *b;
+    c = *a + *b;
     return c;
 } 
 
