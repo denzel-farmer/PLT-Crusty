@@ -16,7 +16,7 @@ open Ast
 
 /* TODO: Keep an eye on deref versus times and precedence now that they are combined as 'star' */
 %token ASSIGN
-%token PLUS MINUS DIVIDE MOD INCR DECR STAR (*TIMES*)
+%token PLUS MINUS DIVIDE MOD INCR DECR STAR  (*TIMES*)
 %token EQ NEQ LT LTE GT GTE
 %token AND OR NOT
 %token DOT
@@ -249,7 +249,7 @@ literal_expression:
 access_expression:
   | ID DOT ID { AccessOp(Id($1), Dot, $3) }
   | ID ARROW ID { AccessOp(Id($1), Arrow, $3) }
-  | STAR ID { Deref($2) }
+  | STAR ID { Deref($2) } 
   | ID LBRACK expr RBRACK { Index($1, $3) }
 
 /* Returns list of statements OR empty list */

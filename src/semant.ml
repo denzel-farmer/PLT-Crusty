@@ -247,6 +247,7 @@ let check (globals, structs, functions) =
         in 
         (t, SOperation(SDeref(s)))
       | Borrow (s) -> 
+        
         (t, SOperation(SBorrow(s)))
       | Index (s, e) -> 
         let (t, e') = check_expr e in

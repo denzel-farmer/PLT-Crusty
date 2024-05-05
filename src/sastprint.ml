@@ -85,8 +85,8 @@ and string_of_soperation = function
     string_of_sexpr e1 ^ " " ^ string_of_binLogOp op ^ " " ^ string_of_sexpr e2
   | SUnLogOp (op, e) -> string_of_unLogOp op ^ string_of_sexpr e
   | SAccessOp (e, op, s) -> string_of_sexpr e ^ string_of_accessOp op ^ s
-  | SDeref e -> "*" ^ string_of_sexpr e
-  | SBorrow e -> "&" ^ string_of_sexpr e
+  | SDeref s -> "*" ^ s
+  | SBorrow s -> "&" ^ s
   | SIndex (s, e2) -> s ^ "[" ^ string_of_sexpr e2 ^ "]"
 
 and string_of_sassignment = function
@@ -109,6 +109,9 @@ let rec string_of_sstmt = function
   | SWhile (cond, stmt) -> "while (" ^ string_of_sexpr cond ^ ")\n" ^ string_of_sstmt stmt
   | SBreak -> "break;"
   | SContinue -> "continue;"
+
+let string_of_var_decl (typ, name) = 
+    string_of_typ typ ^ " " ^ name
 
 let string_of_sreturn = function 
   | SReturn e -> "return " ^ string_of_sexpr e
@@ -137,7 +140,7 @@ let string_of_sfunc_def func_def =
 
 let string_of_sstruct_def struct_def =
   let fields_str =
-    String.concat ";\n" (List.map string_of_var_decl struct_def.sfields)
+    String.concat ";\n" (List.map string_of_var_decl struct_def.fields)
   in
   string_of_lin struct_def.lin_qual ^ " struct " ^ struct_def.sname ^ " {\n" ^ fields_str ^ ";\n}"
 

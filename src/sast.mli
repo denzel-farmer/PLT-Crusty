@@ -73,6 +73,6 @@ type sstruct_def =
 (* Program Type *)
 type sprogram =
   { sglobals : var_decl list
-  ; sstructs : sstruct_def list
+  ; sstructs : struct_def list
   ; sfuncs : sfunc_def list
   }
