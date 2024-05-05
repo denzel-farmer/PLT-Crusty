@@ -1,22 +1,19 @@
-int main() {
-    // single line comment
-    int x;
-    unrestricted int y[4];
-    float f;
-    bool b;
-    char c;
-    char newline;
-    string s;
+int sum(ref int a, ref int b) {
+    int c;
 
-    /* 
-     * multi line comment
-     */
-    x = 2;
-    y = [1, 2, 3, 4];
-    f = 3.14;
-    b = true;
-    c = 'c';
-    newline = '\n';
-    s = "hello\n";
-    return 0;
+    c = *a + *b;
+
+    return c;
+} 
+
+int main() {
+    int a;
+    int b;
+    int c;
+
+    a = 1;
+    b = 2;
+
+    c = sum(&a, &b);
+    return c;
 } 
