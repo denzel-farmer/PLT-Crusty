@@ -16,11 +16,11 @@ open Ast
 
 /* TODO: Keep an eye on deref versus times and precedence now that they are combined as 'star' */
 %token ASSIGN
-%token PLUS MINUS DIVIDE MOD INCR DECR STAR  (*TIMES*)
+%token PLUS MINUS DIVIDE MOD INCR DECR STAR  /*TIMES*/
 %token EQ NEQ LT LTE GT GTE
 %token AND OR NOT
 %token DOT
-%token BORROW (*DEREF*) ARROW
+%token BORROW /*DEREF*/ ARROW
 
 %token IF ELSE WHILE BREAK CONTINUE RETURN
 
@@ -36,7 +36,7 @@ open Ast
 %left EQ NEQ
 %left LT GT LTE GTE
 %left PLUS MINUS
-%left (*TIMES*) DIVIDE MOD
+%left /*TIMES*/ DIVIDE MOD
 %left STAR /* TODO is deref left associative? Probably should enforce this 'by hand' for deref/times */
 
 %right INCR DECR NOT
