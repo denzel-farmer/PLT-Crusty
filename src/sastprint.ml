@@ -1,3 +1,7 @@
+open Ast
+open Sast
+open Astprint
+
 let string_of_prim_typ = function
   | Int -> "int"
   | Bool -> "bool"
@@ -54,16 +58,17 @@ let string_of_accessOp = function
   | Arrow -> "->"
 
 let rec string_of_literal = function
-  | IntLit i -> string_of_int i
-  | BoolLit b -> string_of_bool b
-  | CharLit c -> "'" ^ String.make 1 c ^ "'"
-  | FloatLit f -> string_of_float f
-  | StructLit exprs -> "{" ^ String.concat ", " (List.map string_of_sexpr exprs) ^ "}"
-  | StringLit s -> "\"" ^ s ^ "\""
-  | ArrayLit exprs -> "[" ^ String.concat ", " (List.map string_of_sexpr exprs) ^ "]"
+  | SIntLit i -> string_of_int i
+  | SBoolLit b -> string_of_bool b
+  | SCharLit c -> "'" ^ String.make 1 c ^ "'"
+  | SFloatLit f -> string_of_float f
+  | SStructLit sexprs -> "{" ^ String.concat ", " (List.map string_of_sexpr sexprs) ^ "}"
+  | SStringLit s -> "\"" ^ s ^ "\""
+  | SArrayLit sexprs -> "[" ^ String.concat ", " (List.map string_of_sexpr sexprs) ^ "]"
 
-and string_of_sexpr =
-    SId s -> s
+and string_of_sexpr (typ, sx) =
+  string_of_typ typ ^ " " ^ match sx with
+  | SId s -> s
   | SLiteral lit -> string_of_literal lit
   | SOperation op -> string_of_soperation op
   | SAssignment assign -> string_of_sassignment assign
@@ -136,13 +141,12 @@ let string_of_sstruct_def struct_def =
   in
   string_of_lin struct_def.lin_qual ^ " struct " ^ struct_def.sname ^ " {\n" ^ fields_str ^ ";\n}"
 
-let string_of_sprogram program =
+let string_of_sprogram (sglobals, sstructs, sfuncs) =
   let globals_str =
-    String.concat ";\n" (List.map string_of_var_decl program.sglobals)
+    String.concat ";\n" (List.map string_of_var_decl sglobals)
   in
-  let structs_str = String.concat ";\n" (List.map string_of_sstruct_def program.sstructs) in
-  let funcs_str = String.concat "" (List.map string_of_sfunc_def program.sfuncs) in
+  let structs_str = String.concat ";\n" (List.map string_of_sstruct_def sstructs) in
+  let funcs_str = String.concat "" (List.map string_of_sfunc_def sfuncs) in
   let globals_end = if String.length globals_str > 0 then ";\n" else "" in
   let structs_end = if String.length structs_str > 0 then ";\n" else "" in
   globals_str ^ globals_end ^ structs_str ^ structs_end ^ funcs_str
-  

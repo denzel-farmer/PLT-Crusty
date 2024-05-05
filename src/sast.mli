@@ -5,7 +5,7 @@ type sexpr = typ * sx
 
 and sx =
   | SId of string
-  | SLiteral of literal
+  | SLiteral of sliteral
   | SOperation of soperation
   | SAssignment of sassignment
   | SCall of string * sexpr list
@@ -71,7 +71,7 @@ type sstruct_def =
   }
 
 (* Program Type *)
-type program =
+type sprogram =
   { sglobals : var_decl list
   ; sstructs : sstruct_def list
   ; sfuncs : sfunc_def list
