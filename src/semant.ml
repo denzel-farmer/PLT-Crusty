@@ -9,7 +9,7 @@ module StringMap = Map.Make(String)
 let check (globals, structs, functions) =
   let check_binds_dup (kind: string) (binds : var_decl list) =
     let check_member n bs = 
-      List.fold_left (fun flag (_, _, n') -> if n = n' then true else flag) false bs
+      List.fold_left (fun flag (_, _, n') -> if n = n' then true else flag) false bs (* why three parameters here? for linearity?*)
   in 
     let rec check_dup bs = 
       match bs with 
@@ -18,9 +18,9 @@ let check (globals, structs, functions) =
     in check_dup binds
   in 
   (* check argument binds *)
-  let check_arg_binds_dup (king: string) (binds : (ref_qual * var_decl) list) =
+  let check_arg_binds_dup (kind: string) (binds : (ref_qual * var_decl) list) =
     let check_member n bs = 
-      List.fold_left (fun flag (_, (_, _, n')) -> if n = n' then true else flag) false bs
+      List.fold_left (fun flag (_, (_, _, n')) -> if n = n' then true else flag) false bs (* can this be combined through pattern matching? *)
   in 
     let rec check_dup bs = 
       match bs with 
@@ -32,7 +32,7 @@ let check (globals, structs, functions) =
   check_binds_dup "global" globals;
 
   (* Collect function declarations for built-in functions: no bodies *)
-  let built_in_decls =
+  let built_in_decls = (* how do we import built in functions? *)
     StringMap.add "print" {
       rtyp = Int;
       fname = "print";
@@ -71,17 +71,17 @@ let check (globals, structs, functions) =
     in match st with (* No duplicate functions or redefinitions of built-ins *)
     | _ when StringMap.mem n map -> make_err dup_err
     | _ ->  
-    (* Make sure no duplicate fields in same struct*)
-    let add_struct_field map field =
-      let dup_err = "duplicate field " ^ field
-      and make_err er = raise (Failure er)
-      and n = field 
-      in match field with
-      | _ when StringMap.mem n map -> make_err dup_err
-      | _ ->  StringMap.add n field map
-    in
-    List.fold_left add_struct_field StringMap.empty st.fields
-    StringMap.add n st map
+      (* Make sure no duplicate fields in same struct*) (* Can probably make a helper function for all of these dup checks? *)
+      let add_struct_field map field =
+        let dup_err = "duplicate field " ^ field
+        and make_err er = raise (Failure er)
+        and n = field 
+        in match field with
+        | _ when StringMap.mem n map -> make_err dup_err
+        | _ ->  StringMap.add n field map
+      in
+      List.fold_left add_struct_field StringMap.empty st.fields;
+      StringMap.add n st map
   in
 
   (* Collect all struct declarations *)
@@ -135,9 +135,9 @@ let check (globals, structs, functions) =
       | BoolLit l -> (Prim(Unrestricted, Bool), SBoolLit l)
       | CharLit l -> (Prim(Unrestricted, Char), SCharLit l)
       | FloatLit l -> (Prim(Unrestricted, Float), SFloatLit l)
-      | StructLit l -> (Struct(), SStructLit l)
+      | StructLit l -> (Struct(), SStructLit l) (* fill in struct type? *)
       | StringLit l -> (Prim(Unrestricted, String), SStringLit l)
-      | ArrayLit l -> (Arr() , SArrayLit l)
+      | ArrayLit l -> (Arr() , SArrayLit l) (* fill in arr type? *)
     in 
     let ref_qual = function 
         Ref l 
@@ -163,7 +163,7 @@ let check (globals, structs, functions) =
                   string_of_typ t1 ^ " " ^ string_of_op op ^ " " ^
                   string_of_typ t2 ^ " in " ^ string_of_expr e
         in
-        let q1, t1' = match_primitive t1
+        let q1, t1' = match_primitive t1 (* is this just extracting the type? *)
         let q2, t2' = match_primitive t2
         (* All binary operators require operands of the same type*)
         if t1 = t2 then
@@ -236,7 +236,7 @@ let check (globals, structs, functions) =
         let (t, e') = check_expr e in
         let err = "illegal access operator " ^ string_of_typ t 
         in     
-        t' = match_struct t
+        t' = match_struct t (* fix ast definition? struct type is just a struct not stuct of string? *)
         in
         (t, SAccessOp(e', op, var))
       | Deref (s) -> 
@@ -280,7 +280,8 @@ let check (globals, structs, functions) =
     in 
     let rec check_stmt_list l = 
     match l with 
-    [] -> [] 
+    [] -> []
+    | Block sl :: sl' -> check_stmt_list (sl @ sl')
     | s :: sl -> check_stmt s :: check_stmt_list sl
     (* return a statement *)
     and check_stmt s = 
