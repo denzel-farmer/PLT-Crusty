@@ -299,6 +299,10 @@ let check (globals, structs, functions) =
         else raise (
             Failure ("return gives " ^ string_of_typ t ^ " expected " ^
                       string_of_typ func.rtyp ^ " in " ^ string_of_expr e)) 
+      | VoidReturn -> 
+        match func.rtype with 
+        | Void -> SVoidReturn 
+        | _ -> raise Failure ("Missing return statement")
     in 
 
     { srtyp=func.rtype
