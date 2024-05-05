@@ -66,12 +66,13 @@ let check_binds_dup (kind: string) (binds : var_decl list) =
         | (t, s) -> s
         in let dup_err = "duplicate field " ^ field_name
         in match field_name with 
-        | _ when StringMap.mem n map -> make_err dup_err
-        | _ ->  StringMap.add n field map
+        | _ when StringMap.mem field_name map -> make_err dup_err
+        | _ ->  StringMap.add field_name field map
       in
       List.fold_left add_struct_field StringMap.empty st.fields;
       StringMap.add n st map;
-  in
+  in 
+  List.fold_left add_struct StringMap.empty program.structs;
   let check_fun func = 
     check_binds_dup "args" func.args;
     check_binds_dup "locals" func.locals;
@@ -146,12 +147,12 @@ let check_binds_dup (kind: string) (binds : var_decl list) =
             let err = "illegal binary operator " ^
                       string_of_typ t1 ^ " " ^ string_of_operation l ^ " " ^
                       string_of_typ t2 ^ " in " ^ string_of_expr e1 ^ string_of_expr e2 in
-            let (q1, t1') = match_primitive t1 (* is this just extracting the type? *)
-            and (q2, t2') = match_primitive t2
+            let (q1, t1') = match_primitive t1 in (* is this just extracting the type? *)
+            (* and (_, t2') = match_primitive t2 *)
             (* All binary operators require operands of the same type*)
-            in if t1 = t2 then
+            if t1 = t2 then
               (* Determine expression type based on operator and operand types *)
-              let t = match op with
+              let _ = match op with
                   Add | Sub | Mul | Div when t1' = Int -> Int
                 | Add | Sub | Mul | Div when t1' = Float -> Float
                 | _ -> raise (Failure err)
@@ -162,7 +163,7 @@ let check_binds_dup (kind: string) (binds : var_decl list) =
             let (t, e') = check_expr e in 
             let err = "illegal unary operation " ^ string_of_typ t in 
             let q, t' = match_primitive t in
-            let t' = match op with 
+            let _ = match op with 
               Neg when t' = Int -> Int
               | Neg when t' = Bool -> Bool 
               | PreInc | PreDec | PostInc | PostDec when t' = Int -> Int
@@ -196,7 +197,7 @@ let check_binds_dup (kind: string) (binds : var_decl list) =
           let q1, t1' = match_primitive t1 in 
           let q2, t2' = match_primitive t2 in 
           if t1' = t2' then
-            let t = match op with
+            let _ = match op with
                 And | Or when t1' = Bool -> Bool
               | _ -> raise (Failure err)
             in
@@ -207,7 +208,7 @@ let check_binds_dup (kind: string) (binds : var_decl list) =
           let err = "illegal unary logical operator " ^
                     string_of_typ t
           in 
-          let q, t' = match t with 
+          let _, _ = match t with 
             | Prim (q, p) when p = Bool -> q, p
             | _ -> raise (Failure err)
           (* if t != Bool then raise (Failure err) *)
@@ -216,8 +217,8 @@ let check_binds_dup (kind: string) (binds : var_decl list) =
         | AccessOp (e, op, var) -> 
           let (t, e') = check_expr e in
           let err = "illegal access operator " ^ string_of_typ t in     
-          (* let t' = match_struct t (* fix ast definition? struct type is just a struct not stuct of string? *)
-          in *)
+          let _ = match_struct t (* fix ast definition? struct type is just a struct not stuct of string? *)
+          in
           (t, SOperation(SAccessOp((t, e'), op, var)))
         (*| Ref (s) -> 
         *)
@@ -225,7 +226,7 @@ let check_binds_dup (kind: string) (binds : var_decl list) =
           let err = "illegal dereference operator " ^ s in
           let type_of_identifier t =
             try StringMap.find s symbols
-            with Not_found -> raise (Failure ("undeclared identifier " ^ s))
+            with Not_found -> raise (Failure (err))
           in 
           let t = type_of_identifier s in
           (t, SOperation(SDeref(s)))
