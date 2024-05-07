@@ -1,21 +1,29 @@
+open Ast
 open Sast 
 open Result
 
 
-
+(* TODO remove this and just use regular Error type
 type linear_result = 
   | LinearError of string
-  | LinPass
+  | LinPass *)
 
-type linear_state = 
+(* type linear_state = 
   | Unassigned 
   | Assigned
   | Borrowed
-  | Used
+  | Used *)
 
+(* Hash table that maps struct name to struct definition *)
+type struct_map = (string, struct_def) Hashtbl.t
+(* let string_of_linear_result = function
+  | LinearError s -> s
+  | LinPass -> "Pass"
+;; *)
 (* Hash table that maps name to linearity and type information *)
-type linear_map = (string, (ref_qual * linear_state * stype)) Hashtbl.t
+(* type linear_map = (string, (ref_qual * linear_state * stype)) Hashtbl.t *)
 
+(* 
 let linear_add_args (lin_map : linear_map) (args : sfunc_def.sargs) : linear_map result =
   let add_arg (ref_qual, (linear_qual, typ, arg_name)) (lin_map, linear_result) =
     (* TODO check for duplicate entries?? *)
@@ -49,16 +57,31 @@ let rec linear_check_func (lin_map : linear_map) (func : sfunc_def) : linear_map
   linear_add_args lin_map func.sargs >>= fun lin_map ->
   linear_add_locals lin_map func.slocals >>= fun lin_map ->
   linear_check_stmt_list lin_map func.sbody >>= fun lin_map ->
-  linear_check_stmt_list lin_map func.sret >>= fun lin_map (* stmt or expr? *)
+  linear_check_stmt_list lin_map func.sret >>= fun lin_map stmt or expr? *)
 
-let rec linear_check_struct (lin_map : linear_map) (sstruct : sstruct_def) : linear_map result =
-  (* check lin_qual of struct *)
-  match sstruct.lin_qual with
+
+  (* match sstruct.lin_qual with
   | Unrestricted ->
     (* check that sstruct.sfields doesn't have linear types else LinError *)
   | Linear ->
     (* add structdef to lin_map, then check sstruct.sfields for any linear types *)
-    Hashtbl.add lin_map arg_name (_, Assigned, typ);
+    Hashtbl.add lin_map arg_name (_, Assigned, typ); *)
+
+  (* let linear_check_structs (structs : struct_def list) : struct_map result = 
+    
+    let linear_check_struct (last_struct_map : struct_map result) (curr_struct : struct_def) : struct_map result =
+      (* check lin_qual of struct *)
+      match last_struct_map with 
+      | Error _ as e -> e
+      | Ok _ as struct_map -> Ok (Hashtbl.add struct_map curr_struct.sname curr_struct)
+    in 
+
+    List.fold_left linear_check_struct (Hashtbl.create 0) structs
+  in
+ *)
+
+
+
 
 
 (* 
@@ -97,21 +120,29 @@ let rec linear_check_func (lin_map : linear_map) (func : sfunc_def) : linear_res
 
   (* Do a check on the return type? *)
 
-in 
+
+let check (program) : (struct_map, string) result =
+  Ok (Hashtbl.create 0)
+  ;
 
 (* Check linearity on a program *)
-let rec linear_check (program : sprogram): linear_result = LinPass
+(* let check (program : sprogram) : bool result =
   (* Initialize the linear map object *)
-  let lin_map = Hashtbl.create 0 in 
+  (* let lin_map = Hashtbl.create 0 in  *)
 
-  let struct_results = List.map (linear_check_struct lin_map) program.sstructs in
+  let struct_results = linear_check_structs program.structs in
 
+  Ok true 
+;; *)
+(* 
+  let struct_results = List.map (linear_check_struct lin_map) program.sstructs in *)
+(* 
   (* Call linearity checking on each function, passing linear vars object to each (probably not needed) *)
-  let func_results = List.map (linear_check_func lin_map) program.sfuncs in
+  let func_results = List.map (linear_check_func lin_map) program.sfuncs in *)
 
-  (* If any function fails linearity checking, return the first error, otherwise pass *)
-  match List.find_opt ((=) Error) func_results with
+  (* If any function fails linearity checking, return the first error, otherwise pass
+  match List.find_opt ((=) Error) struct_results with
   | Some (Error err) -> Error err
-  | None -> Pass
-
-in 
+  | Some (Ok _) -> Error "Unexpected Ok in struct_results" (*TODO this is dumb*)
+  | None -> Ok true 
+  *)
