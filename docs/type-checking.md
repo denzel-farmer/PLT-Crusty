@@ -1,6 +1,15 @@
 # Generic Checking Rules 
 - Need to declare variables before they are used 
 
+- Check that field types in structures exist? (only really matters if it is another structure)
+    - doesn't seem like we do this now, should add check in semant that structures actually exist
+
+# Input to Linear Checking
+
+ - sast representing program, containing
+    - Structure definitions containing valid fields (i.e. if they are structures, those structures exist)
+
+    
 # Linear Checking Rules
 - All values in the program are either linear or nonlinear/unrestricted
     - primitive values are, by default, unrestricted 
