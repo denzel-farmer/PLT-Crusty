@@ -207,7 +207,7 @@ let check_binds_dup (kind: string) (binds : var_decl list) =
           let (t, e') = check_expr e in 
           let err = "illegal unary logical operator " ^
                     string_of_typ t
-          in 
+          in  
           let _, _ = match t with 
             | Prim (q, p) when p = Bool -> q, p
             | _ -> raise (Failure err)
@@ -220,30 +220,41 @@ let check_binds_dup (kind: string) (binds : var_decl list) =
           let _ = match_struct t (* fix ast definition? struct type is just a struct not stuct of string? *)
           in
           (t, SOperation(SAccessOp((t, e'), op, var)))
-        (*| Ref (s) -> 
-        *)
         | Deref (s) -> 
-          let err = "illegal dereference operator " ^ s in
+          let err = "illegal dereference operator " in
           let type_of_identifier t =
             try StringMap.find s symbols
             with Not_found -> raise (Failure (err))
           in 
           let t = type_of_identifier s in
-          (t, SOperation(SDeref(s)))
+          let err = "illegal dereference operator " ^ string_of_typ t in
+          let t' = match t with 
+            | Ref s -> s
+            | _ -> raise (Failure(err))
+          in 
+          (t', SOperation(SDeref(s)))
         | Borrow (s) -> 
           let type_of_identifier t =
             try StringMap.find s symbols
             with Not_found -> raise (Failure ("undeclared identifier " ^ s))
           in 
           let t = type_of_identifier s in
-          (t, SOperation(SBorrow(s)))
+          (Ref(t), SOperation(SBorrow(s)))
         | Index (s, e) -> 
+          let err = "invalid access operation" in
           let (t, e') = check_expr e in
           let type_of_identifier t = 
             try StringMap.find s symbols 
             with Not_found -> raise (Failure ("undeclared identifier " ^ s)) in 
-          (* let t, i = match_array t in  *)
-          (t, SOperation(SIndex(s, (t, e'))))
+          let _, t' = match_primitive t in  
+          if t' != Int then raise (Failure(err))
+          else 
+            let s' = type_of_identifier s in
+            let arr_typ = match s' with 
+              | Arr (t, s) -> t
+              | _ -> raise(Failure(err))
+            in  
+            (t, SOperation(SIndex(s, (t, e'))))
         in o
     | Call (fname, args) as call -> 
       let fd = find_func fname in
