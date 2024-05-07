@@ -15,6 +15,8 @@ all : scanparse helloworld
 # your executable successfully, the output of test case will be 
 # generate automatically in a file named calc.out
 
+checksemant: crustyparse.cmo scanner.cmo astprint.cmo checksemant.cmo
+	ocamlc -w A -o checksemant $^
 
 scanparse : crustyparse.cmo scanner.cmo astprint.cmo scanparse.cmo
 	ocamlc -w A -o scanparse $^
@@ -55,4 +57,4 @@ scanner.cmx : crustyparse.cmx
 
 .PHONY : clean
 clean :
-	rm -rf *.cmi *.cmo crustyparse.ml crustyparse.mli crustyparse.output scanner.ml scanparse hello.out crustyparse.conflicts
+	rm -rf *.cmi *.cmo crustyparse.ml crustyparse.mli crustyparse.output scanner.ml scanparse hello.out crustyparse.conflicts checksemant
