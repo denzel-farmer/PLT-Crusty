@@ -12,7 +12,7 @@ let string_of_lin = function
   | Linear -> "linear"
 
 (* AST Pretty Printer *)
-let rec string_of_typ = function
+let rec string_of_typ : typ -> string = function
   | Prim (lin, prim) -> string_of_lin lin ^ " " ^ string_of_prim_typ prim
   | Struct s -> "struct " ^ s
   | Arr (t, s) -> string_of_typ t ^ "[" ^ string_of_int s ^ "]"
