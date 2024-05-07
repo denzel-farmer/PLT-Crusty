@@ -1,4 +1,4 @@
-int main(void) {
+int main() {
     unrestricted int c[4];
     
     c = [1, 2, 3, 4];

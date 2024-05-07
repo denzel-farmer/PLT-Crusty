@@ -1,10 +1,19 @@
-int main(void) {
-    int a; 
-    int b;
-    unrestricted int c[4];
+// TODO: support programs where we have references to integers
+int sum(int a, int b) {
+    int c;
+    c = 3;
+   //c = *a + *b;
+    return c;
+} 
 
-    a = 2;
-    b = 3; 
-    c = [1, 2, 3, 4];
-    return 0;
+int main() {
+    int a;
+    int b;
+    int c;
+
+    a = 1;
+    b = 2;
+
+    c = sum(&a, &b);
+    return c;
 } 

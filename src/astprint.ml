@@ -5,6 +5,7 @@ let string_of_prim_typ = function
   | Bool -> "bool"
   | Char -> "char"
   | Float -> "float"
+  | String -> "string"
 
 let string_of_lin = function
   | Unrestricted -> "unrestricted"
@@ -15,7 +16,7 @@ let rec string_of_typ = function
   | Prim (lin, prim) -> string_of_lin lin ^ " " ^ string_of_prim_typ prim
   | Struct s -> "struct " ^ s
   | Arr (t, s) -> string_of_typ t ^ "[" ^ string_of_int s ^ "]"
-  | Ref t -> "ref" ^ string_of_typ t
+  | Ref t -> "ref " ^ string_of_typ t
 ;;
 
 let string_of_ret_typ = function

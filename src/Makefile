@@ -32,7 +32,9 @@ crustyparse.ml crustyparse.mli : crustyparse.mly ast.cmi
 	menhir --infer --explain $<
 
 helloworld: scanparse hello.cp 
-	./scanparse < hello.cp > hello.out
+	./scanparse < hello.cp
+# > hello.out
+
 
 # Dependencies from ocamldep
 scanparse.cmo : scanner.cmo crustyparse.cmi ast.cmi

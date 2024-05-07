@@ -5,7 +5,7 @@ type sexpr = typ * sx
 
 and sx =
   | SId of string
-  | SLiteral of literal
+  | SLiteral of sliteral
   | SOperation of soperation
   | SAssignment of sassignment
   | SCall of string * sexpr list
@@ -18,8 +18,8 @@ and soperation =
   | SLogOp of sexpr * binLogOp * sexpr
   | SUnLogOp of unLogOp * sexpr
   | SAccessOp of sexpr * accessOp * string
-  | SDeref of sexpr
-  | SBorrow of sexpr
+  | SDeref of string
+  | SBorrow of string
   | SIndex of string * sexpr
 
 (* Assignment Types *)
@@ -71,8 +71,8 @@ type sstruct_def =
   }
 
 (* Program Type *)
-type program =
+type sprogram =
   { sglobals : var_decl list
-  ; sstructs : sstruct_def list
+  ; sstructs : struct_def list
   ; sfuncs : sfunc_def list
   }

@@ -2,15 +2,24 @@ import os
 import subprocess
 import sys
 
+PASS = '\033[92m'
+FAIL = '\033[91m'
+ENDC = '\033[0m'
+
 # Check if the binary path is provided as an argument
 if len(sys.argv) < 2:
-    print("Usage: python test_files.py <binary_path> [-f <string>]")
+    print("Usage: python test_files.py <binary_path> [-f <string>] [-c]")
     exit(1)
 
 binary_path = sys.argv[1]
 samples_folder = "samples"
 test_file = "test-file.expected"
 test_output_folder = "test-output"
+compare = False
+
+# Check if the -c option is provided
+if "-c" in sys.argv:
+    compare = True
 
 # Check if the -f option is provided
 if len(sys.argv) > 2 and sys.argv[2] == "-f":
@@ -34,25 +43,35 @@ else:
 
                 file_path = os.path.join(root, file)
                 os.makedirs(test_output_folder, exist_ok=True)
-                output_file = f"{test_output_folder}/{filename}.crust.out"
+                output_file_path = f"{test_output_folder}/{filename}.crust.out"
                 print(f"Running binary on file: {filename}")
                 # Run the binary on the current file and save the output
-                with open(file_path, "r") as input_file, open(output_file, "w") as output_file:
+                with open(file_path, "r") as input_file, open(output_file_path, "w") as output_file:
                     subprocess.run([binary_path], stdin=input_file, stdout=output_file, stderr=output_file)
 
-                # Compare the output with the expected output
-                expected_output_file = os.path.join(samples_folder, f"{filename}.expected")
-                if os.path.isfile(expected_output_file):
-                    print("Comparing output with expected...")
-                    with open(expected_output_file, "r") as expected_file, open(output_file, "r") as actual_file:
-                        expected_output = expected_file.read()
+                if compare:
+                    # Compare the output with the expected output
+                    expected_output_file = os.path.join(samples_folder, f"{filename}.expected")
+                    if os.path.isfile(expected_output_file):
+                        print("Comparing output with expected...")
+                        with open(expected_output_file, "r") as expected_file, open(output_file_path, "r") as actual_file:
+                            expected_output = expected_file.read()
+                            actual_output = actual_file.read()
+
+                            print(f"Comparing output for file: {file_path}")
+                            print(f"Expected output: {expected_output}")
+                            print(f"Actual output: {actual_output}")
+
+                            if expected_output != actual_output:
+                                print(f"FAILED: {filename}")
+                    else:
+                        print(f"Expected output file not found for {filename}")
+                else:
+                    # Print if scanning and parsing passed
+                    with open(output_file_path, "r") as actual_file:
                         actual_output = actual_file.read()
 
-                        print(f"Comparing output for file: {file_path}")
-                        print(f"Expected output: {expected_output}")
-                        print(f"Actual output: {actual_output}")
-
-                        if expected_output != actual_output:
-                            print(f"FAILED: {filename}")
-                else:
-                    print(f"Expected output file not found for {filename}")
+                        if "Failure" in actual_output:
+                            print(f"{FAIL}FAILED{ENDC}")
+                        else:
+                            print(f"{PASS}PASSED{ENDC}")

@@ -9,7 +9,7 @@ module StringMap = Map.Make(String)
 let check (globals, structs, functions) =
   let check_binds_dup (kind: string) (binds : var_decl list) =
     let check_member n bs = 
-      List.fold_left (fun flag (_, _, n') -> if n = n' then true else flag) false bs
+      List.fold_left (fun flag (_, _, n') -> if n = n' then true else flag) false bs (* why three parameters here? for linearity?*)
   in 
     let rec check_dup bs = 
       match bs with 
@@ -18,9 +18,9 @@ let check (globals, structs, functions) =
     in check_dup binds
   in 
   (* check argument binds *)
-  let check_arg_binds_dup (king: string) (binds : (ref_qual * var_decl) list) =
+  let check_arg_binds_dup (kind: string) (binds : (ref_qual * var_decl) list) =
     let check_member n bs = 
-      List.fold_left (fun flag (_, (_, _, n')) -> if n = n' then true else flag) false bs
+      List.fold_left (fun flag (_, (_, _, n')) -> if n = n' then true else flag) false bs (* can this be combined through pattern matching? *)
   in 
     let rec check_dup bs = 
       match bs with 
@@ -32,7 +32,7 @@ let check (globals, structs, functions) =
   check_binds_dup "global" globals;
 
   (* Collect function declarations for built-in functions: no bodies *)
-  let built_in_decls =
+  let built_in_decls = (* how do we import built in functions? *)
     StringMap.add "print" {
       rtyp = Int;
       fname = "print";
@@ -71,17 +71,17 @@ let check (globals, structs, functions) =
     in match st with (* No duplicate functions or redefinitions of built-ins *)
     | _ when StringMap.mem n map -> make_err dup_err
     | _ ->  
-    (* Make sure no duplicate fields in same struct*)
-    let add_struct_field map field =
-      let dup_err = "duplicate field " ^ field
-      and make_err er = raise (Failure er)
-      and n = field 
-      in match field with
-      | _ when StringMap.mem n map -> make_err dup_err
-      | _ ->  StringMap.add n field map
-    in
-    List.fold_left add_struct_field StringMap.empty st.fields
-    StringMap.add n st map
+      (* Make sure no duplicate fields in same struct*) (* Can probably make a helper function for all of these dup checks? *)
+      let add_struct_field map field =
+        let dup_err = "duplicate field " ^ field
+        and make_err er = raise (Failure er)
+        and n = field 
+        in match field with
+        | _ when StringMap.mem n map -> make_err dup_err
+        | _ ->  StringMap.add n field map
+      in
+      List.fold_left add_struct_field StringMap.empty st.fields;
+      StringMap.add n st map
   in
 
   (* Collect all struct declarations *)
@@ -131,13 +131,13 @@ let check (globals, structs, functions) =
     in 
     (* Check literals*)
     let check_literal = function 
-        IntLit l -> ((Unrestricted, Int), SIntLit l)
-      | BoolLit l -> ((Unrestricted, Bool), SBoolLit l)
-      | CharLit l -> ((Unrestricted, Char), SCharLit l)
-      | FloatLit l -> ((Unrestricted, Float), SFloatLit l)
-      | StructLit l -> ((Unrestricted, Struct), SStructLit l)
-      | StringLit l -> ((Unrestricted, String), SStringLit l)
-      (* | ArrayLit l -> (Array, ) *)
+        IntLit l -> (Prim(Unrestricted, Int), SIntLit l)
+      | BoolLit l -> (Prim(Unrestricted, Bool), SBoolLit l)
+      | CharLit l -> (Prim(Unrestricted, Char), SCharLit l)
+      | FloatLit l -> (Prim(Unrestricted, Float), SFloatLit l)
+      | StructLit l -> (Struct(), SStructLit l) (* fill in struct type? *)
+      | StringLit l -> (Prim(Unrestricted, String), SStringLit l)
+      | ArrayLit l -> (Arr() , SArrayLit l) (* fill in arr type? *)
     in 
     let ref_qual = function 
         Ref l 
@@ -163,24 +163,27 @@ let check (globals, structs, functions) =
                   string_of_typ t1 ^ " " ^ string_of_op op ^ " " ^
                   string_of_typ t2 ^ " in " ^ string_of_expr e
         in
+        let q1, t1' = match_primitive t1 (* is this just extracting the type? *)
+        let q2, t2' = match_primitive t2
         (* All binary operators require operands of the same type*)
         if t1 = t2 then
           (* Determine expression type based on operator and operand types *)
           let t = match op with
-              Add | Sub | Mul | Div when t1 = (Unrestricted, Int) -> (Unrestricted, Int)
-            | Add | Sub | Mul | Div when t1 = (Unrestricted, Float) -> (Unrestricted, Float)
+              Add | Sub | Mul | Div when t1' = Int -> Int
+            | Add | Sub | Mul | Div when t1' = Float -> Float
             | _ -> raise (Failure err)
           in
-          (t, SOperation(SArithop((t1, e1'), op, (t2, e2'))))
+          (t1, SOperation(SArithop((t1, e1'), op, (t2, e2'))))
         else raise (Failure err)
       | UnArithOp (op, e) -> 
         let (t, e) = check_expr e1 in 
         let err = "illegal unary operation " ^ string_of_typ t 
         in  
-        let t = match op with 
-          Neg when t = Int -> Int
-          | Neg when t = Bool -> Bool 
-          | PreInc | PreDec | PostInc | PostDec when t = (Unrestricted, Int) -> (Unrestricted, Int)
+        let q, t' = match_primitive t
+        let t' = match op with 
+          Neg when t' = Int -> Int
+          | Neg when t' = Bool -> Bool 
+          | PreInc | PreDec | PostInc | PostDec when t' = Int -> Int
           | _ -> raise (Failure err)
         in  
         (t, SOperation(SUnArithop(op, (t, e))))
@@ -191,16 +194,16 @@ let check (globals, structs, functions) =
                   string_of_typ t1 ^ " " ^ string_of_op op ^ " " ^
                   string_of_typ t2 ^ " in " ^ string_of_expr e
         in
+        (* TODO: allow compare operator to work for non-primitives ? *)
+        let q1, t1' = match_primitive t1 in
+        let q2, t2' = match_primitive t2 in 
         (* All compare operators require operands of the same type*)
-        if t1 = t2 then
+        if t1' = t2' then
           let t = match op with
-              Eq | Neq -> (Unrestricted, Bool)
-            (* can this apply to other types besides int and float ? *)
-            | Lt | Gt | Leq | Geq when t1 = (Unrestricted, Int) -> (Unrestricted, Bool) 
-            | Lt | Gt | Leq | Geq when t1 = (Unrestricted, Float) -> (Unrestricted, Bool)
+              Eq | Neq | Lt | Gt | Leq | Geq when t1' = Int or t1' = Float -> Bool
             | _ -> raise (Failure err)
           in
-          (t, SOperation(SCompOp((t1, e1'), op, (t2, e2'))))
+          (Prim(q1, t), SOperation(SCompOp((t1, e1'), op, (t2, e2'))))
         else raise (Failure err)
       | LogOp (e1, op, e2) -> 
         let (t1, e1') = check_expr e1
@@ -209,50 +212,77 @@ let check (globals, structs, functions) =
                   string_of_typ t1 ^ " " ^ string_of_op op ^ " " ^
                   string_of_typ t2 ^ " in " ^ string_of_expr e
         in
-        (* Both must be bools *)
-        if t1 = t2 then
+        let q1, t1' = match_primitive t1 in 
+        let q2, t2' = match_primitive t2 in 
+        if t1' = t2' then
           let t = match op with
-              And | Or when t1 = (Unrestricted, Bool) -> (Unrestricted, Bool)
+              And | Or when t1' = Bool -> Bool
             | _ -> raise (Failure err)
           in
-          (t, SOperation(SLogOp((t1, e1'), op, (t2, e2'))))
+          (t1, SOperation(SLogOp(t1, e1'), op, (t2, e2')))
         else raise (Failure err)
       | UnLogOp (op, e) -> 
         let (t, e') = check_expr e in 
         let err = "illegal unary logical operator " ^
                   string_of_typ t
         in 
-        if t != (Unrestricted, SBool) then raise (Failure err)
+        let q, t' = match t with 
+          | Prim (q, p) when p = Bool -> q, p
+          | _ -> raise (Failure err)
+        (* if t != Bool then raise (Failure err) *)
         in
         (t, SUnLogOp(op, (t, e')))
       | AccessOp (e, op, var) -> 
         let (t, e') = check_expr e in
-        let err = "illegal access operator " ^
-        string_of_typ t ^ " " ^ string_of_op op
-in 
-        if t != SStruct then raise (Failure err)
+        let err = "illegal access operator " ^ string_of_typ t 
+        in     
+        t' = match_struct t (* fix ast definition? struct type is just a struct not stuct of string? *)
         in
-        (t, SAccessOp(e, op, var))
+        (t, SAccessOp(e', op, var))
       | Deref (s) -> 
+        let err = "illegal dereference operator " ^ string_of_typ t
         let type_of_identifier t =
           try StringMap.find s symbols
           with Not_found -> raise (Failure ("undeclared identifier " ^ s))
         in 
-        (* if t != (, SStruct)  *)
         (t, SOperation(SDeref(s)))
-      | Borrow (e) -> 
+      | Borrow (s) -> 
+        
         (t, SOperation(SBorrow(s)))
+      | Index (s, e) -> 
+        let (t, e') = check_expr e in
+        let type_of_identifier t = 
+          try StringMap.find s symbols 
+          with Not_found -> raise (Failure ("undeclared identifier " ^ s))
+        in 
+        let t, i = match_array t in 
+        (t, SOperation(SIndex(s, e')))
+      in 
+    let match_primitive t = 
+      match t with      
+        | Prim (q, p) -> q, p
+        | _ -> raise(Failure "")
     in 
-    
+    let match_struct t =
+      match t with 
+        | Struct s -> s
+        | _ -> raise(Failure "")
+    in
+    let match_array t = 
+        match t with 
+        | Arr (t, i) -> t, i
+        | _ -> raise (Failure "")
+    in 
     let check_bool_expr e =
       let (t, e') = check_expr e in
       match t with
       | (Unrestricted, Bool) -> (t, e')
       |  _ -> raise (Failure ("expected Boolean expression in " ^ string_of_expr e))
-
+    in 
     let rec check_stmt_list l = 
     match l with 
-    [] -> [] 
+    [] -> []
+    | Block sl :: sl' -> check_stmt_list (sl @ sl')
     | s :: sl -> check_stmt s :: check_stmt_list sl
     (* return a statement *)
     and check_stmt s = 
@@ -271,6 +301,10 @@ in
         else raise (
             Failure ("return gives " ^ string_of_typ t ^ " expected " ^
                       string_of_typ func.rtyp ^ " in " ^ string_of_expr e)) 
+      | VoidReturn -> 
+        match func.rtype with 
+        | Void -> SVoidReturn 
+        | _ -> raise Failure ("Missing return statement")
     in 
 
     { srtyp=func.rtype
