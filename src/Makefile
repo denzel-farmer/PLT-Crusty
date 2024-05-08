@@ -1,4 +1,4 @@
-all : scanparse helloworld
+all : scanparse helloworld checksemant
 
 ##############################
 #
@@ -15,7 +15,7 @@ all : scanparse helloworld
 # your executable successfully, the output of test case will be 
 # generate automatically in a file named calc.out
 
-checksemant: crustyparse.cmo scanner.cmo astprint.cmo checksemant.cmo
+checksemant: sastprint.cmo linear.cmo astprint.cmo scanner.cmo crustyparse.cmo semant2.cmo checksemant.cmo
 	ocamlc -w A -o checksemant $^
 
 scanparse : crustyparse.cmo scanner.cmo astprint.cmo scanparse.cmo
@@ -30,7 +30,7 @@ scanparse : crustyparse.cmo scanner.cmo astprint.cmo scanparse.cmo
 scanner.ml : scanner.mll
 	ocamllex $^
 
-crustyparse.ml crustyparse.mli : crustyparse.mly ast.cmi
+crustyparse.ml crustyparse.mli : crustyparse.mly ast.cmi crustyparse.cmi
 	menhir --infer --explain $<
 
 helloworld: scanparse hello.cp 
@@ -38,19 +38,64 @@ helloworld: scanparse hello.cp
 # > hello.out
 
 
+# Extra dependencies not found by ocamldep
+scanner.cmo : crustyparse.cmo
+
 # Dependencies from ocamldep
-scanparse.cmo : scanner.cmo crustyparse.cmi ast.cmi
-scanparse.cmx : scanner.cmx crustyparse.cmx ast.cmi
+ast.cmi :
+sast.cmi : \
+    ast.cmi
 
-crustyparse.cmo : ast.cmi crustyparse.cmi
-crustyparse.cmx : ast.cmi crustyparse.cmi
-
-scanner.cmo : crustyparse.cmi
-scanner.cmx : crustyparse.cmx
-
-
-# ast.cmi ast.cmo : ast.ml
-# 	ocamlc -w A -c $<
+astprint.cmo : \
+    ast.cmi
+astprint.cmx : \
+    ast.cmi
+checksemant.cmo : \
+    semant2.cmo \
+    sastprint.cmo \
+    linear.cmo \
+    astprint.cmo
+checksemant.cmx : \
+    semant2.cmx \
+    sastprint.cmx \
+    linear.cmx \
+    astprint.cmx
+crusty.cmo : \
+    semant.cmo \
+    sast.cmi \
+    astprint.cmo
+crusty.cmx : \
+    semant.cmx \
+    sast.cmi \
+    astprint.cmx
+linear.cmo : \
+    sast.cmi \
+    ast.cmi
+linear.cmx : \
+    sast.cmi \
+    ast.cmi
+sastprint.cmo : \
+    sast.cmi \
+    astprint.cmo \
+    ast.cmi
+sastprint.cmx : \
+    sast.cmi \
+    astprint.cmx \
+    ast.cmi
+scanparse.cmo : \
+    astprint.cmo
+scanparse.cmx : \
+    astprint.cmx
+semant.cmo :
+semant.cmx :
+semant2.cmo : \
+    sast.cmi \
+    astprint.cmo \
+    ast.cmi
+semant2.cmx : \
+    sast.cmi \
+    astprint.cmx \
+    ast.cmi
 
 ##############################
 
