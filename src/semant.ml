@@ -118,7 +118,7 @@ let check_binds_dup (kind: string) (binds : var_decl list) =
       | BoolLit l -> (Prim(Unrestricted, Bool), SLiteral(SBoolLit(l)))
       | CharLit l -> (Prim(Unrestricted, Char), SLiteral(SCharLit(l)))
       | FloatLit l -> (Prim(Unrestricted, Float), SLiteral(SFloatLit(l)))
-      | StructLit l -> (Struct(l), SStructLit l)  *)
+      (* idk how to do this | StructLit l -> (Struct(), SStructLit l)  *)
       | StringLit l -> (Prim(Unrestricted, String), SLiteral(SStringLit(l)))
       (* idk how to do this | ArrayLit l -> ( , SArrayLit l) *)
     (* Return a semantically-checked expression, i.e., with a type *)
