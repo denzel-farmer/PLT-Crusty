@@ -44,7 +44,7 @@
 
 - The result of a borrow operator is a ref type, so they can only be used for function args declared as ref types
 
-- Only function arguments can be given reference types
+- Only function arguments can be given reference types (checked by linearity checker)
 
 - A linear variable can only be borrowed if it is in the 'assigned but not consumed' state 
 
