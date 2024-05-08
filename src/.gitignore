@@ -1,5 +1,6 @@
+checksemant
 scanner.ml
-curestparse.ml
+crustyparse.ml
 crustyparse.mli
 *.output
 *.conflicts
