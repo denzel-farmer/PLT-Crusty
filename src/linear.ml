@@ -9,6 +9,12 @@ module StringMap = Map.Make (String)
 type struct_info = struct_def StringMap.t
 type struct_info_result = (struct_info, string) result
 type func_info = sfunc_def StringMap.t
+type program_info = struct_info * func_info
+type program_info_result = (program_info, string) result
+
+(* Linear State Types *)
+
+(* Linear state for a variable *)
 
 type linear_state =
   | Unassigned
@@ -21,7 +27,7 @@ type linear_map = (linear_state * typ) StringMap.t
 type linear_map_result = (linear_map, string) result
 
 (* Final output type for debugging *)
-type linear_result = struct_info_result * func_info option * linear_map_result
+type linear_result = program_info_result * (string * linear_map_result) list
 
 (* Print functions for debugging and error messages *)
 let string_of_struct_info (struct_info : struct_info) : string =
@@ -42,6 +48,14 @@ let string_of_func_info (func_info : func_info) : string =
       (fun key value acc -> acc ^ key ^ " -> " ^ string_of_sfunc_def value ^ "\n")
       func_info
       ""
+;;
+
+let string_of_program_info (program_info : program_info) : string =
+  let struct_info, func_info = program_info in
+  "Struct Info:\n"
+  ^ string_of_struct_info struct_info
+  ^ "\nFunc Info:\n"
+  ^ string_of_func_info func_info
 ;;
 
 let string_of_linear_state (lin_state : linear_state) : string =
@@ -84,13 +98,15 @@ let string_of_option (string_of_a : 'a -> string) (opt : 'a option) : string =
 ;;
 
 let string_of_linear_result (lin_result : linear_result) : string =
-  let struct_info, func_info, lin_map = lin_result in
-  "Struct Info:\n"
-  ^ string_of_result string_of_struct_info struct_info
-  ^ "\nFunc Info:\n"
-  ^ string_of_option string_of_func_info func_info
-  ^ "\nLinear Map:\n"
-  ^ string_of_result string_of_linear_map lin_map
+  let program_info_result, lin_map_result = lin_result in
+  "Program Info: "
+  ^ string_of_result string_of_program_info program_info_result
+  ^ "\nLinear Maps:\n"
+  ^ List.fold_left
+      (fun acc (fname, lin_map_res) ->
+        acc ^ fname ^ " -> " ^ string_of_result string_of_linear_map lin_map_res ^ "\n")
+      ""
+      lin_map_result
 ;;
 
 (* Generic Helpers *)
@@ -280,25 +296,50 @@ let gen_func_info_map (funcs : sfunc_def list) (struct_info_map : struct_info) :
     | Nonvoid ret -> is_linear_type struct_info_map ret
     | _ -> false
   in
-  let acc_linear_func (acc : func_info) (func : sfunc_def) : func_info =
-    if func_has_linear_args func || func_has_linear_ret func
-    then StringMap.add func.sfname func acc
-    else acc
-  in
-  List.fold_left acc_linear_func StringMap.empty funcs
+  (* let acc_linear_func (acc : func_info) (func : sfunc_def) : func_info =
+     if func_has_linear_args func || func_has_linear_ret func
+     then StringMap.add func.sfname func acc
+     else acc
+     in *)
+  List.fold_left
+    (fun acc func ->
+      if func_has_linear_args func || func_has_linear_ret func
+      then StringMap.add func.sfname func acc
+      else acc)
+    StringMap.empty
+    funcs
+;;
+
+let generate_program_info (structs : struct_def list) (funcs : sfunc_def list)
+  : program_info_result
+  =
+  let struct_info_map = process_structs structs in
+  match struct_info_map with
+  | Ok struct_info -> Ok (struct_info, (gen_func_info_map funcs) struct_info)
+  | Error err -> Error err
+;;
+
+(* Check a function to ensure it follows linearity rules *)
+let process_func
+  (struct_info_map : struct_info)
+  (func_info_map : func_info)
+  (func : sfunc_def)
+  : string * linear_map_result
+  =
+  let lin_map = StringMap.empty in
+  func.sfname, Ok lin_map
 ;;
 
 (* Check linearity on a program *)
 let check program : linear_result =
   let _, structs, funcs = program in
-  (* Generate struct info map *)
-  let struct_info_map = process_structs structs in
-  (* populate func map *)
-  let func_info_map =
-    Result.to_option (Result.map (gen_func_info_map funcs) struct_info_map)
-  in
-  (* check functions *)
-  struct_info_map, func_info_map, Ok StringMap.empty
+  let program_info_maps = generate_program_info structs funcs in
+  match program_info_maps with
+  | Error err -> Error err, []
+  | Ok (struct_info_map, func_info_map) ->
+    (* check functions *)
+    let lin_map = List.map (process_func struct_info_map func_info_map) funcs in
+    Ok (struct_info_map, func_info_map), lin_map
 ;;
 
 (* match sstruct.lin_qual with
