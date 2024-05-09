@@ -31,17 +31,22 @@
                     - If operation
                         - If unary operation, check operand expression
                         - If binary operation, check first expr then second expr
-                        - If access operation (EXPR.STRING or EXPR->STRING)
+                        - If access operation (EXPR.ID or EXPR->ID)
                             - If dot 
                                 - Get struct name from type of EXPR (if not struct type, raise error)
-                                - Check field STRING in struct is unrestricted (if field not found, raise error)
+                                - Check field ID in struct is unrestricted (if field not found, raise error)
                             - If arrow
                                 - Get struct name from type within Ref (if not ref struct type, raise error)
-                                - Check field STRING in struct is unrestricted
+                                - Check field ID in struct is unrestricted
                         - If Deref
                         - If Borrow
                         - If index
                     - If assignment
+                        - If Assign (ID = EXPR)
+                            - try Unassiged -> Assigned or Used -> Assigned on ID
+                            - check EXPR 
+                        - If StructAssign (ID.ID = EXPR)
+                        - If RefStructAssign (ID->ID = EXPR)
                     - If call 
 
         - remove local declarations, checking that each is in a valid state (Used or Ref, I think)
