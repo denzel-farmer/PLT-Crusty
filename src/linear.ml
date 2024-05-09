@@ -29,6 +29,10 @@ type linear_map_result = (linear_map, string) result
 (* Final output type for debugging *)
 type linear_result = program_info_result * (string * linear_map_result) list
 
+type log_level =
+  | Debug
+  | Info
+
 let lin_result_failed (lin_result : linear_result) : bool =
   match lin_result with
   | Error _, _ -> true
@@ -42,6 +46,22 @@ let lin_result_failed (lin_result : linear_result) : bool =
 ;;
 
 (* Print functions for debugging and error messages *)
+let linear_log_level = Some Debug
+
+let log_print (msg : string) (level : log_level) : unit =
+  match linear_log_level, level with
+  | Some Debug, Debug | Some Debug, Info -> print_string msg
+  | Some Info, Info -> print_string msg
+  | Some Info, Debug -> ()
+  | None, _ -> ()
+;;
+
+let log_println (msg : string) (level : log_level) : unit = log_print (msg ^ "\n") level
+let debug_print (msg : string) : unit = log_print msg Debug
+let debug_println (msg : string) : unit = log_println ("[DEBUG] " ^ msg) Debug
+let info_print (msg : string) : unit = log_print msg Info
+let info_println (msg : string) : unit = log_println ("[INFO] " ^ msg) Info
+
 let string_of_struct_info (struct_info : struct_info) : string =
   if StringMap.is_empty struct_info
   then "[]"
@@ -268,6 +288,7 @@ let rec linear_check_block
   (* Try to consume an assigned identifier, throws an error if in the wrong state. Does
      nothing if not in lin_map. *)
   let consume_assigned_ident (lin_map : linear_map) (ident : string) : linear_map_result =
+    info_println ("Consuming " ^ ident);
     match StringMap.find_opt ident lin_map with
     | Some (Assigned, typ) -> Ok (StringMap.add ident (Used, typ) lin_map)
     | Some (Borrowed, typ) -> Ok (StringMap.add ident (Used, typ) lin_map)
@@ -328,13 +349,17 @@ let rec linear_check_block
   *)
 
   (*Basic implementation that only works for one level of scope *)
+  info_println "Checking new block";
   match lin_map with
   | Error err -> Error err
   | Ok lin_map ->
     (* Add local variables *)
     let lin_map = add_linear_decls struct_info Unassigned lin_map vdecls in
+    debug_println ("Added locals to lin_map: " ^ string_of_linear_map lin_map);
     (* Check statements *)
     let lin_map = linear_check_stmt_list (Ok lin_map) s_list in
+    debug_println ("Checked statements, lin_map: " ^ string_of_result string_of_linear_map lin_map);
+    info_println "Done checking block";
     lin_map
 ;;
 
@@ -343,28 +368,36 @@ let rec linear_check_block
 let process_func (struct_info : struct_info) (func_info : func_info) (func : sfunc_def)
   : string * linear_map_result
   =
+  info_println ("Checking linearity of function: " ^ func.sfname);
   (* TODO pull out all the error checking glue with cool monad stuff *)
   let lin_map = StringMap.empty in
   let lin_map = add_linear_decls struct_info Assigned lin_map func.sargs in
+  debug_println ("Added args to lin_map: " ^ string_of_linear_map lin_map);
   let func_statements =
     match func.sreturn with
     | SVoidReturn -> func.sbody
     | SReturn ex -> func.sbody @ [ SExpr ex ]
   in
+  info_println "Checking function body";
   let lin_map =
     linear_check_block struct_info func_info (Ok lin_map) func.slocals func_statements
   in
+  debug_println
+    ("Final lin_map for " ^ func.sfname ^ string_of_result string_of_linear_map lin_map);
   func.sfname, lin_map
 ;;
 
 (* Check linearity on a program *)
 let check program : linear_result =
+  info_println "Begin checking linearity, generating program info";
   let _, structs, funcs = program in
   let program_info = generate_program_info structs funcs in
+  info_println "Generated program info, checking linearity of functions";
   match program_info with
   | Error err -> Error err, []
   | Ok (struct_info, func_info) ->
     (* check functions *)
     let lin_map = List.map (process_func struct_info func_info) funcs in
+    info_println "Done checking linearity";
     Ok (struct_info, func_info), lin_map
 ;;
