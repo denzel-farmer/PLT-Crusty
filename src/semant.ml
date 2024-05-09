@@ -4,7 +4,7 @@ open Ast
 open Sast
 open Astprint
 
-module StringMap = Map.Make(String)
+module StringMap = Map.Make (String)
 
 let check program =
 let check_binds_dup (kind: string) (binds : var_decl list) =
