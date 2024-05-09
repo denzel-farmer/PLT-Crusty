@@ -250,12 +250,17 @@ let linear_add_args
 let linear_check_block
   (vdecls : var_decl list)
   (s_list : sstmt list)
-  (lin_map : linear_map_result)
+  (in_lin_map : linear_map_result)
   : linear_map_result
   =
-  (*Add args*)
-  (*Check statements*)
-  lin_map
+  (*One possible way to do this that isn't saving/comparing the lin map: 
+    - save new decls in a list
+    - add new decls to lin map
+    - check statements 
+    - remove new decls from lin map one by one, checking that none are unconsumed
+    - return lin map  
+  *)
+in_lin_map
 ;;
 
 let merge_map (map1 : linear_map_result) (map2 : linear_map_result) : linear_map_result =
