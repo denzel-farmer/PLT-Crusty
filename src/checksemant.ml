@@ -5,4 +5,5 @@ let _ =
   let linear_result = Linear.check sprogram in
   print_endline (Astprint.string_of_program program);
   print_endline (Sastprint.string_of_sprogram sprogram);
-  print_endline ("Passed linearity check: " ^ string_of_bool (Result.is_ok linear_result));
+  print_endline (Linear.string_of_linear_result linear_result)
+;;
