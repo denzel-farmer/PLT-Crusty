@@ -99,9 +99,12 @@ and literal =
   | StringLit of string
   | ArrayLit of expr list
 
+(* Declaration Types *)
+type var_decl = typ * string
+
 (* Statement Types *)
 type stmt =
-  | Block of stmt list
+  | Block of (var_decl list) * (stmt list)
   | Expr of expr
   | If of expr * stmt * stmt
   | While of expr * stmt
@@ -109,9 +112,6 @@ type stmt =
   | Continue
 
 (*TODO re add const?*)
-
-(* Declaration Types *)
-type var_decl = typ * string
 
 type return_stmt =
   | Return of expr

@@ -94,39 +94,58 @@ let translate (globals, structs, functions) =
   let printf_func : L.llvalue =
     L.declare_function "printf" printf_t the_module in *)
 
+  let scopes = ref [] in
+
+  let enter_scope () = scopes := StringMap.empty :: !scopes in
+  
+  let exit_scope () = match !scopes with
+    | [] -> raise (Failure "No scope to exit")
+    | _ :: tl -> scopes := tl
+  in
+  
+  let add_local builder var_name lltype =
+    let current_map = List.hd !scopes in
+    let alloca = L.build_alloca lltype var_name builder in
+    scopes := (StringMap.add var_name alloca current_map) :: (List.tl !scopes);
+    alloca
+  in
+  
+  let find_local var_name =
+    let rec lookup scopes = match scopes with
+      | [] -> raise (Failure ("Unbound variable " ^ var_name))
+      | h :: t -> (try StringMap.find var_name h with Not_found -> lookup t)
+    in lookup !scopes   
+  in
+
   let build_function_body fdecl =
     let (function_addr, _) = StringMap.find fdecl.sfname function_decls in
     let builder = L.builder_at_end context (L.entry_block function_addr) in
 
     (* let int_format_str = L.build_global_stringptr "%d\n" "fmt" builder in *)
 
+    enter_scope ();
+
     (* Construct the function's "locals": formal arguments and locally
        declared variables.  Allocate each on the stack, initialize their
        value, if appropriate, and remember their values in the "locals" map *)
-    let local_vars =
-      let add_arg m (t, n) p =
-        L.set_value_name n p;
-        let local = L.build_alloca (ltype_of_typ t) n builder in
-        ignore (L.build_store p local builder);
-        StringMap.add n local m
-
-      (* Allocate space for any locally declared variables and add the
-       * resulting registers to our map *)
-      and add_local m (t, n) =
-        let local_var = L.build_alloca (ltype_of_typ t) n builder
-        in StringMap.add n local_var m
-      in
-
-      let args = List.fold_left2 add_arg StringMap.empty fdecl.sargs
-          (Array.to_list (L.params function_addr)) 
-      in
-      List.fold_left add_local args fdecl.slocals
-    in
+    (* Handle function parameters *)
+    let params = Array.to_list (L.params function_addr) in
+    List.iteri (fun i (ty, n) ->
+        let param_type = ltype_of_typ ty in
+        let param = List.nth params i in
+        let _ = add_local builder n param_type in
+        ignore (L.build_store param (find_local n) builder)
+    ) fdecl.sargs;
+    
+    (* Handle local variables *)
+    (* List.iter (fun (ty, n) ->
+      ignore (add_local builder n (ltype_of_typ ty))
+    ) fdecl.slocals; *)
 
     (* Return the value for a variable or formal argument.
        Check local names first, then global names *)
-    let lookup n = try StringMap.find n local_vars
-      with Not_found -> StringMap.find n global_vars
+    let lookup n = try find_local n
+      with Failure _ -> StringMap.find n global_vars
     in
     let rec build_expr builder ((_, e) : sexpr) = match e with
         | SId s -> L.build_load (lookup s) s builder
@@ -201,7 +220,18 @@ let translate (globals, structs, functions) =
       in
 
     let rec build_stmt builder = function
-        SBlock sl -> List.fold_left build_stmt builder sl
+        SBlock (vl, sl) -> 
+          enter_scope ();
+
+          List.iter (fun (ty, name) ->
+            ignore (add_local builder name (ltype_of_typ ty))
+          ) vl;
+          
+          let result_builder = List.fold_left build_stmt builder sl in
+
+          exit_scope ();
+
+          result_builder
       | SExpr e -> ignore(build_expr builder e); builder
       | SIf (predicate, then_stmt, else_stmt) ->
         let bool_val = build_expr builder predicate in
@@ -237,10 +267,12 @@ let translate (globals, structs, functions) =
       | SContinue -> ignore(L.build_br while_bb builder) *)
     in
     (* Build the code for each statement in the function *)
-    let func_builder = build_stmt builder (SBlock fdecl.sbody) 
+    let func_builder = build_stmt builder (SBlock (fdecl.slocals, fdecl.sbody)) 
     in
     (* Add a return if the last block falls off the end *)
-    add_terminal func_builder (L.build_ret (L.const_int i32_t 0))
+    add_terminal func_builder (L.build_ret (L.const_int i32_t 0));
+    
+    exit_scope ();
   in
 List.iter build_function_body functions; 
 the_module
