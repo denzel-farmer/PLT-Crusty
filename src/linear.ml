@@ -295,9 +295,7 @@ let check program : linear_result =
   let struct_info_map = process_structs structs in
   (* populate func map *)
   let func_info_map =
-    match struct_info_map with
-    | Error err -> None
-    | Ok struct_info_map -> Some (gen_func_info_map funcs struct_info_map)
+    Result.to_option (Result.map (gen_func_info_map funcs) struct_info_map)
   in
   (* check functions *)
   struct_info_map, func_info_map, Ok StringMap.empty
