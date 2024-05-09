@@ -1,6 +1,6 @@
 // TODO: support programs where we have references to integers
 struct a {
-    int a;
+    int x;
     int b;
 };
 
@@ -9,6 +9,10 @@ int sum(ref int a, ref int b) {
     c = *a + *b;
     return c;
 } 
+
+struct a get_x(struct a in_a) {
+    return in_a;
+}
 
 int main() {
     int a;
