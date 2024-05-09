@@ -206,31 +206,8 @@ let generate_program_info (structs : struct_def list) (funcs : sfunc_def list)
 
 (* Function checking stuff *)
 
-(* Check an expression *)
-let rec check_expr
-  (struct_info : struct_info)
-  (func_info : func_info)
-  (lin_map : linear_map_result)
-  (expr : sexpr)
-  : linear_map_result
-  =
-  lin_map
-;;
-
-(* TODO: I just went through and threw in whatever values made these functions not throw
-   compile errors, they are still definitely wrong - denzel*)
-let linear_add_locals
-  (struct_info_map : struct_info)
-  (lin_map : linear_map)
-  (slocals : var_decl list)
-  : linear_map
-  =
-  (*TODO implement *)
-  lin_map
-;;
-
 let linear_add_args
-  (struct_info_map : struct_info)
+  (struct_info : struct_info)
   (lin_map : linear_map)
   (args : var_decl list)
   : linear_map
@@ -239,7 +216,7 @@ let linear_add_args
     =
     (* TODO check for duplicate entries?? *)
     (* if linear, add arg *)
-    match is_linear_decl struct_info_map arg_decl with
+    match is_linear_decl struct_info arg_decl with
     | false -> lin_map
     | true -> StringMap.add arg_name (Assigned, typ) lin_map
   in
@@ -247,13 +224,58 @@ let linear_add_args
   new_map
 ;;
 
-(* TODO implement *)
-let linear_check_block
+let merge_map (map1 : linear_map_result) (map2 : linear_map_result) : linear_map_result =
+  (* TODO implement *)
+  map1
+;;
+
+(* TODO implement - this is 'top level' block checking function that includes checking helpers.
+   I put everything under this function so we could just pass in struct_info and func_info once
+   and use them everywhere since they don't change rather than keep passing them to every subfunction *)
+let rec linear_check_block
+  (struct_info : struct_info)
+  (func_info : func_info)
+  (lin_map : linear_map_result)
   (vdecls : var_decl list)
   (s_list : sstmt list)
-  (in_lin_map : linear_map_result)
   : linear_map_result
   =
+  (* Add a list of variable declarations to a lin_map in state Unassigned *)
+  let linear_add_locals (lin_map : linear_map) (slocals : var_decl list) : linear_map =
+    (*TODO implement *)
+    lin_map
+  in
+  (* Check an expression *)
+  let rec check_expr (lin_map : linear_map_result) (expr : sexpr) : linear_map_result =
+    lin_map
+  in
+  (* Check a list of statements *)
+  let rec linear_check_stmt_list (in_lin_map : linear_map_result) (s_list : sstmt list)
+    : linear_map_result
+    =
+    let rec linear_check_stmt (lin_map : linear_map_result) (stmt : sstmt)
+      : linear_map_result
+      =
+      match stmt with
+      | SBlock (vdecls, stmts) ->
+        linear_check_block struct_info func_info lin_map vdecls stmts
+      | SExpr ex -> check_expr lin_map ex
+      | SIf (cond_ex, true_stmt, false_stmt) ->
+        let lin_map = check_expr lin_map cond_ex in
+        let true_map = linear_check_stmt lin_map true_stmt in
+        let false_map = linear_check_stmt lin_map false_stmt in
+        merge_map true_map false_map
+      | SWhile (cond_ex, body_stmt) ->
+        let lin_map = check_expr lin_map cond_ex in
+        let end_map = linear_check_stmt lin_map body_stmt in
+        merge_map lin_map end_map
+      | SBreak | SContinue -> raise (Failure "Break and Continue not supported")
+    in
+    List.fold_left linear_check_stmt in_lin_map s_list
+    (* I removed merging here, because I think we should do that in
+       the outer level check block, but I could be wrong*)
+  in
+  (* Actual body of check_block: *)
   (*One possible way to do this that isn't saving/comparing the lin map:
     - save new decls in a list
     - add new decls to lin map
@@ -261,43 +283,18 @@ let linear_check_block
     - remove new decls from lin map one by one, checking that none are unconsumed
     - return lin map
   *)
-  in_lin_map
+
+  (*Basic implementation that only works for one level of scope *)
+  match lin_map with
+  | Error err -> Error err
+  | Ok lin_map ->
+    let lin_map = linear_add_locals lin_map vdecls in
+    let lin_map = linear_check_stmt_list (Ok lin_map) s_list in
+    lin_map
 ;;
 
-let merge_map (map1 : linear_map_result) (map2 : linear_map_result) : linear_map_result =
-  (* TODO implement *)
-  map1
-;;
-
-let rec linear_check_stmt_list
-  (struct_info : struct_info)
-  (func_info : func_info)
-  (in_lin_map : linear_map_result)
-  (body : sstmt list)
-  : linear_map_result
-  =
-  let rec linear_check_stmt (lin_map : linear_map_result) (stmt : sstmt)
-    : linear_map_result
-    =
-    match stmt with
-    | SBlock (vdecls, stmts) -> linear_check_block vdecls stmts lin_map
-    | SExpr ex -> check_expr struct_info func_info lin_map ex
-    | SIf (cond_ex, true_stmt, false_stmt) ->
-      let lin_map = check_expr struct_info func_info lin_map cond_ex in
-      let true_map = linear_check_stmt lin_map true_stmt in
-      let false_map = linear_check_stmt lin_map false_stmt in
-      merge_map true_map false_map
-    | SWhile (cond_ex, body_stmt) ->
-      let lin_map = check_expr struct_info func_info lin_map cond_ex in
-      let end_map = linear_check_stmt lin_map body_stmt in
-      merge_map lin_map end_map
-    | SBreak | SContinue -> raise (Failure "Break and Continue not supported")
-  in
-  let new_map = List.fold_left linear_check_stmt in_lin_map body in
-  merge_map in_lin_map new_map
-;;
-
-(* Check a function to ensure it follows linearity rules *)
+(* Check a function to ensure it follows linearity rules, return
+   a tuple of function name and the final lin_map *)
 let process_func (struct_info : struct_info) (func_info : func_info) (func : sfunc_def)
   : string * linear_map_result
   =
@@ -308,7 +305,9 @@ let process_func (struct_info : struct_info) (func_info : func_info) (func : sfu
     | SVoidReturn -> func.sbody
     | SReturn ex -> func.sbody @ [ SExpr ex ]
   in
-  let lin_map = linear_check_block func.slocals func_statements (Ok lin_map) in
+  let lin_map =
+    linear_check_block struct_info func_info (Ok lin_map) func.slocals func_statements
+  in
   func.sfname, lin_map
 ;;
 
