@@ -40,7 +40,7 @@ and sliteral =
 
 (* Statement Types *)
 type sstmt =
-  | SBlock of sstmt list
+  | SBlock of (var_decl list) * (sstmt list)
   | SExpr of sexpr
   | SIf of sexpr * sstmt * sstmt
   | SWhile of sexpr * sstmt

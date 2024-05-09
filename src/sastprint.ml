@@ -96,8 +96,11 @@ and string_of_sassignment = function
   | SStructExplode (fields, e) ->
     ":{" ^ String.concat ", " fields ^ "} = " ^ string_of_sexpr e
 
+  let string_of_var_decl (typ, name) = 
+    string_of_typ typ ^ " " ^ name
+
 let rec string_of_sstmt = function
-  | SBlock stmts -> "{\n" ^ String.concat "\n" (List.map string_of_sstmt stmts) ^ "\n}"
+  | SBlock (vars, stmts) -> "{\n" ^ String.concat "\n" (List.map string_of_var_decl vars) ^ String.concat "\n" (List.map string_of_sstmt stmts) ^ "\n}"
   | SExpr e -> string_of_sexpr e 
   | SIf (cond, stmt1, stmt2) ->
     "if ("
@@ -109,9 +112,6 @@ let rec string_of_sstmt = function
   | SWhile (cond, stmt) -> "while (" ^ string_of_sexpr cond ^ ")\n" ^ string_of_sstmt stmt
   | SBreak -> "break;"
   | SContinue -> "continue;"
-
-let string_of_var_decl (typ, name) = 
-    string_of_typ typ ^ " " ^ name
 
 let string_of_sreturn = function 
   | SReturn e -> "return " ^ string_of_sexpr e

@@ -7,19 +7,6 @@ open Astprint
 module StringMap = Map.Make(String)
 
 let check program =
-let check_binds_dup (kind: string) (binds : var_decl list) =
-    let check_member n bs = 
-      List.fold_left (fun flag (_, n') -> if n = n' then true else flag) false bs (* why three parameters here? for linearity?*)
-  in 
-    let rec check_dup bs = 
-      match bs with 
-      | [] -> () 
-      | (_, n) :: sl -> if check_member n sl then raise (Failure ("duplicate variable " ^ n ^ " in " ^ kind )) else check_dup sl
-    in check_dup binds
-  in 
-
-  check_binds_dup "global" program.globals;
-
   (* Collect function declarations for built-in functions: no bodies *)
   let built_in_decls = (* how do we import built in functions? *)
     StringMap.add "print" {
@@ -73,25 +60,45 @@ let check_binds_dup (kind: string) (binds : var_decl list) =
       StringMap.add n st map;
   in 
   List.fold_left add_struct StringMap.empty program.structs;
+
+  let scopes = ref [] in
+  let enter_scope () = scopes := StringMap.empty :: !scopes in
+  let exit_scope () = match !scopes with
+  | [] -> raise (Failure "No scope to exit")
+  | _ :: tl -> scopes := tl
+  in
+
+  let add_symbol (ty, name) =
+    let current_map = List.hd !scopes in
+    if StringMap.mem name current_map
+    then raise (Failure ("duplicate variable " ^ name))
+    else let updated_map = StringMap.add name ty current_map in
+    scopes := updated_map :: (List.tl !scopes)
+  in
+
+  (* Return a variable from our local symbol table *)
+  let type_of_identifier s =
+    let rec lookup in_scopes =
+      match in_scopes with
+      | [] -> raise (Failure ("undeclared identifier " ^ s))
+      | hd :: tl ->
+          try StringMap.find s hd
+          with Not_found -> lookup tl
+    in lookup !scopes
+  in
+
+  enter_scope (); (* Enter global scope *)
+  List.iter (fun (ty, name) -> add_symbol (ty, name)) program.globals;
+
   let check_fun func = 
-    check_binds_dup "args" func.args;
-    check_binds_dup "locals" func.locals;
+    enter_scope (); (* Enter args/locals scope *)
+    List.iter (fun (ty, name) -> add_symbol (ty, name)) func.args;
+    List.iter (fun (ty, name) -> add_symbol (ty, name)) func.locals;
 
     (* Raise an exception if the given rvalue type cannot be assigned to
     the given lvalue type *)
     let check_assign lvaluet rvaluet err =
       if lvaluet = rvaluet then lvaluet else raise (Failure err)
-    in
-
-    let add_symbol m (ty, name) = StringMap.add name ty m 
-    in 
-    let symbols = List.fold_left add_symbol StringMap.empty (program.globals @ func.args @ func.locals)
-    in 
-
-    (* Return a variable from our local symbol table *)
-    let type_of_identifier s =
-      try StringMap.find s symbols
-      with Not_found -> raise (Failure ("undeclared identifier " ^ s))
     in
 
     let match_primitive t = 
@@ -222,10 +229,6 @@ let check_binds_dup (kind: string) (binds : var_decl list) =
           (t, SOperation(SAccessOp((t, e'), op, var)))
         | Deref (s) -> 
           let err = "illegal dereference operator " in
-          let type_of_identifier t =
-            try StringMap.find s symbols
-            with Not_found -> raise (Failure (err))
-          in 
           let t = type_of_identifier s in
           let err = "illegal dereference operator " ^ string_of_typ t in
           let t' = match t with 
@@ -234,18 +237,11 @@ let check_binds_dup (kind: string) (binds : var_decl list) =
           in 
           (t', SOperation(SDeref(s)))
         | Borrow (s) -> 
-          let type_of_identifier t =
-            try StringMap.find s symbols
-            with Not_found -> raise (Failure ("undeclared identifier " ^ s))
-          in 
           let t = type_of_identifier s in
           (Ref(t), SOperation(SBorrow(s)))
         | Index (s, e) -> 
           let err = "invalid access operation" in
           let (t, e') = check_expr e in
-          let type_of_identifier t = 
-            try StringMap.find s symbols 
-            with Not_found -> raise (Failure ("undeclared identifier " ^ s)) in 
           let _, t' = match_primitive t in  
           if t' != Int then raise (Failure(err))
           else 
@@ -282,12 +278,17 @@ let check_binds_dup (kind: string) (binds : var_decl list) =
     let rec check_stmt_list l = 
     match l with 
     [] -> []
-    | Block sl :: sl' -> check_stmt_list (sl @ sl')
+    (* | Block sl :: sl' -> check_stmt_list (sl @ sl') *)
     | s :: sl -> check_stmt s :: check_stmt_list sl
     (* return a statement *)
     and check_stmt s = 
       match s with 
-      Block sl -> SBlock (check_stmt_list sl)
+        Block (vl, sl) -> 
+          enter_scope ();
+          List.iter (fun (ty, name) -> add_symbol (ty, name)) vl;
+          let checked_stmts = check_stmt_list sl in
+          exit_scope ();
+          SBlock (vl, checked_stmts)
       | Expr e -> SExpr (check_expr e)
       | If(e, st1, st2) ->
         SIf(check_bool_expr e, check_stmt st1, check_stmt st2)
@@ -315,13 +316,16 @@ let check_binds_dup (kind: string) (binds : var_decl list) =
           in s
       in r
     in 
+    let checked_body = check_stmt_list func.body in
+    let checked_return = check_return_stmt func.return in 
+    exit_scope (); (* Exit args/locals scope *)
     { 
       srtyp=func.rtyp;
       sfname=func.fname;
       sargs=func.args;
       slocals=func.locals;
-      sbody=check_stmt_list func.body;
-      sreturn=check_return_stmt func.return
+      sbody=checked_body;
+      sreturn=checked_return
     }
 in
 (program.globals, program.structs, List.map check_fun program.funcs)

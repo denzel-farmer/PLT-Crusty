@@ -259,7 +259,7 @@ stmt_list:
 
 /* Statements */
 stmt:
-  | LBRACE stmt_list RBRACE                 { Block $2 }
+  | LBRACE var_decl_list stmt_list RBRACE                 { Block ($2, $3) }
   | expr SEMI                               { Expr $1      }
   | ifstmt                                  { $1 }
   | WHILE LPAREN expr RPAREN stmt           { While ($3, $5)  }
@@ -267,7 +267,7 @@ stmt:
   | CONTINUE SEMI                           { Continue       }
 
 ifstmt:
-  | IF LPAREN expr RPAREN stmt %prec LOWER_THAN_ELSE { If($3, $5, Block []) }
+  | IF LPAREN expr RPAREN stmt %prec LOWER_THAN_ELSE { If($3, $5, Block([], [])) }
   | IF LPAREN expr RPAREN stmt ELSE stmt { If($3, $5, $7) } 
 
 return_stmt : 

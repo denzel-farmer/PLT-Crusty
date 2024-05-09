@@ -1,6 +1,12 @@
 int main(int y) {
     int x;
+    int z;
     x = 3;
     y = 5;
+    {
+        int z;
+        z = 1;
+    }
+    z = 3;
     return 0;
 }
