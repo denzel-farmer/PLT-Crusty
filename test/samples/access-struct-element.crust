@@ -1,0 +1,18 @@
+// TODO: this should compile, but currently doesn't
+struct a {
+    int x;
+    int b;
+};
+
+int get_x(struct a in_a) {
+    return in_a.x;
+}
+
+int main() {
+    struct a a;
+
+    a.x = 5;
+    a.b = 10;
+
+    return get_x(a);
+} 
