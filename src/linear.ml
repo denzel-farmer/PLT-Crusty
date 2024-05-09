@@ -259,7 +259,7 @@ let rec linear_check_stmt_list
   : linear_map_result
   =
   (* TODO implement *)
-  let linear_check_block (s_list : sstmt list) (lin_map : linear_map_result)
+  let linear_check_block (vdecls : var_decl list) (s_list : sstmt list) (lin_map : linear_map_result)
     : linear_map_result
     =
     lin_map
@@ -268,7 +268,7 @@ let rec linear_check_stmt_list
     : linear_map_result
     =
     match stmt with
-    | SBlock s_list -> linear_check_block s_list lin_map
+    | SBlock (vdecls, stmts) -> linear_check_block vdecls stmts lin_map
     | SExpr ex -> check_expr struct_info func_info lin_map ex
     | SIf (cond_ex, true_stmt, false_stmt) ->
       let lin_map = check_expr struct_info func_info lin_map cond_ex in
