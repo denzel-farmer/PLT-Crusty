@@ -1,8 +1,147 @@
+
+# Linear Checker Implementation
+- Take as input semantic abstract syntax tree, with root program p
+- Processes structure definitions to produce structure_info map
+    - For each structure, check that no unrestricted struct contains linear var
+    - Add linear structures to map from name -> definition
+- Process function prototypes to produce function_info map 
+    - For each function, add a map from name -> ret type, arg types
+- Process functions 
+    - construct initial linear map
+        - add arguments 
+            - Add each linear argument to linear map as state Assigned
+            - Add each ref argument to linear map as state Ref
+        - add local declarations
+            - Add each linear variable to linear map as state Unassigned
+    - process statements
+        - check that all 
+
+## Linear Map
+- State: Unassigned, Assigned, Borrowed, Used, Ref
+
+
+- verifies that the sast doesn't break type rules
+    - 
+
+    - Every time checker leaves scope, remove variables declared in that scope
+    from linear map and check if any removed are not consumed 
+
+## Linear Type System
+- All types include a 'Linear' or 'Unrestricted' qualifier 
+
+### Linear Primitive Types 
+- When declared, variables with primitive types always include one of these
+qualifiers
+- Primitive declarations without an 'Unrestricted' or 'Linear' keyword are 
+assumed to be unrestricted
+    - Because linearity doesn't matter for local primitives (they are managed by
+    the stack)
+
+### Linear Structure Types 
+- Struct types must include this qualifier in the struct definition itself,
+    not when specific instances are declared 
+    - So, cannot declare Linear or Unrestricted versions of the same struct
+- Struct definitions without an 'Unrestricted' or 'Linear' keyword are
+assumed to be Linear
+- Linear struct definitions may include both linear and unrestricted components 
+    - Unrestricted components of linear structures can be accessed and modified
+    using the 'dot' operator ('.') so long as the structure is unconsumed
+    - Unrestricted components of references to linear structures can be accessed
+    (but not modified) using the 'arrow' operator ('->')
+
+### References
+- At a function call site, any variable (linear or unrestricted) may be borrowed
+with the '&' operator, and a read-only reference to that variable will be passed
+as an argument 
+#### Borrowing a variable (at a call site)
+- The borrow operator ('&') outputs a value with the same type as the input
+variable, but with the "Ref" type qualifier 
+- The borrow operator can only be applied to variables, not values (i.e. &(x+1)
+is not allowed)
+- The borrow operator can only be used at a call site, and only if the value it
+outputs is passed directly as an argument to the called function (i.e. foo(1+&x)
+is not allowed)
+    - The type of the argument must also be a "Ref" type (checked by the regular
+    type system)
+- Both linear and unrestricted variables can be safely borrowed multiple times,
+because borrowing a linear variable does not constitute consuming it
+- Cannot borrow any variable before it is declared
+- Cannot borrow linear variables after they are consumed
+#### Using a Reference (in a function)
+- the "Ref" type qualifier may only be specified in the arguments of a function
+- References to variables are read-only, and cannot be reassigned 
+    - References can't themselves be linear (i.e. "Linear Ref int x_ref" is not allowed) 
+- References to unrestricted variables can be accessed/assigned to non-reference
+variables using the 'dereference' operator ("*").
+    - kinda useless but still supported
+    - Can't dereference linear references 
+- Components of references to unrestricted structures and unrestricted components
+of linear structures can be accessed using the 'arrow' operator ("->").
+- References to linear variables cannot be consumed
+    - So, the main use case for references is allowing use of unrestricted components 
+    of linear structures without consuming that structure. For example, a linear
+    File structure might declare a function 'String readstring(Ref struct File f_ref)' 
+    to read a string from the file, without consuming the file.
+    
+- References to linear primitives are allowed, but are mostly useless
+
+# Linear Type Rules 
+- Any value with a linear type must be consumed exactly once in its scope
+- An expression producing a linear value can't be discarded without assignment
+
+- Borrow operation rules 
+    - must be at a call site
+    - must be a variable not an expression (might be checked by semant)
+- Rules about references 
+- Assignment 
+    - struct assignment
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 # Generic Checking Rules 
 - Need to declare variables before they are used 
 
 - Check that field types in structures exist? (only really matters if it is another structure)
     - doesn't seem like we do this now, should add check in semant that structures actually exist
+
+- Make sure that references are read-only (i.e. can't be on the LHS of an assignment)
 
 # Input to Linear Checking
 
