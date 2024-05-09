@@ -205,6 +205,19 @@ let generate_program_info (structs : struct_def list) (funcs : sfunc_def list)
 
 (* Function checking stuff *)
 
+(* Check an expression *)
+let rec check_expr
+  (struct_info : struct_info)
+  (func_info : func_info)
+  (lin_map : linear_map_result)
+  (expr : sexpr)
+  : linear_map_result
+  =
+  lin_map
+;;
+
+(* TODO: I just went through and threw in whatever values made these functions not throw
+   compile errors, they are still definitely wrong - denzel*)
 let linear_add_locals
   (struct_info_map : struct_info)
   (lin_map : linear_map)
@@ -212,7 +225,7 @@ let linear_add_locals
   : linear_map
   =
   (*TODO implement *)
-  StringMap.empty
+  lin_map
 ;;
 
 let linear_add_args
@@ -231,17 +244,6 @@ let linear_add_args
   in
   let new_map = List.fold_left add_arg lin_map args in
   new_map
-;;
-
-(* Check an expression *)
-let rec check_expr
-  (struct_info : struct_info)
-  (func_info : func_info)
-  (lin_map : linear_map_result)
-  (expr : sexpr)
-  : linear_map_result
-  =
-  lin_map
 ;;
 
 let merge_map (map1 : linear_map_result) (map2 : linear_map_result) : linear_map_result =
@@ -283,89 +285,36 @@ let rec linear_check_stmt_list
   merge_map in_lin_map new_map
 ;;
 
-(* let linear_check_return (lin_map : *)
-
-(* Hash table that maps struct name to struct definition *)
-(* let string_of_linear_result = function
-   | LinearError s -> s
-   | LinPass -> "Pass"
-   ;; *)
-(* Hash table that maps name to linearity and type information *)
-(* type linear_map = (string, (ref_qual * linear_state * stype)) Hashtbl.t *)
-(*
-   let rec linear_add_locals (lin_map : linear_map) (slocals : sfunc_def.slocals) : linear_map result =
-   (*TODO implement *)
-   Ok lin_map
-
-   let linear_add_args (lin_map : linear_map) (args : sfunc_def.sargs) : linear_map result =
-   let add_arg (ref_qual, (linear_qual, typ, arg_name)) (lin_map, linear_result) =
-   (* TODO check for duplicate entries?? *)
-   (* if linear, add arg *)
-   match linear_qual with
-   | Unrestricted ->
-   lin_map, LinPass
-   | Linear ->
-   Hashtbl.add lin_map arg_name (ref_qual, Assigned, typ);
-   lin_map, LinPass
-   in
-   let new_map, linear_result = List.fold_left add_arg (lin_map, LinPass) args in
-   new_map, linear_result
-   in
-
-   let merge_map (map1 : linear_map) (map2 : linear_map) : linear_map result =
-
-   let rec linear_check_stmt_list (lin_map : linear_map) (body : sfunc_def.sbody) : linear_map result =
-   (* TODO implement *)
-   let linear_check_stmt (lin_map : linear_map) (list : stmt list) : linear_map =
-   match stmt with
-   | Block ->
-   let linear_check_block
-   | Expr ->
-   linear_check_expr stmt
-   | If ->
-   let true_map = linear_check_stmt list;
-   let false_map = linear_check_stmt list;
-   merge_map true_map false_map
-   | While ->
-   let end_map = linear_check_stmt list;
-   merge_map lin_map end_map
-   in
-   let new_map, linear_result = List.fold_left linear_check_stmt body lin_map;
-   merge_map lin_map new_map
-   Ok lin_map
-
-   let rec linear_check_expr () : linear_map result
-   (* TODO implement *)
-   Ok lin_map
-
-   let linear_check_return (lin_map : linear_map) (sfunc_def.sret) : linear_map result =
-
-   let rec linear_check_func (lin_map : linear_map) (func : sfunc_def) : linear_map result =
-   linear_add_args lin_map func.sargs >>= fun lin_map ->
-   linear_add_locals lin_map func.slocals >>= fun lin_map ->
-   linear_check_stmt_list lin_map func.sbody >>= fun lin_map ->
-   linear_check_return lin_map func.sret >>= fun lin_map
-
-   in *)
-
-let init_lin_map (struct_info_map : struct_info) (func_info_map : func_info) : linear_map =
-  let lin_map = StringMap.empty in
+let linear_check_return
+  (struct_info : struct_info)
+  (func_info : func_info)
+  (ret_statement : sreturn_stmt)
+  (lin_map : linear_map_result)
+  : linear_map_result
+  =
+  (* TODO implement *)
   lin_map
 ;;
 
+(* Initial Information Gathering Funcs *)
+let init_lin_map (struct_info : struct_info) (func : sfunc_def) : linear_map =
+  let args = func.sargs in
+  let lin_map = linear_add_args struct_info StringMap.empty args in
+  let locals = func.slocals in
+  linear_add_locals struct_info lin_map locals
+;;
+
+let ( let* ) = Result.bind
+
 (* Check a function to ensure it follows linearity rules *)
-let process_func
-  (struct_info_map : struct_info)
-  (func_info_map : func_info)
-  (func : sfunc_def)
+let process_func (struct_info : struct_info) (func_info : func_info) (func : sfunc_def)
   : string * linear_map_result
   =
-  let lin_map = StringMap.empty in
-  (* linear_add_args struct_info_map lin_map func.sargs >>= fun lin_map ->
-     linear_add_locals lin_map func.slocals >>= fun lin_map ->
-     linear_check_stmt_list lin_map func.sbody >>= fun lin_map ->
-     linear_check_return lin_map func.sret >>= fun lin_map *)
-  func.sfname, Ok lin_map
+  (* TODO pull out all the error checking glue with cool monad stuff *)
+  let lin_map = init_lin_map struct_info func in
+  let lin_map = linear_check_stmt_list struct_info func_info (Ok lin_map) func.sbody in
+  let lin_map = linear_check_return struct_info func_info func.sreturn lin_map in
+  func.sfname, lin_map
 ;;
 
 (* Check linearity on a program *)
