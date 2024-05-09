@@ -29,6 +29,18 @@ type linear_map_result = (linear_map, string) result
 (* Final output type for debugging *)
 type linear_result = program_info_result * (string * linear_map_result) list
 
+let lin_result_failed (lin_result : linear_result) : bool =
+  match lin_result with
+  | Error _, _ -> true
+  | Ok _, lin_map_results ->
+    List.exists
+      (fun (_, lin_map_result) ->
+        match lin_map_result with
+        | Error _ -> true
+        | Ok _ -> false)
+      lin_map_results
+;;
+
 (* Print functions for debugging and error messages *)
 let string_of_struct_info (struct_info : struct_info) : string =
   if StringMap.is_empty struct_info
@@ -99,7 +111,11 @@ let string_of_option (string_of_a : 'a -> string) (opt : 'a option) : string =
 
 let string_of_linear_result (lin_result : linear_result) : string =
   let program_info_result, lin_map_result = lin_result in
-  "Program Info:\n"
+  let result_header =
+    if lin_result_failed lin_result then "LINEAR CHECK FAIL" else "LINEAR CHECK SUCCESS"
+  in
+  result_header
+  ^ "\nProgram Info:\n"
   ^ string_of_result string_of_program_info program_info_result
   ^ "\nLinear Maps:\n"
   ^ List.fold_left
@@ -249,9 +265,32 @@ let rec linear_check_block
   (s_list : sstmt list)
   : linear_map_result
   =
+  (* Try to consume an assigned identifier, throws an error if in the wrong state. Does
+     nothing if not in lin_map. *)
+  let consume_assigned_ident (lin_map : linear_map) (ident : string) : linear_map_result =
+    match StringMap.find_opt ident lin_map with
+    | Some (Assigned, typ) -> Ok (StringMap.add ident (Used, typ) lin_map)
+    | Some (Borrowed, typ) -> Ok (StringMap.add ident (Used, typ) lin_map)
+    | Some (Unassigned, typ) -> Error ("Variable " ^ ident ^ " consumed before assignment")
+    | Some (Used, typ) -> Error ("Variable " ^ ident ^ " consumed more than once")
+    | Some (Ref, typ) -> Error ("Reference " ^ ident ^ " cannot be consumed")
+    | None -> Ok lin_map
+    (* TODO I am starting to think we should just add everything and double check here...*)
+  in
   (* Check an expression *)
   let rec check_expr (lin_map : linear_map_result) (expr : sexpr) : linear_map_result =
-    lin_map
+    match lin_map with
+    | Error err -> Error err
+    | Ok lin_map ->
+      (match expr with
+       | _, SLiteral _ -> Ok lin_map
+       | id_typ, SId id ->
+         consume_assigned_ident
+           lin_map
+           id (* An expression with just an ident consumes it *)
+       | out_typ, SOperation op -> Ok lin_map
+       | out_typ, SAssignment assmt -> Ok lin_map
+       | out_typ, SCall (fname, args) -> Ok lin_map)
   in
   (* Check a list of statements *)
   let rec linear_check_stmt_list (in_lin_map : linear_map_result) (s_list : sstmt list)
@@ -321,11 +360,11 @@ let process_func (struct_info : struct_info) (func_info : func_info) (func : sfu
 (* Check linearity on a program *)
 let check program : linear_result =
   let _, structs, funcs = program in
-  let program_info_maps = generate_program_info structs funcs in
-  match program_info_maps with
+  let program_info = generate_program_info structs funcs in
+  match program_info with
   | Error err -> Error err, []
-  | Ok (struct_info_map, func_info_map) ->
+  | Ok (struct_info, func_info) ->
     (* check functions *)
-    let lin_map = List.map (process_func struct_info_map func_info_map) funcs in
-    Ok (struct_info_map, func_info_map), lin_map
+    let lin_map = List.map (process_func struct_info func_info) funcs in
+    Ok (struct_info, func_info), lin_map
 ;;
