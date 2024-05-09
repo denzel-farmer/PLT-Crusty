@@ -265,7 +265,7 @@ let add_linear_decls
   (args : var_decl list)
   : linear_map
   =
-  let new_map = List.fold_left (add_decl_if_linear struct_info Assigned) lin_map args in
+  let new_map = List.fold_left (add_decl_if_linear struct_info state) lin_map args in
   new_map
 ;;
 
