@@ -150,61 +150,149 @@ let is_linear_decl (struct_map : struct_info) (decl : var_decl) : bool =
   is_linear_type struct_map (fst decl)
 ;;
 
-(* let linear_add_locals (lin_map : linear_map) (slocals : sfunc_def.slocals) : linear_map result =
-   (*TODO implement *)
-   Ok lin_map
+(* Process a list of structs, populating a result map that maps struct name
+   to struct definition. Also checks for unrestricted structs with linear members,
+   and if they exist returns Error *)
+let process_structs (structs : struct_def list) : struct_info_result =
+  (* Check that a struct has only linear members, based on types and previous structs in struct_map.
+     If it is Linear, add it to the map. *)
+  let process_struct (in_struct : struct_def) (struct_map : struct_info)
+    : struct_info_result
+    =
+    match in_struct.lin_qual with
+    | Linear -> Ok (StringMap.add in_struct.sname in_struct struct_map)
+    | Unrestricted ->
+      if List.exists (is_linear_decl struct_map) in_struct.fields
+      then Error ("Struct " ^ in_struct.sname ^ " has linear fields but is unrestricted")
+      else Ok struct_map (* Ok, but don't add unrestricted struct to map*)
+  in
+  (* Fold over each struct, accumulating but returning error if any fails *)
+  List.fold_left
+    (fun acc in_struct -> Result.bind acc (process_struct in_struct))
+    (Ok StringMap.empty)
+    structs
+;;
 
-   let linear_add_args (lin_map : linear_map) (args : sfunc_def.sargs) : linear_map result =
-   let add_arg (ref_qual, (linear_qual, typ, arg_name)) (lin_map, linear_result) =
-   (* TODO check for duplicate entries?? *)
-   (* if linear, add arg *)
-   match linear_qual with
-   | Unrestricted ->
-   lin_map, LinPass
-   | Linear ->
-   Hashtbl.add lin_map arg_name (ref_qual, Assigned, typ);
-   lin_map, LinPass
-   in
-   let new_map, linear_result = List.fold_left add_arg (lin_map, LinPass) args in
-   new_map, linear_result
-   in
+(* Take in a list of func prototypes and adds each to a map if they have a
+   linear return type or linear arguments. Does no rule-checking. *)
+let gen_func_info_map (funcs : sfunc_def list) (struct_info_map : struct_info) : func_info
+  =
+  let func_has_linear_args (func : sfunc_def) : bool =
+    List.exists (is_linear_decl struct_info_map) func.sargs
+  in
+  let func_has_linear_ret (func : sfunc_def) : bool =
+    match func.srtyp with
+    | Nonvoid ret -> is_linear_type struct_info_map ret
+    | _ -> false
+  in
+  List.fold_left
+    (fun acc func ->
+      if func_has_linear_args func || func_has_linear_ret func
+      then StringMap.add func.sfname func acc
+      else acc)
+    StringMap.empty
+    funcs
+;;
 
-   let merge_map (map1 : linear_map) (map2 : linear_map) : linear_map result =
+let generate_program_info (structs : struct_def list) (funcs : sfunc_def list)
+  : program_info_result
+  =
+  let struct_info_map = process_structs structs in
+  match struct_info_map with
+  | Ok struct_info -> Ok (struct_info, (gen_func_info_map funcs) struct_info)
+  | Error err -> Error err
+;;
 
-   let rec linear_check_stmt_list (lin_map : linear_map) (body : sfunc_def.sbody) : linear_map result =
-   (* TODO implement *)
-   let linear_check_stmt (lin_map : linear_map) (list : stmt list) : linear_map =
-   match stmt with
-   | Block ->
-   let linear_check_block
-   | Expr ->
-   linear_check_expr stmt
-   | If ->
-   let true_map = linear_check_stmt list;
-   let false_map = linear_check_stmt list;
-   merge_map true_map false_map
-   | While ->
-   let end_map = linear_check_stmt list;
-   merge_map lin_map end_map
-   in
-   let new_map, linear_result = List.fold_left linear_check_stmt body lin_map;
-   merge_map lin_map new_map
-   Ok lin_map
+(* Function checking stuff *)
 
-   let rec linear_check_expr () : linear_map result
-   (* TODO implement *)
-   Ok lin_map
+let linear_add_locals
+  (struct_info_map : struct_info)
+  (lin_map : linear_map)
+  (slocals : var_decl list)
+  : linear_map
+  =
+  (*TODO implement *)
+  StringMap.empty
+;;
 
-   let linear_check_return (lin_map :
+let linear_add_args
+  (struct_info_map : struct_info)
+  (lin_map : linear_map)
+  (args : var_decl list)
+  : linear_map
+  =
+  let add_arg (lin_map : linear_map) ((typ, arg_name) as arg_decl : var_decl) : linear_map
+    =
+    (* TODO check for duplicate entries?? *)
+    (* if linear, add arg *)
+    match is_linear_decl struct_info_map arg_decl with
+    | false -> lin_map
+    | true -> StringMap.add arg_name (Assigned, typ) lin_map
+  in
+  let new_map = List.fold_left add_arg lin_map args in
+  new_map
+;;
 
-   (* Hash table that maps struct name to struct definition *)
-   (* let string_of_linear_result = function
+(* Check an expression *)
+let rec check_expr
+  (struct_info : struct_info)
+  (func_info : func_info)
+  (lin_map : linear_map_result)
+  (expr : sexpr)
+  : linear_map_result
+  =
+  lin_map
+;;
+
+let merge_map (map1 : linear_map_result) (map2 : linear_map_result) : linear_map_result =
+  (* TODO implement *)
+  map1
+;;
+
+let rec linear_check_stmt_list
+  (struct_info : struct_info)
+  (func_info : func_info)
+  (in_lin_map : linear_map_result)
+  (body : sstmt list)
+  : linear_map_result
+  =
+  (* TODO implement *)
+  let linear_check_block (s_list : sstmt list) (lin_map : linear_map_result)
+    : linear_map_result
+    =
+    lin_map
+  in
+  let rec linear_check_stmt (lin_map : linear_map_result) (stmt : sstmt)
+    : linear_map_result
+    =
+    match stmt with
+    | SBlock s_list -> linear_check_block s_list lin_map
+    | SExpr ex -> check_expr struct_info func_info lin_map ex
+    | SIf (cond_ex, true_stmt, false_stmt) ->
+      let lin_map = check_expr struct_info func_info lin_map cond_ex in
+      let true_map = linear_check_stmt lin_map true_stmt in
+      let false_map = linear_check_stmt lin_map false_stmt in
+      merge_map true_map false_map
+    | SWhile (cond_ex, body_stmt) ->
+      let lin_map = check_expr struct_info func_info lin_map cond_ex in
+      let end_map = linear_check_stmt lin_map body_stmt in
+      merge_map lin_map end_map
+    | SBreak | SContinue -> raise (Failure "Break and Continue not supported")
+  in
+  let new_map = List.fold_left linear_check_stmt in_lin_map body in
+  merge_map in_lin_map new_map
+;;
+
+(* let linear_check_return (lin_map : *)
+
+(* Hash table that maps struct name to struct definition *)
+(* let string_of_linear_result = function
    | LinearError s -> s
    | LinPass -> "Pass"
    ;; *)
-   (* Hash table that maps name to linearity and type information *)
-   (* type linear_map = (string, (ref_qual * linear_state * stype)) Hashtbl.t *)
-   (*
+(* Hash table that maps name to linearity and type information *)
+(* type linear_map = (string, (ref_qual * linear_state * stype)) Hashtbl.t *)
+(*
    let rec linear_add_locals (lin_map : linear_map) (slocals : sfunc_def.slocals) : linear_map result =
    (*TODO implement *)
    Ok lin_map
@@ -259,64 +347,10 @@ let is_linear_decl (struct_map : struct_info) (decl : var_decl) : bool =
    linear_check_return lin_map func.sret >>= fun lin_map
 
    in *)
-*)
 
-(* Process a list of structs, populating a result map that maps struct name
-   to struct definition. Also checks for unrestricted structs with linear members,
-   and if they exist returns Error *)
-let process_structs (structs : struct_def list) : struct_info_result =
-  (* Check that a struct has only linear members, based on types and previous structs in struct_map.
-     If it is Linear, add it to the map. *)
-  let process_struct (in_struct : struct_def) (struct_map : struct_info)
-    : struct_info_result
-    =
-    match in_struct.lin_qual with
-    | Linear -> Ok (StringMap.add in_struct.sname in_struct struct_map)
-    | Unrestricted ->
-      if List.exists (is_linear_decl struct_map) in_struct.fields
-      then Error ("Struct " ^ in_struct.sname ^ " has linear fields but is unrestricted")
-      else Ok struct_map (* Ok, but don't add unrestricted struct to map*)
-  in
-  (* Fold over each struct, accumulating but returning error if any fails *)
-  List.fold_left
-    (fun acc in_struct -> Result.bind acc (process_struct in_struct))
-    (Ok StringMap.empty)
-    structs
-;;
-
-(* Take in a list of func prototypes and adds each to a map if they have a
-   linear return type or linear arguments. Does no rule-checking. *)
-let gen_func_info_map (funcs : sfunc_def list) (struct_info_map : struct_info) : func_info
-  =
-  let func_has_linear_args (func : sfunc_def) : bool =
-    List.exists (is_linear_decl struct_info_map) func.sargs
-  in
-  let func_has_linear_ret (func : sfunc_def) : bool =
-    match func.srtyp with
-    | Nonvoid ret -> is_linear_type struct_info_map ret
-    | _ -> false
-  in
-  (* let acc_linear_func (acc : func_info) (func : sfunc_def) : func_info =
-     if func_has_linear_args func || func_has_linear_ret func
-     then StringMap.add func.sfname func acc
-     else acc
-     in *)
-  List.fold_left
-    (fun acc func ->
-      if func_has_linear_args func || func_has_linear_ret func
-      then StringMap.add func.sfname func acc
-      else acc)
-    StringMap.empty
-    funcs
-;;
-
-let generate_program_info (structs : struct_def list) (funcs : sfunc_def list)
-  : program_info_result
-  =
-  let struct_info_map = process_structs structs in
-  match struct_info_map with
-  | Ok struct_info -> Ok (struct_info, (gen_func_info_map funcs) struct_info)
-  | Error err -> Error err
+let init_lin_map (struct_info_map : struct_info) (func_info_map : func_info) : linear_map =
+  let lin_map = StringMap.empty in
+  lin_map
 ;;
 
 (* Check a function to ensure it follows linearity rules *)
@@ -327,6 +361,10 @@ let process_func
   : string * linear_map_result
   =
   let lin_map = StringMap.empty in
+  (* linear_add_args struct_info_map lin_map func.sargs >>= fun lin_map ->
+     linear_add_locals lin_map func.slocals >>= fun lin_map ->
+     linear_check_stmt_list lin_map func.sbody >>= fun lin_map ->
+     linear_check_return lin_map func.sret >>= fun lin_map *)
   func.sfname, Ok lin_map
 ;;
 
