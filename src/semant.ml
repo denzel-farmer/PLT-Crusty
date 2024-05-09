@@ -4,7 +4,17 @@ open Ast
 open Sast
 open Astprint
 
-module StringMap = Map.Make(String)
+module StringMap = Map.Make (String)
+
+(* Compares two types, not considering linearity *)
+let rec compare_stripped_types (first : typ) (second : typ) : bool =
+  match first, second with
+  | Prim(_, t1), Prim(_, t2) -> t1 = t2
+  | Ref(t1), Ref(t2) -> compare_stripped_types t1 t2
+  | Struct(s1), Struct(s2) -> s1 = s2
+  | Arr(t1, i1), Arr(t2, i2) -> compare_stripped_types t1 t2 && i1 = i2
+  | _ -> false 
+;;
 
 let check program =
   (* Collect function declarations for built-in functions: no bodies *)
@@ -98,7 +108,7 @@ let check program =
     (* Raise an exception if the given rvalue type cannot be assigned to
     the given lvalue type *)
     let check_assign lvaluet rvaluet err =
-      if lvaluet = rvaluet then lvaluet else raise (Failure err)
+      if (compare_stripped_types lvaluet rvaluet) then lvaluet else raise (Failure err)
     in
 
     let match_primitive t = 
