@@ -15,7 +15,7 @@ all : scanparse helloworld checksemant
 # your executable successfully, the output of test case will be 
 # generate automatically in a file named calc.out
 
-checksemant: sastprint.cmo linear.cmo astprint.cmo scanner.cmo crustyparse.cmo semant2.cmo checksemant.cmo
+checksemant: sastprint.cmo linear.cmo astprint.cmo scanner.cmo crustyparse.cmo semant.cmo checksemant.cmo
 	ocamlc -w A -o checksemant $^
 
 scanparse : crustyparse.cmo scanner.cmo astprint.cmo scanparse.cmo
@@ -51,12 +51,12 @@ astprint.cmo : \
 astprint.cmx : \
     ast.cmi
 checksemant.cmo : \
-    semant2.cmo \
+    semant.cmo \
     sastprint.cmo \
     linear.cmo \
     astprint.cmo
 checksemant.cmx : \
-    semant2.cmx \
+    semant.cmx \
     sastprint.cmx \
     linear.cmx \
     astprint.cmx
@@ -88,11 +88,11 @@ scanparse.cmx : \
     astprint.cmx
 semant.cmo :
 semant.cmx :
-semant2.cmo : \
+semant.cmo : \
     sast.cmi \
     astprint.cmo \
     ast.cmi
-semant2.cmx : \
+semant.cmx : \
     sast.cmi \
     astprint.cmx \
     ast.cmi
