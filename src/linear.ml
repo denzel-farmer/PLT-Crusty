@@ -2,6 +2,9 @@ open Ast
 open Sast 
 open Result
 
+module StringMap = Map.Make(String)
+
+type string_map_result = (struct_def StringMap.t, string) result
 
 (* TODO remove this and just use regular Error type
 type linear_result = 
@@ -15,7 +18,6 @@ type linear_result =
   | Used *)
 
 (* Hash table that maps struct name to struct definition *)
-type struct_map = (string, struct_def) Hashtbl.t
 (* let string_of_linear_result = function
   | LinearError s -> s
   | LinPass -> "Pass"
@@ -67,21 +69,6 @@ let rec linear_check_func (lin_map : linear_map) (func : sfunc_def) : linear_map
     (* add structdef to lin_map, then check sstruct.sfields for any linear types *)
     Hashtbl.add lin_map arg_name (_, Assigned, typ); *)
 
-  (* let linear_check_structs (structs : struct_def list) : struct_map result = 
-    
-    let linear_check_struct (last_struct_map : struct_map result) (curr_struct : struct_def) : struct_map result =
-      (* check lin_qual of struct *)
-      match last_struct_map with 
-      | Error _ as e -> e
-      | Ok _ as struct_map -> Ok (Hashtbl.add struct_map curr_struct.sname curr_struct)
-    in 
-
-    List.fold_left linear_check_struct (Hashtbl.create 0) structs
-  in
- *)
-
-
-
 
 
 (* 
@@ -121,11 +108,29 @@ let rec linear_check_func (lin_map : linear_map) (func : sfunc_def) : linear_res
   (* Do a check on the return type? *)
 
 
-let check (program) : (struct_map, string) result =
-  Ok (Hashtbl.create 0)
-  ;
+let linear_check_structs (structs : struct_def list) : string_map_result = 
+  
+  let linear_check_struct (last_struct_map : string_map_result) (curr_struct : struct_def) : string_map_result =
+    (* check lin_qual of struct *)
+    match last_struct_map with 
+    | Error _ as e -> e
+    | Ok struct_map -> Ok (StringMap.add curr_struct.sname curr_struct struct_map)
+  in 
+
+  List.fold_left linear_check_struct (Ok StringMap.empty) structs
+in
+ 
+
+
 
 (* Check linearity on a program *)
+let check (program) : (string, string) result =
+
+  let struct_results = linear_check_structs program.structs in
+
+  Ok "Passed Linearity Check"
+  ;
+
 (* let check (program : sprogram) : bool result =
   (* Initialize the linear map object *)
   (* let lin_map = Hashtbl.create 0 in  *)
