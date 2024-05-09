@@ -77,7 +77,6 @@ and operation =
   | LogOp of expr * binLogOp * expr
   | UnLogOp of unLogOp * expr
   | AccessOp of expr * accessOp * string
-  | Ref of string
   | Deref of string
   | Borrow of string
   | Index of string * expr
