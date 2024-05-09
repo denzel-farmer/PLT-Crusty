@@ -204,23 +204,32 @@ let generate_program_info (structs : struct_def list) (funcs : sfunc_def list)
   | Error err -> Error err
 ;;
 
-(* Function checking stuff *)
+(* Function checking stuff, TODO move everything inside process_func? *)
 
-let linear_add_args
+(* Add a declaration to the linear map with the given state, if it is linear,
+   otherwise does nothing *)
+let add_decl_if_linear
   (struct_info : struct_info)
+  (state : linear_state)
+  (lin_map : linear_map)
+  (decl : var_decl)
+  : linear_map
+  =
+  let typ, name = decl in
+  if is_linear_type struct_info typ
+  then StringMap.add name (state, typ) lin_map
+  else lin_map
+;;
+
+(* Add declarations to linear map if they are linear, ignoring otherwise *)
+let add_linear_decls
+  (struct_info : struct_info)
+  (state : linear_state)
   (lin_map : linear_map)
   (args : var_decl list)
   : linear_map
   =
-  let add_arg (lin_map : linear_map) ((typ, arg_name) as arg_decl : var_decl) : linear_map
-    =
-    (* TODO check for duplicate entries?? *)
-    (* if linear, add arg *)
-    match is_linear_decl struct_info arg_decl with
-    | false -> lin_map
-    | true -> StringMap.add arg_name (Assigned, typ) lin_map
-  in
-  let new_map = List.fold_left add_arg lin_map args in
+  let new_map = List.fold_left (add_decl_if_linear struct_info Assigned) lin_map args in
   new_map
 ;;
 
@@ -240,11 +249,6 @@ let rec linear_check_block
   (s_list : sstmt list)
   : linear_map_result
   =
-  (* Add a list of variable declarations to a lin_map in state Unassigned *)
-  let linear_add_locals (lin_map : linear_map) (slocals : var_decl list) : linear_map =
-    (*TODO implement *)
-    lin_map
-  in
   (* Check an expression *)
   let rec check_expr (lin_map : linear_map_result) (expr : sexpr) : linear_map_result =
     lin_map
@@ -288,7 +292,9 @@ let rec linear_check_block
   match lin_map with
   | Error err -> Error err
   | Ok lin_map ->
-    let lin_map = linear_add_locals lin_map vdecls in
+    (* Add local variables *)
+    let lin_map = add_linear_decls struct_info Unassigned lin_map vdecls in
+    (* Check statements *)
     let lin_map = linear_check_stmt_list (Ok lin_map) s_list in
     lin_map
 ;;
@@ -299,7 +305,8 @@ let process_func (struct_info : struct_info) (func_info : func_info) (func : sfu
   : string * linear_map_result
   =
   (* TODO pull out all the error checking glue with cool monad stuff *)
-  let lin_map = linear_add_args struct_info StringMap.empty func.sargs in
+  let lin_map = StringMap.empty in
+  let lin_map = add_linear_decls struct_info Assigned lin_map func.sargs in
   let func_statements =
     match func.sreturn with
     | SVoidReturn -> func.sbody
