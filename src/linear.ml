@@ -4,12 +4,11 @@ open Astprint
 open Sastprint
 module StringMap = Map.Make (String)
 
-(* Generic string map result types, allowing for Ok StringMap or Error string *)
+(* Types for passing results and errors *)
 
 type struct_info = struct_def StringMap.t
 type struct_info_result = (struct_info, string) result
 type func_info = sfunc_def StringMap.t
-type func_info_result = (func_info, string) result
 
 type linear_state =
   | Unassigned
@@ -21,21 +20,28 @@ type linear_state =
 type linear_map = (linear_state * typ) StringMap.t
 type linear_map_result = (linear_map, string) result
 
-(* For debugging and error message printing *)
-type linear_result = struct_info_result * func_info_result * linear_map_result
+(* Final output type for debugging *)
+type linear_result = struct_info_result * func_info option * linear_map_result
 
+(* Print functions for debugging and error messages *)
 let string_of_struct_info (struct_info : struct_info) : string =
-  StringMap.fold
-    (fun key value acc -> acc ^ key ^ " -> " ^ string_of_struct_def value ^ "\n")
-    struct_info
-    ""
+  if StringMap.is_empty struct_info
+  then "[]"
+  else
+    StringMap.fold
+      (fun key value acc -> acc ^ key ^ " -> " ^ string_of_struct_def value ^ "\n")
+      struct_info
+      ""
 ;;
 
 let string_of_func_info (func_info : func_info) : string =
-  StringMap.fold
-    (fun key value acc -> acc ^ key ^ " -> " ^ string_of_sfunc_def value ^ "\n")
-    func_info
-    ""
+  if StringMap.is_empty func_info
+  then "[]"
+  else
+    StringMap.fold
+      (fun key value acc -> acc ^ key ^ " -> " ^ string_of_sfunc_def value ^ "\n")
+      func_info
+      ""
 ;;
 
 let string_of_linear_state (lin_state : linear_state) : string =
@@ -48,17 +54,20 @@ let string_of_linear_state (lin_state : linear_state) : string =
 ;;
 
 let string_of_linear_map (lin_map : linear_map) : string =
-  StringMap.fold
-    (fun key value acc ->
-      acc
-      ^ key
-      ^ " -> "
-      ^ string_of_linear_state (fst value)
-      ^ " : "
-      ^ string_of_typ (snd value)
-      ^ "\n")
-    lin_map
-    ""
+  if StringMap.is_empty lin_map
+  then "[]"
+  else
+    StringMap.fold
+      (fun key value acc ->
+        acc
+        ^ key
+        ^ " -> "
+        ^ string_of_linear_state (fst value)
+        ^ " : "
+        ^ string_of_typ (snd value)
+        ^ "\n")
+      lin_map
+      ""
 ;;
 
 (* Generic Printing of 'Result' type *)
@@ -68,31 +77,62 @@ let string_of_result (string_of_a : 'a -> string) (result : ('a, string) result)
   | Error err -> err
 ;;
 
+let string_of_option (string_of_a : 'a -> string) (opt : 'a option) : string =
+  match opt with
+  | Some a -> string_of_a a
+  | None -> "None"
+;;
+
 let string_of_linear_result (lin_result : linear_result) : string =
   let struct_info, func_info, lin_map = lin_result in
   "Struct Info:\n"
   ^ string_of_result string_of_struct_info struct_info
-  ^ "Func Info:\n"
-  ^ string_of_result string_of_func_info func_info
-  ^ "Linear Map:\n"
+  ^ "\nFunc Info:\n"
+  ^ string_of_option string_of_func_info func_info
+  ^ "\nLinear Map:\n"
   ^ string_of_result string_of_linear_map lin_map
 ;;
 
-(* type linear_result =
-   | LinearError of string
-   | LinPass *)
+(* Generic Helpers *)
 
-(* type linear_state =
-   | Unassigned
-   | Assigned
-   | Borrowed
-   | Used *)
+let flip f x y = f y x
 
-(* type ref_qual =
-   | Linear
-   | Unrestricted *)
+(* Struct Info Helpers *)
 
-(* type linear_map = (string, (ref_qual * linear_state * stype)) Hashtbl.t *)
+(* Returns true if the given struct is linear, based on its qualifier *)
+let is_linear_struct (in_struct : struct_def) : bool =
+  match in_struct with
+  | { lin_qual = Linear } -> true
+  | _ -> false
+;;
+
+(* Given a struct map and a struct name, search the struct map for that struct *)
+let get_struct (struct_map : struct_info) (sname : string) : struct_def option =
+  StringMap.find_opt sname struct_map
+;;
+
+(* Linear Type Helpers *)
+
+(* check if a given variable type is linear (based on struct_map if it is a struct type)
+   if struct type and struct type not present in map, returns false *)
+let rec is_linear_type (struct_map : struct_info) (var_type : typ) : bool =
+  match var_type with
+  | Prim (Linear, _) -> true
+  | Struct sname ->
+    (match get_struct struct_map sname with
+     | Some in_struct -> is_linear_struct in_struct
+     | None -> false)
+  | Arr (subtyp, _) ->
+    is_linear_type struct_map subtyp
+    (* Array of linear types is linear *)
+    (* TODO add linear arrays of unrestricted types *)
+  | Ref _ -> false (* Refs can't be linear *)
+  | _ -> false
+;;
+
+let is_linear_decl (struct_map : struct_info) (decl : var_decl) : bool =
+  is_linear_type struct_map (fst decl)
+;;
 
 (* let linear_add_locals (lin_map : linear_map) (slocals : sfunc_def.slocals) : linear_map result =
    (*TODO implement *)
@@ -204,42 +244,6 @@ let string_of_linear_result (lin_result : linear_result) : string =
 
    in *)
 *)
-let flip f x y = f y x
-
-(* Returns true if the given struct is linear, based on its qualifier *)
-let is_linear_struct (in_struct : struct_def) : bool =
-  match in_struct with
-  | { lin_qual = Linear } -> true
-  | _ -> false
-;;
-
-(* Given a struct map and a struct name, search the struct map for that struct *)
-let get_struct (struct_map : struct_info) (sname : string) : struct_def option =
-  StringMap.find_opt sname struct_map
-;;
-
-(* Given a struct map and a struct name, search the struct map for that struct and return the linear qualifier *)
-
-(* check if a given variable type is linear (based on struct_map if it is a struct type)
-   if struct type and struct type not present in map, returns false *)
-let rec is_linear_type (struct_map : struct_info) (var_type : typ) : bool =
-  match var_type with
-  | Prim (Linear, _) -> true
-  | Struct sname ->
-    (match get_struct struct_map sname with
-     | Some in_struct -> is_linear_struct in_struct
-     | None -> false)
-  | Arr (subtyp, _) ->
-    is_linear_type struct_map subtyp
-    (* Array of linear types is linear *)
-    (* TODO add linear arrays of unrestricted types *)
-  | Ref _ -> false (* Refs can't be linear *)
-  | _ -> false
-;;
-
-let is_linear_decl (struct_map : struct_info) (decl : var_decl) : bool =
-  is_linear_type struct_map (fst decl)
-;;
 
 (* Process a list of structs, populating a result map that maps struct name
    to struct definition. Also checks for unrestricted structs with linear members,
@@ -264,27 +268,40 @@ let process_structs (structs : struct_def list) : struct_info_result =
     structs
 ;;
 
-(* Check linearity on a program *)
-let check program : linear_result =
-  (* Generate struct info map *)
-  let _, structs, _ = program in
-  let struct_info_map = process_structs structs in
-  (* populate func map *)
-
-  (* check functions *)
-  (struct_info_map, Ok StringMap.empty, Ok StringMap.empty)
+(* Take in a list of func prototypes and adds each to a map if they have a
+   linear return type or linear arguments. Does no rule-checking. *)
+let gen_func_info_map (funcs : sfunc_def list) (struct_info_map : struct_info) : func_info
+  =
+  let func_has_linear_args (func : sfunc_def) : bool =
+    List.exists (is_linear_decl struct_info_map) func.sargs
+  in
+  let func_has_linear_ret (func : sfunc_def) : bool =
+    match func.srtyp with
+    | Nonvoid ret -> is_linear_type struct_info_map ret
+    | _ -> false
+  in
+  let acc_linear_func (acc : func_info) (func : sfunc_def) : func_info =
+    if func_has_linear_args func || func_has_linear_ret func
+    then StringMap.add func.sfname func acc
+    else acc
+  in
+  List.fold_left acc_linear_func StringMap.empty funcs
 ;;
 
-(* TODO remove this and just use regular Error type
-   type linear_result =
-   | LinearError of string
-   | LinPass *)
-
-(* type linear_state =
-   | Unassigned
-   | Assigned
-   | Borrowed
-   | Used *)
+(* Check linearity on a program *)
+let check program : linear_result =
+  let _, structs, funcs = program in
+  (* Generate struct info map *)
+  let struct_info_map = process_structs structs in
+  (* populate func map *)
+  let func_info_map =
+    match struct_info_map with
+    | Error err -> None
+    | Ok struct_info_map -> Some (gen_func_info_map funcs struct_info_map)
+  in
+  (* check functions *)
+  struct_info_map, func_info_map, Ok StringMap.empty
+;;
 
 (* match sstruct.lin_qual with
    | Unrestricted ->
