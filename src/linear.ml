@@ -99,7 +99,7 @@ let string_of_option (string_of_a : 'a -> string) (opt : 'a option) : string =
 
 let string_of_linear_result (lin_result : linear_result) : string =
   let program_info_result, lin_map_result = lin_result in
-  "Program Info: "
+  "Program Info:\n"
   ^ string_of_result string_of_program_info program_info_result
   ^ "\nLinear Maps:\n"
   ^ List.fold_left
@@ -246,6 +246,18 @@ let linear_add_args
   new_map
 ;;
 
+(* TODO implement *)
+let linear_check_block
+  (vdecls : var_decl list)
+  (s_list : sstmt list)
+  (lin_map : linear_map_result)
+  : linear_map_result
+  =
+  (*Add args*)
+  (*Check statements*)
+  lin_map
+;;
+
 let merge_map (map1 : linear_map_result) (map2 : linear_map_result) : linear_map_result =
   (* TODO implement *)
   map1
@@ -258,12 +270,6 @@ let rec linear_check_stmt_list
   (body : sstmt list)
   : linear_map_result
   =
-  (* TODO implement *)
-  let linear_check_block (vdecls : var_decl list) (s_list : sstmt list) (lin_map : linear_map_result)
-    : linear_map_result
-    =
-    lin_map
-  in
   let rec linear_check_stmt (lin_map : linear_map_result) (stmt : sstmt)
     : linear_map_result
     =
@@ -297,12 +303,12 @@ let linear_check_return
 ;;
 
 (* Initial Information Gathering Funcs *)
-let init_lin_map (struct_info : struct_info) (func : sfunc_def) : linear_map =
-  let args = func.sargs in
-  let lin_map = linear_add_args struct_info StringMap.empty args in
-  let locals = func.slocals in
-  linear_add_locals struct_info lin_map locals
-;;
+(* let init_lin_map (struct_info : struct_info) (func : sfunc_def) : linear_map =
+   let args = func.sargs in
+   let lin_map = linear_add_args struct_info StringMap.empty args in
+   let locals = func.slocals in
+   linear_add_locals struct_info lin_map locals
+   ;; *)
 
 let ( let* ) = Result.bind
 
@@ -311,9 +317,13 @@ let process_func (struct_info : struct_info) (func_info : func_info) (func : sfu
   : string * linear_map_result
   =
   (* TODO pull out all the error checking glue with cool monad stuff *)
-  let lin_map = init_lin_map struct_info func in
-  let lin_map = linear_check_stmt_list struct_info func_info (Ok lin_map) func.sbody in
-  let lin_map = linear_check_return struct_info func_info func.sreturn lin_map in
+  let lin_map = linear_add_args struct_info StringMap.empty func.sargs in
+  let func_statements =
+    match func.sreturn with
+    | SVoidReturn -> func.sbody
+    | SReturn ex -> func.sbody @ [ SExpr ex ]
+  in
+  let lin_map = linear_check_block func.slocals func_statements (Ok lin_map) in
   func.sfname, lin_map
 ;;
 
