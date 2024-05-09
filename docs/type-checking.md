@@ -5,16 +5,48 @@
     - For each structure, check that no unrestricted struct contains linear var
     - Add linear structures to map from name -> definition
 - Process function prototypes to produce function_info map 
-    - For each function, add a map from name -> ret type, arg types
+    - For each function with linear return or linear args, add a map from name -> ret type, arg types
 - Process functions 
-    - construct initial linear map
-        - add arguments 
+    - construct initial linear map from function arguments 
             - Add each linear argument to linear map as state Assigned
             - Add each ref argument to linear map as state Ref
+    - Process block (locals, statements)
         - add local declarations
             - Add each linear variable to linear map as state Unassigned
-    - process statements
-        - check that all 
+        - process statements (Block, Expr, If, While):
+            - For each statement:
+                - If Block, recursively process inner block (this enters a new scope)
+                - If If
+                    - check conditional expression 
+                    - produce 'true map' by recursively processing the first statement 
+                    - produce 'false map' by recursively processing the second statement
+                    - compare true/false maps to ensure all elements in matching states
+                - If While
+                    - check conditional expression, store result as 'initial map'
+                    - produce 'end map' by recursively processing body statement 
+                    - compare initial/end maps to ensure all elements in matching states
+                - If Expr (Identifier, Literal, Operation, Assignment, Call)
+                    - If literal, do nothing
+                    - If identifier, try Assigned -> Used  
+                    - If operation
+                        - If unary operation, check operand expression
+                        - If binary operation, check first expr then second expr
+                        - If access operation (EXPR.STRING or EXPR->STRING)
+                            - If dot 
+                                - Get struct name from type of EXPR (if not struct type, raise error)
+                                - Check field STRING in struct is unrestricted (if field not found, raise error)
+                            - If arrow
+                                - Get struct name from type within Ref (if not ref struct type, raise error)
+                                - Check field STRING in struct is unrestricted
+                        - If Deref
+                        - If Borrow
+                        - If index
+                    - If assignment
+                    - If call 
+
+        - remove local declarations, checking that each is in a valid state (Used or Ref, I think)
+
+
 
 ## Linear Map
 - State: Unassigned, Assigned, Borrowed, Used, Ref
