@@ -49,8 +49,8 @@ scanner.cmo : crustyparse.cmi
 scanner.cmx : crustyparse.cmx
 
 
-# ast.cmi ast.cmo : ast.ml
-# 	ocamlc -w A -c $<
+ast.cmi ast.cmo : ast.ml
+	ocamlc -w A -c $<
 
 ##############################
 
