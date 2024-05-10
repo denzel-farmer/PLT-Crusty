@@ -325,7 +325,7 @@ let rec linear_check_block
       | Some (Assigned, typ) -> Error ("Variable " ^ ident ^ " assigned more than once")
       | Some (Borrowed, typ) -> Error ("Variable " ^ ident ^ " borrowed before assignment")
       | Some (Ref, typ) -> Error ("Reference " ^ ident ^ " cannot be assigned")
-      | None -> Error ("Variable " ^ ident ^ " not declared")
+      | None -> Ok lin_map
     in
     (* Check a single-identifier expression. If is_consume is true, this expression is
        immediately consumed (i.e. is passed as a function argument or assigned to a new variable).*)
