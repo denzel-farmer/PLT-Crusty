@@ -27,13 +27,18 @@
                     - compare initial/end maps to ensure all elements in matching states
                 - If Expr (Identifier, Literal, Operation, Assignment, Call)
                     - If literal, do nothing
-                    - If identifier, try Assigned -> Used  
+                    - If identifier
+                        - If is_consumed then try Assigned -> Used 
+                        - Else if is linear primitive then try Assigned -> Assigned (treated like dot access) 
+                        - Else if is linear struct then error, silent discard
+                        - 
                     - If operation
                         - If unary operation, check operand expression
                         - If binary operation, check first expr then second expr
                         - If access operation (EXPR.ID or EXPR->ID)
                             - If dot 
                                 - Get struct name from type of EXPR (if not struct type, raise error)
+                                - Check struct is Assigned
                                 - Check field ID in struct is unrestricted (if field not found, raise error)
                             - If arrow
                                 - Get struct name from type within Ref (if not ref struct type, raise error)
@@ -44,14 +49,32 @@
                     - If assignment
                         - If Assign (ID = EXPR)
                             - try Unassiged -> Assigned or Used -> Assigned on ID
-                            - check EXPR 
+                            - check EXPR with is_consumed true
                         - If StructAssign (ID.ID = EXPR)
                         - If RefStructAssign (ID->ID = EXPR)
                     - If call 
+                        - [do something]
+                        - Check each arg expression marking is_consumed
 
         - remove local declarations, checking that each is in a valid state (Used or Ref, I think)
 
+## Consumtion, Expressions, and Statements
+- Consuming a linear variable requires exploding it or passing it to another function
+    - simple assignment counts as explosion for a linear primitive, but use in an expression 
+    with primitive operations does not (treated like dot access)
+- So, in an expression the possible changes to a given linear variable are:
+    - None, if it is unused 
+    - None, if only its free members are accessed with a dot operation 
+    - Assigned, if it is in the lhs of an assignment 
+    - Consumed, if it is assigned to another variable 
+    - Consumed, if it is passed to a function call 
+    - Borrowed, if it is passed as a ref argument 
 
+- Expressions:
+    - For linear primitives x and y, "x + y" consumes neither x nor y, treat like dot-access from a linearity perspective
+    - For linear primitives x, y, and z, "z = x + y" consumes netiher x nor y, but assigns z 
+    - For any linear x and y, "y = x" consumes x and assigns y 
+    - For any linear struct x with free member m, "x.m" does not change the state of x (but requires x )
 
 ## Linear Map
 - State: Unassigned, Assigned, Borrowed, Used, Ref
@@ -67,6 +90,14 @@
 - All types include a 'Linear' or 'Unrestricted' qualifier 
 
 ### Linear Primitive Types 
+- Linear primitives don't make much sense/aren't much use 
+    - but, conceptually can be treated like a linear struct containing a single 
+    free primitive component, that gets dot-accessed whenever it is used in a primitive
+    operation. 
+    - When linear primitives are on the rhs of an assigment they are consumed/exploded 
+        - As a result, using a linear primitive in an expression is not sufficient 
+        to consume it, unless that expression is a reassignment or it is passed to a function call 
+
 - When declared, variables with primitive types always include one of these
 qualifiers
 - Primitive declarations without an 'Unrestricted' or 'Linear' keyword are 
