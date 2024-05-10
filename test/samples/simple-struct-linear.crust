@@ -15,7 +15,7 @@ int main() {
     int c;
     int d;
 
-    a = {1, 2};
+    a = {struct lin_point -> 1, 2};
 
     b.x = 3;
     b.y = 4;

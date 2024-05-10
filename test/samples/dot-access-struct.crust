@@ -1,0 +1,13 @@
+
+unrestricted struct point {
+    int x;
+    int y;
+};
+
+int main() {
+    struct point a;
+ 
+    a = {struct point -> 1, 2};
+    
+    return a.x + a.y;
+} 
