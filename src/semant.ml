@@ -84,13 +84,14 @@ let gen_struct_map (structs : struct_def list) : structs_map =
       StringMap.add st.sname (st, fields) map
   in
   List.fold_left add_struct StringMap.empty structs
-  in 
-  let struct_map = gen_struct_map program.structs in
+in 
+let struct_map = gen_struct_map program.structs in
 
-  let find_struct (sname : string) : struct_def = 
+  (* looks up a struct name (point) *)
+  let find_struct (sname : string) = 
     match (StringMap.find_opt sname struct_map) with
     | None -> raise (Failure ("unrecognized struct " ^ sname))
-    | Some (st, _) -> st
+    | Some s -> s
   in
   
   let scopes = ref [] in
@@ -151,16 +152,6 @@ let gen_struct_map (structs : struct_def list) : structs_map =
       | _ -> raise (Failure "match_array")
       in t
     in 
-    let check_field s field =
-        let struct_def = find_struct s in
-        let find_field s = 
-          try
-            let s' = List.find (fun (_, name) -> name = field) struct_def.fields
-            in s'
-          with Not_found -> raise (Failure ("Field "^ field ^" not found in struct " ^ s))
-        in
-        find_field field
-    in  
     (* Return a semantically-checked expression, i.e., with a type *)
    
     let rec check_expr (exp : expr) : sexpr =
@@ -191,20 +182,55 @@ let gen_struct_map (structs : struct_def list) : structs_map =
         let a = match l with 
           | Assign (var, e) -> 
             let lt = type_of_identifier var
-            and (rt, e') = check_expr e in
+            and (rt, e') = check_expr e
+            in
             let err = "illegal assignment " ^ string_of_typ lt ^ " = " ^
                       string_of_typ rt ^ " in " ^ string_of_expr e
             in
             (check_assign lt rt err, SAssignment(SAssign(var, (rt, e'))))
           | StructAssign (var1, var2, e) -> 
-            let (lt, _ ) = check_field var1 var2 in 
-            let (rt, e') = check_expr e in 
+            (* Get struct definition from global struct map *)
+            let stype = type_of_identifier var1 in 
+            let get_sname = function 
+              | Struct s -> s 
+              | _ -> raise (Failure "Not a struct type")
+            in 
+            let s = find_struct (get_sname stype) in
+            let (sdef, smap) = match s with 
+              | (a, b) -> a, b 
+            in 
+            let (lt, _) = 
+              try StringMap.find var2 smap 
+              with Not_found -> raise (Failure ("Field "^ var2 ^" not found in struct " ^ var1))
+            in
+            let (rt, e') = check_expr e in
             let err = "illegal assignment " ^ string_of_typ lt ^ " = " ^
                       string_of_typ rt ^ " in " ^ string_of_expr e
             in
             (check_assign lt rt err, SAssignment(SStructAssign(var1, var2, (rt, e'))))
-          (* | RefStructAssign (var1, var2, e) -> ()
-          | StructExplode (var, e) -> () *)
+          (* | RefStructAssign (var1, var2, e) -> () *)
+          | StructExplode (var, e) -> 
+(* 
+            let (t, e) = check_expr e in 
+            (t, SStructExplode(var, (t, e)))
+            ) *)
+
+            let (struct_type, struct_expr) = check_expr e in
+            match struct_type with
+            | Struct sname ->
+              let (struct_def, field_map) = find_struct sname in
+              if List.length var <> List.length struct_def.fields then
+                raise (Failure "Number of variables does not match number of structure fields")
+              else
+                let field_types = List.map (fun (t, _) -> t) struct_def.fields in
+                let var_types = List.map type_of_identifier var in
+                List.iter2 (fun expected found ->
+                  if not (compare_stripped_types expected found) then
+                    raise (Failure "Type mismatch in struct explode")
+                ) field_types var_types;
+                (struct_type, SAssignment(SStructExplode (var, (struct_type, struct_expr))))
+            | _ -> raise (Failure "Right hand side of StructExplode is not a structure")
+                    
         in a
       | Operation l -> 
         let o = match l with 
@@ -282,8 +308,20 @@ let gen_struct_map (structs : struct_def list) : structs_map =
           in
           (t, SOperation(SUnLogOp(op, (t, e'))))
         | AccessOp (s, op, var) -> 
-          let (t, _) = check_field s var
-          in (t, SOperation(SAccessOp((s, op, var))))
+          let stype = type_of_identifier s in
+          let get_sname = function 
+              | Struct s -> s 
+              | _ -> raise (Failure "Not a struct type")
+          in 
+          let s' = find_struct (get_sname stype) in
+          let (sdef, smap) = match s' with 
+            | (a, b) -> a, b 
+          in 
+          let (t, _) = 
+            try StringMap.find var smap 
+            with Not_found -> raise (Failure ("Field "^ var ^" not found in struct " ^ s))
+          in
+          (t, SOperation(SAccessOp((s, op, var))))
         | Deref (s) -> 
           let err = "illegal dereference operator " in
           let t = type_of_identifier s in

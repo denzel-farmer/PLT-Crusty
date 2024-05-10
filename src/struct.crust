@@ -10,13 +10,14 @@ int main() {
     int c;
     int d;
 
-    a.x = 1;
-    //a.y = 2;
+    a.x = 2;
+    a.y = 2;
 
-    //b.x = 3;
-    //b.y = 4;
+    b.x = 3;
+    b.y = 4;
+    c = b.x;
 
-    //:{c, d} = a;
+    :{c, d} = a;
     
-    return 3;
+    return b.x;
 } 
