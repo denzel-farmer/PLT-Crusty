@@ -31,7 +31,6 @@
                         - If is_consumed then try Assigned -> Used 
                         - Else if is linear primitive then try Assigned -> Assigned (treated like dot access) 
                         - Else if is linear struct then error, silent discard
-                        - 
                     - If operation
                         - If unary operation, check operand expression
                         - If binary operation, check first expr then second expr
@@ -52,8 +51,9 @@
                             - check EXPR with is_consumed true
                         - If StructAssign (ID.ID = EXPR)
                         - If RefStructAssign (ID->ID = EXPR)
-                    - If call 
-                        - [do something]
+                    - If call (ID(EXPR list))
+                        - Look up func info, see if func returns linear. If so,
+                        fail if is_consumed is false.
                         - Check each arg expression marking is_consumed
 
         - remove local declarations, checking that each is in a valid state (Used or Ref, I think)
@@ -62,6 +62,7 @@
 - Consuming a linear variable requires exploding it or passing it to another function
     - simple assignment counts as explosion for a linear primitive, but use in an expression 
     with primitive operations does not (treated like dot access)
+    
 - So, in an expression the possible changes to a given linear variable are:
     - None, if it is unused 
     - None, if only its free members are accessed with a dot operation 
@@ -94,10 +95,9 @@
     - but, conceptually can be treated like a linear struct containing a single 
     free primitive component, that gets dot-accessed whenever it is used in a primitive
     operation. 
-    - When linear primitives are on the rhs of an assigment they are consumed/exploded 
+    - When linear primitives are on the rhs of an assigment or passed as arguments they are consumed/exploded 
         - As a result, using a linear primitive in an expression is not sufficient 
         to consume it, unless that expression is a reassignment or it is passed to a function call 
-
 - When declared, variables with primitive types always include one of these
 qualifiers
 - Primitive declarations without an 'Unrestricted' or 'Linear' keyword are 

@@ -296,7 +296,8 @@ let rec linear_check_block
   (s_list : sstmt list)
   : linear_map_result
   =
-  (* Check an expression *)
+  (* Check an expression and transform linear_map. Bool is_consumed indicates
+     whether this expression is immediately consumed *)
   let rec check_expr (lin_map : linear_map_result) (is_consumed : bool) (expr : sexpr)
     : linear_map_result
     =
@@ -331,6 +332,12 @@ let rec linear_check_block
     let check_lone_ident (lin_map : linear_map) (is_consumed : bool) (ident : string)
       : linear_map_result
       =
+      debug_print
+        ("Checking lone identifier \""
+         ^ ident
+         ^ "\" (is_consumed="
+         ^ string_of_bool is_consumed
+         ^ ")\n");
       if is_consumed
       then consume_ident lin_map ident
       else (
@@ -338,9 +345,15 @@ let rec linear_check_block
         | None ->
           (* If identifier is unrestricted, we don't care *)
           Ok lin_map
+        | Some (Unassigned, _) ->
+          (* Whether or not it is explosion or psuedo-dot access, this is an error *)
+          Error ("Linear variable \"" ^ ident ^ "\" used before assignment")
+        | Some (Used, _) ->
+          (* Whether or not it is explosion or psuedo-dot access, this is an error *)
+          Error ("Linear variable \"" ^ ident ^ "\" used more than once")
         | Some (Assigned, Prim (Linear, _)) | Some (Borrowed, Prim (Linear, _)) ->
           (* The only time a non-consumed, lone linear identifier is allowed is if it
-             is a primitive, in which case we treat this as sugar for dot access *)
+             is an assigned primitive, in which case we treat this as sugar for dot access *)
           Ok lin_map
         | _ ->
           (* Otherwise, silent discard is happening *)
@@ -352,7 +365,7 @@ let rec linear_check_block
       debug_println ("Assignment is  \"" ^ string_of_sassignment assmt ^ "\"");
       match assmt with
       | SAssign (id, expr) ->
-        (* Regular assignment, mark lhs assigned and check rhs, with 'is_assigned' context *)
+        (* Regular assignment, mark lhs assigned and check rhs, with 'is_consumed' context *)
         let lin_map = assign_ident lin_map id in
         check_expr lin_map true expr
       | SStructAssign (s_id, mem_id, expr) ->
@@ -361,7 +374,7 @@ let rec linear_check_block
       | SRefStructAssign (s_ref_id, mem_id, expr) -> Ok lin_map
       | SStructExplode (idents, s_expr) -> Ok lin_map
     in
-    (* Check expression main *)
+    (* Check expression *)
     info_println "Checking expression";
     debug_println ("Expression is  \"" ^ string_of_sexpr expr ^ "\"");
     match lin_map with
@@ -374,9 +387,7 @@ let rec linear_check_block
          check_lone_ident lin_map is_consumed id
        | out_typ, SOperation op -> Ok lin_map
        | out_typ, SAssignment assmt -> check_assignment lin_map assmt
-       | out_typ, SCall (fname, args) ->
-         (*TODO will need to add a parameter 'is_assigned' to track whether an expression is discarded*)
-         Ok lin_map)
+       | out_typ, SCall (fname, args) -> Ok lin_map)
   in
   (* Check a list of statements *)
   let rec linear_check_stmt_list (in_lin_map : linear_map_result) (s_list : sstmt list)
