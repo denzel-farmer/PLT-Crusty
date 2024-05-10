@@ -76,8 +76,7 @@ and operation =
   | CompOp of expr * compOp * expr
   | LogOp of expr * binLogOp * expr
   | UnLogOp of unLogOp * expr
-  | AccessOp of string * accessOp * string
-  | Ref of string
+  | AccessOp of string * accessOp * string (* TODO: change back to expr * accessOp * string? *)
   | Deref of string
   | Borrow of string
   | Index of string * expr
@@ -95,7 +94,7 @@ and literal =
   | BoolLit of bool
   | CharLit of char
   | FloatLit of float
-  | StructLit of expr list
+  | StructLit of string * expr list
   | StringLit of string
   | ArrayLit of expr list
 
@@ -137,6 +136,6 @@ type struct_def =
 (* Program Type *)
 type program =
   { globals : var_decl list
-  ; structs : struct_def list
+  ; structs : struct_def list (*TODO replace struct_def list with string map*)
   ; funcs : func_def list
   }

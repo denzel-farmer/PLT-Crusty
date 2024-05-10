@@ -6,6 +6,16 @@ open Astprint
 
 module StringMap = Map.Make (String)
 
+(* Types for storing all struct definitions and members by name, could make this 
+into separate module and share with the linear checker/parser  *)
+
+
+type field_map = var_decl StringMap.t
+
+(* TODO inefficient, stores fields as both list and map *)
+type structs_map = (struct_def*field_map) StringMap.t
+
+
 (* Compares two types, not considering linearity *)
 let rec compare_stripped_types (first : typ) (second : typ) : bool =
   match first, second with
@@ -15,6 +25,11 @@ let rec compare_stripped_types (first : typ) (second : typ) : bool =
   | Arr(t1, i1), Arr(t2, i2) -> compare_stripped_types t1 t2 && i1 = i2
   | _ -> false 
 ;;
+
+let rec compare_sexpr_decl_stripped_types (first : var_decl) (second : sexpr) : bool =
+  let (t1, _) = first in
+  let (t2, _) = second in
+  compare_stripped_types t1 t2
 
 let check program =
   (* Collect function declarations for built-in functions: no bodies *)
@@ -49,33 +64,35 @@ let check program =
   in
   let _ = find_func "main" in (* Ensure "main" is defined *)
 
-  let add_struct map (st: struct_def) = 
-    let dup_err = "duplicate struct " ^ st.sname
-    and make_err er = raise (Failure er)
-    and n = st.sname (* Name of the function *)
-    in match st with (* No duplicate functions or redefinitions of built-ins *)
-    | _ when StringMap.mem n map -> make_err dup_err
-    | _ ->  
-      (* Make sure no duplicate fields in same struct*) (* Can probably make a helper function for all of these dup checks? *)
-      let add_struct_field map (field: var_decl) =
-        let make_err er = raise (Failure er)
-        and field_name = match field with 
-        | (t, s) -> s
-        in let dup_err = "duplicate field " ^ field_name
-        in match field_name with 
-        | _ when StringMap.mem field_name map -> make_err dup_err
-        | _ ->  StringMap.add field_name field map
-      in
-      List.fold_left add_struct_field StringMap.empty st.fields;
-      StringMap.add n st map;
-  in 
-  let struct_decls = List.fold_left add_struct StringMap.empty program.structs in
-
-  let find_struct s = 
-    try StringMap.find s struct_decls
-      with Not_found -> raise (Failure ("unrecognized struct " ^ s))
+  (*TODO replace 'raise' with result/option *)
+let gen_struct_map (structs : struct_def list) : structs_map =
+  let gen_field_map (fields : var_decl list) : field_map =
+    let add_field (map : field_map) (field : var_decl) =
+      let (field_type, field_name) = field in
+      if (StringMap.mem field_name map) then
+        raise (Failure ("duplicate field name: " ^ field_name))
+      else
+        StringMap.add field_name field map
+    in
+    List.fold_left add_field StringMap.empty fields
   in
+  let add_struct (map : structs_map) (st : struct_def) : structs_map =
+    if (StringMap.mem st.sname map) then
+      raise (Failure ("duplicate struct name: " ^ st.sname))
+    else
+      let fields = gen_field_map st.fields in
+      StringMap.add st.sname (st, fields) map
+  in
+  List.fold_left add_struct StringMap.empty structs
+  in 
+  let struct_map = gen_struct_map program.structs in
 
+  let find_struct (sname : string) : struct_def = 
+    match (StringMap.find_opt sname struct_map) with
+    | None -> raise (Failure ("unrecognized struct " ^ sname))
+    | Some (st, _) -> st
+  in
+  
   let scopes = ref [] in
   let enter_scope () = scopes := StringMap.empty :: !scopes in
   let exit_scope () = match !scopes with
@@ -144,18 +161,30 @@ let check program =
         in
         find_field field
     in  
-    (* Check literals*)
-    let check_literal = function 
-        IntLit l -> (Prim(Unrestricted, Int), SLiteral(SIntLit(l)))
-      | BoolLit l -> (Prim(Unrestricted, Bool), SLiteral(SBoolLit(l)))
-      | CharLit l -> (Prim(Unrestricted, Char), SLiteral(SCharLit(l)))
-      | FloatLit l -> (Prim(Unrestricted, Float), SLiteral(SFloatLit(l)))
-      (* idk how to do this | StructLit l -> (Struct(), SStructLit l)  *)
-      | StringLit l -> (Prim(Unrestricted, String), SLiteral(SStringLit(l)))
-      (* idk how to do this | ArrayLit l -> ( , SArrayLit l) *)
     (* Return a semantically-checked expression, i.e., with a type *)
-    in 
-    let rec check_expr = function
+   
+    let rec check_expr (exp : expr) : sexpr =
+        (* Check literals*)
+      let check_literal (lit : literal): sexpr =
+        match lit with 
+          IntLit l -> (Prim(Unrestricted, Int), SLiteral(SIntLit(l)))
+        | BoolLit l -> (Prim(Unrestricted, Bool), SLiteral(SBoolLit(l)))
+        | CharLit l -> (Prim(Unrestricted, Char), SLiteral(SCharLit(l)))
+        | FloatLit l -> (Prim(Unrestricted, Float), SLiteral(SFloatLit(l)))
+        | StringLit l -> (Prim(Unrestricted, String), SLiteral(SStringLit(l)))
+        | ArrayLit l -> raise (Failure "ArrayLit not implemented")
+        | StructLit (name, exprs) -> 
+          match (StringMap.find_opt name struct_map) with
+          | None -> raise (Failure ("undeclared struct \"" ^ name ^ "\""))
+          | Some (st, fields) ->
+            let sexprs = List.map check_expr exprs in
+            let type_match = List.for_all2 compare_sexpr_decl_stripped_types st.fields sexprs in
+            if not type_match then
+              raise (Failure ("type mismatch in struct literal \"" ^ name ^ "\""))
+            else
+            (Struct(name), SLiteral(SStructLit(name, sexprs)))
+        in
+      match exp with
       | Id var -> (type_of_identifier var, SId var)
       | Literal l -> check_literal l
       | Assignment l -> 
