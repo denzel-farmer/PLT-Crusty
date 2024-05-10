@@ -16,7 +16,7 @@ let translate (globals, structs, functions) =
   (* and iString_t  = L.pointer_type (L.i8_type context) *)
   in
   
-  let struct_decls : (A.struct_def) StringMap.t =
+  let all_structs : (A.struct_def) StringMap.t =
     let struct_decl m (sdecl: A.struct_def) =
       let name = sdecl.sname in
       StringMap.add name (sdecl) m in
@@ -36,10 +36,11 @@ let translate (globals, structs, functions) =
   | A.Prim(_, Float) -> L.float_type context
   | A.Prim(_, String) -> L.pointer_type i8_t
   | A.Struct(s) ->
-    let struct_decl = StringMap.find s struct_decls in
+    let struct_decl = StringMap.find s all_structs in
     let field_types = List.map (fun (t, _) -> ltype_of_typ t) struct_decl.fields in
     L.struct_type context (Array.of_list field_types)
   | A.Arr(t, n) -> L.array_type (ltype_of_typ t) n 
+  | A.Ref(t) -> L.pointer_type (ltype_of_typ t)
   (* | A.Ref(t) ->  *) (* TODO *)
   in 
 
@@ -47,7 +48,15 @@ let translate (globals, structs, functions) =
     A.Nonvoid(t) -> ltype_of_typ t
     | A.Void -> L.void_type context
   in
+
+  let struct_decls : (L.lltype) StringMap.t =
+    let struct_decl m (sdecl: A.struct_def) =
+      let name = sdecl.sname in
+      let field_types = List.map (fun (t, _) -> ltype_of_typ t) sdecl.fields in
+      StringMap.add name (L.struct_type context (Array.of_list field_types)) m in
+    List.fold_left struct_decl StringMap.empty structs
   
+  in
   (* Define each function (arguments and return type) so we can
      call it even before we've created its body *)
   let function_decls : (L.llvalue * sfunc_def) StringMap.t =
@@ -122,11 +131,16 @@ let translate (globals, structs, functions) =
     in lookup !scopes   
   in
 
+  let printf_t : L.lltype =
+    L.var_arg_function_type i32_t [| L.pointer_type i8_t |] in
+  let printf_func : L.llvalue =
+    L.declare_function "printf" printf_t the_module in
+
   let build_function_body fdecl =
     let (function_addr, _) = StringMap.find fdecl.sfname function_decls in
     let builder = L.builder_at_end context (L.entry_block function_addr) in
 
-    (* let int_format_str = L.build_global_stringptr "%d\n" "fmt" builder in *)
+    let int_format_str = L.build_global_stringptr "%d\n" "fmt" builder in
 
     enter_scope ();
 
@@ -143,9 +157,9 @@ let translate (globals, structs, functions) =
     ) fdecl.sargs;
     
     (* Handle local variables *)
-    (* List.iter (fun (ty, n) ->
+    List.iter (fun (ty, n) ->
       ignore (add_local builder n (ltype_of_typ ty))
-    ) fdecl.slocals; *)
+    ) fdecl.slocals;
 
     (* Return the value for a variable or formal argument.
        Check local names first, then global names *)
@@ -160,6 +174,11 @@ let translate (globals, structs, functions) =
           | SAssign (s, e) ->
             let e' = build_expr builder e in
             ignore(L.build_store e' (lookup s) builder); e'
+          | SStructAssign (s1, s2, e) -> 
+            let e' = build_expr builder e in
+            let struct_ptr = lookup s1 in
+            let field_ptr = L.build_struct_gep struct_ptr 0 s2 builder in
+            ignore(L.build_store e' field_ptr builder); e'
           | _ -> raise (Failure "Invalid assignment"))
         | SOperation so ->
           (match so with 
@@ -210,16 +229,39 @@ let translate (globals, structs, functions) =
               (match op with 
                   | A.Not -> L.build_not
               ) e' "tmp" builder
-          | _ -> raise (Failure "Not implemented: SAccessOp, SDerefOp, SBorrow, SIndex")
-          )
-          (* | SCall ("print", [e]) ->
+          | SAccessOp (s1, op, s2) -> 
+              (match op with 
+                | Arrow -> 
+                  let s_ptr = lookup s1 in
+                  let s' = (L.build_load s_ptr "tmp" builder) in 
+                  let field_ptr = L.build_struct_gep s_ptr 0 s2 builder in
+                  L.build_load field_ptr "s1.s2" builder
+                | Dot -> 
+                  let struct_ptr = lookup s1 in
+                  let field_ptr = L.build_struct_gep struct_ptr 0 s2 builder in
+                  L.build_load field_ptr "s1.s2" builder
+              )
+          | SDeref s -> 
+              let s' = lookup s in
+              L.build_load s' "tmp" builder
+          (* | SBorrow s -> 
+              let s_ptr = L.build_alloca (L.pointer_type (ltype_of_typ )) "s_ptr" builder in
+              let s' = lookup s in 
+              ignore (L.build_store s' s_ptr builder); s_ptr  *)
+          | SIndex (s, e) -> 
+              let s_ptr = lookup s in
+              let e' = build_expr builder e in
+              let index = L.build_gep s_ptr [| e' |] "index" builder in
+              L.build_load index "tmp" builder
+          | _ -> raise (Failure "Not implemented: SAccessOp, SDerefOp, SBorrow, SIndex"))
+        | SCall ("print", [e]) -> 
             L.build_call printf_func [| int_format_str ; (build_expr builder e) |]
-              "printf" builder *)
-          | SCall (f, args) ->
-            let (fdef, fdecl) = StringMap.find f function_decls in
-            let llargs = List.rev (List.map (build_expr builder) (List.rev args)) in
-            let result = f ^ "_result" in
-            L.build_call fdef (Array.of_list llargs) result builder  
+              "printf" builder
+        | SCall (f, args) ->
+          let (fdef, fdecl) = StringMap.find f function_decls in
+          let llargs = List.rev (List.map (build_expr builder) (List.rev args)) in
+          let result = f ^ "_result" in
+          L.build_call fdef (Array.of_list llargs) result builder  
         
     in
 

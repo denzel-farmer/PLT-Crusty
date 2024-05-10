@@ -1,4 +1,10 @@
+struct point {
+    int x; 
+    int y;
+};
+
 int main(int y) {
+    struct point a;
     int x;
     int z;
     string s;
@@ -7,9 +13,13 @@ int main(int y) {
     char c;
     float f;
 
+    a.x = 2;
+    print(a.x);
+
     x = 3 + 3 - 3 * 4 / 6;
     y = 5;
     s = "hello\n";
+    //print(s);
     b = true && !true;
     b1 = 5 > 4;
     c = 'c';

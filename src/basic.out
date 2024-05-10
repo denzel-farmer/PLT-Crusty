@@ -1,12 +1,14 @@
 ; ModuleID = 'Crusty'
 source_filename = "Crusty"
 
+@fmt = private unnamed_addr constant [4 x i8] c"%d\0A\00", align 1
 @globalstring = private unnamed_addr constant [7 x i8] c"hello\0A\00", align 1
 
 define i32 @main(i32 %0) {
 entry:
   %y = alloca i32, align 4
   store i32 %0, i32* %y, align 4
+  %a = alloca { i32, i32 }, align 8
   %x = alloca i32, align 4
   %z = alloca i32, align 4
   %s = alloca i8*, align 8
@@ -14,15 +16,30 @@ entry:
   %b1 = alloca i1, align 1
   %c = alloca i8, align 1
   %f = alloca float, align 4
-  store i32 4, i32* %x, align 4
+  %a1 = alloca { i32, i32 }, align 8
+  %x2 = alloca i32, align 4
+  %z3 = alloca i32, align 4
+  %s4 = alloca i8*, align 8
+  %b5 = alloca i1, align 1
+  %b16 = alloca i1, align 1
+  %c7 = alloca i8, align 1
+  %f8 = alloca float, align 4
+  %x9 = getelementptr inbounds { i32, i32 }, { i32, i32 }* %a1, i32 0, i32 0
+  store i32 2, i32* %x9, align 4
+  %x10 = getelementptr inbounds { i32, i32 }, { i32, i32 }* %a1, i32 0, i32 0
+  %s1.s2 = load i32, i32* %x10, align 4
+  %printf = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @fmt, i32 0, i32 0), i32 %s1.s2)
+  store i32 4, i32* %x2, align 4
   store i32 5, i32* %y, align 4
-  store i8* getelementptr inbounds ([7 x i8], [7 x i8]* @globalstring, i32 0, i32 0), i8** %s, align 8
-  store i1 false, i1* %b, align 1
-  store i1 true, i1* %b1, align 1
-  store i8 99, i8* %c, align 1
-  store float 0x40091EB840000000, float* %f, align 4
-  %z1 = alloca i32, align 4
-  store i32 1, i32* %z1, align 4
-  store i32 3, i32* %z, align 4
+  store i8* getelementptr inbounds ([7 x i8], [7 x i8]* @globalstring, i32 0, i32 0), i8** %s4, align 8
+  store i1 false, i1* %b5, align 1
+  store i1 true, i1* %b16, align 1
+  store i8 99, i8* %c7, align 1
+  store float 0x40091EB840000000, float* %f8, align 4
+  %z11 = alloca i32, align 4
+  store i32 1, i32* %z11, align 4
+  store i32 3, i32* %z3, align 4
   ret i32 0
 }
+
+declare i32 @printf(i8*, ...)
