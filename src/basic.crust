@@ -19,6 +19,7 @@ int main(int y) {
     a.y = 2;
     p.x = 3;
     print(a.x);
+    print(a.y);
     print(p.x);
 
     x = 3 + 3 - 3 * 4 / 6;

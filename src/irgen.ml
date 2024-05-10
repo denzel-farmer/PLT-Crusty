@@ -24,12 +24,15 @@ let translate (globals, structs, functions) =
   in
 
   (* function to find out the offset of a given field in a struct *)
-  let find_field_num (s: A.struct_def) field = 
-    let all_fields = s.fields in 
+  let find_field_num all_fields field = 
     let rec find_field fields field num = 
       match fields with 
       | [] -> -1 
-      | hd :: tl -> if hd = field then num else find_field tl field num + 1 
+      | hd :: tl ->
+        let field' = match hd with 
+          | (_, f) -> f
+        in
+        if field' = field then num else find_field tl field num + 1 
     in
     find_field all_fields field 0 
   in
@@ -203,10 +206,13 @@ let translate (globals, structs, functions) =
             ignore(L.build_store e2' e1' builder); e2'
           | SStructAssign (s1, s2, e) -> 
             let e' = build_expr builder e in
+            let (_, st) = find_local s1 in
+            let s = match st with 
+              A.Struct(s) -> StringMap.find s all_structs
+            in 
+            let index = find_field_num s.fields s2 in
             let struct' = lookup s1 in
-            (* let t_typ = find_typ s1
-            let field_index = find_field_num t s2 in *)
-            let field' = L.build_struct_gep struct' 0 s2 builder in
+            let field' = L.build_struct_gep struct' index s2 builder in
             ignore(L.build_store e' field' builder); e'
           (* | SRefStructAssign (s1, s2, e) -> 
             let e' = build_expr builder e in
@@ -269,14 +275,18 @@ let translate (globals, structs, functions) =
                 | Arrow -> 
                   let s_ptr = lookup s1 in
                   let s' = (L.build_load s_ptr "tmp" builder) in 
-                  (* let field_index = find_field_num s2 in *)
+                  
                   let field_ptr = L.build_struct_gep s' 0 s2 builder in
                   L.build_load field_ptr "s1->s2" builder
                 | Dot -> 
-                  let s_ptr = lookup s1 in
-                  (* let field_index = find_field_num s2 in  *)
-                  let field_ptr = L.build_struct_gep s_ptr 0 s2 builder in
-                  L.build_load field_ptr "s1.s2" builder)
+                  let (_, st) = find_local s1 in
+                  let s = match st with 
+                    A.Struct(s) -> StringMap.find s all_structs
+                  in 
+                  let index = find_field_num s.fields s2 in
+                  let struct' = lookup s1 in
+                  let field' = L.build_struct_gep struct' index s2 builder in
+                  L.build_load field' "tmp" builder)
           (* | SDeref s -> 
               let s' = lookup s in
               s
