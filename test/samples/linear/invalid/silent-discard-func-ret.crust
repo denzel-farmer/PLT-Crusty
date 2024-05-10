@@ -6,7 +6,7 @@ linear struct lin_point {
 struct lin_point make() {
     struct lin_point b;
 
-    b = {1};
+    b = {struct lin_point -> 1};
 
     return b;
 
