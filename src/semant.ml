@@ -208,7 +208,24 @@ let struct_map = gen_struct_map program.structs in
                       string_of_typ rt ^ " in " ^ string_of_expr e
             in
             (check_assign lt rt err, SAssignment(SStructAssign(var1, var2, (rt, e'))))
-          (* | RefStructAssign (var1, var2, e) -> () *)
+          | RefStructAssign (var1, var2, e) -> 
+            let stype = type_of_identifier var1 in 
+            let get_sname = function 
+              | Ref(Struct s) -> s 
+            in 
+            let s = find_struct (get_sname stype) in 
+            let (sdef, smap) = match s with 
+              | (a, b) -> a, b
+            in
+            let (lt, _) = 
+            try StringMap.find var2 smap 
+            with Not_found -> raise (Failure ("Field "^ var2 ^" not found in struct " ^ var1))
+            in
+            let (rt, e') = check_expr e in
+            let err = "illegal assignment " ^ string_of_typ lt ^ " = " ^
+                      string_of_typ rt ^ " in " ^ string_of_expr e
+            in
+            (check_assign lt rt err, SAssignment(SRefStructAssign(var1, var2, (rt, e'))))
           | StructExplode (var, e) -> 
 (* 
             let (t, e) = check_expr e in 

@@ -5,7 +5,7 @@ struct point {
 
 int main(int y) {
     struct point a;
-    ref struct point p;
+    struct point p;
     ref int g;
     int x;
     int z;
@@ -15,14 +15,15 @@ int main(int y) {
     char c;
     float f;
 
-    *g = 3;
+    //*g = 3;
     a.y = 2;
+    p.x = 3;
     print(a.x);
-    //p->x = 3;
-    //print(p->y);
+    print(p.x);
 
     x = 3 + 3 - 3 * 4 / 6;
-    y = 5;
+    y = x;
+    print(y);
     s = "hello\n";
     //print(s);
     b = true && !true;

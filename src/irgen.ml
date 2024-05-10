@@ -89,9 +89,10 @@ let translate (globals, structs, functions) =
     | SCharLit l -> L.const_int i8_t (Char.code l)
     | SFloatLit l -> L.const_float (L.float_type context) l
     | SStringLit s -> 
-      let str = L.build_global_stringptr s "globalstring" builder in
-      L.const_bitcast str (L.pointer_type i8_t) 
-  in
+      L.build_global_stringptr s "globalstring" builder in
+
+      (* let str = L.build_global_stringptr s "globalstring" builder in
+      L.const_bitcast str (L.pointer_type i8_t) *)
 
   (* Create a map of global variables after creating each *)
   let global_vars : L.llvalue StringMap.t =
@@ -133,17 +134,18 @@ let translate (globals, structs, functions) =
   in 
   let = add_ *)
 
-  let add_local builder var_name lltype =
+  let add_local builder var_name var_type lltype =
     let current_map = List.hd !scopes in
     let alloca = L.build_alloca lltype var_name builder in
-    scopes := (StringMap.add var_name alloca current_map) :: (List.tl !scopes);
+    scopes := (StringMap.add var_name (alloca, var_type) current_map) :: (List.tl !scopes);
     alloca
   in
   
   let find_local var_name =
-    let rec lookup scopes = match scopes with
+    let rec lookup (scopes) = match scopes with
       | [] -> raise (Failure ("Unbound variable " ^ var_name))
-      | h :: t -> (try StringMap.find var_name h with Not_found -> lookup t)
+      | h :: t -> 
+        try StringMap.find var_name h with Not_found -> lookup t
     in lookup !scopes   
   in
 
@@ -168,8 +170,12 @@ let translate (globals, structs, functions) =
     List.iteri (fun i (ty, n) ->
         let param_type = ltype_of_typ ty in
         let param = List.nth params i in
-        let _ = add_local builder n param_type in
-        ignore (L.build_store param (find_local n) builder)
+        let _ = add_local builder n ty param_type in
+        let a' = find_local n in
+        let a = match a' with 
+          (t, _) -> t
+        in  
+        ignore (L.build_store param a builder)
     ) fdecl.sargs;
     
     (* Handle local variables *)
@@ -179,7 +185,7 @@ let translate (globals, structs, functions) =
 
     (* Return the value for a variable or formal argument.
        Check local names first, then global names *)
-    let lookup n = try find_local n
+    let lookup n = try match find_local n with (t, _) -> t 
       with Failure _ -> StringMap.find n global_vars
     in
     let rec build_expr builder ((_, e) : sexpr) = match e with
@@ -188,7 +194,11 @@ let translate (globals, structs, functions) =
         | SAssignment s -> 
           (match s with 
           | SAssign (e1, e2) ->
-            let e1' = build_expr builder e1 in
+            let e1' = match e1 with 
+              | (_, SId(s)) -> lookup s 
+              | _ -> build_expr builder e1
+            in
+            (* let e' = L.build_alloca  "tmp" builder in *)
             let e2' = build_expr builder e2 in
             ignore(L.build_store e2' e1' builder); e2'
           | SStructAssign (s1, s2, e) -> 
@@ -198,12 +208,12 @@ let translate (globals, structs, functions) =
             let field_index = find_field_num t s2 in *)
             let field' = L.build_struct_gep struct' 0 s2 builder in
             ignore(L.build_store e' field' builder); e'
-          | SRefStructAssign (s1, s2, e) -> 
+          (* | SRefStructAssign (s1, s2, e) -> 
             let e' = build_expr builder e in
             let s_ptr = lookup s1 in
             let s' = L.build_load s_ptr "s" builder in
             let field_ptr = L.build_struct_gep s' 0 s2 builder in
-            ignore(L.build_store e' field_ptr builder); e'
+            ignore(L.build_store e' field_ptr builder); e' *)
           | _ -> raise (Failure "Invalid assignment"))
         | SOperation s ->
           (match s with 
@@ -266,11 +276,12 @@ let translate (globals, structs, functions) =
                   let s_ptr = lookup s1 in
                   (* let field_index = find_field_num s2 in  *)
                   let field_ptr = L.build_struct_gep s_ptr 0 s2 builder in
-                  L.build_load field_ptr "s1.s2" builder
-              )
-          | SDeref s -> 
+                  L.build_load field_ptr "s1.s2" builder)
+          (* | SDeref s -> 
               let s' = lookup s in
-              L.build_load s' "tmp" builder
+              s
+              (* let d = L.build_load s' "value" builder in
+              d *) *)
           (* | SBorrow s -> 
               let s_ptr = L.build_alloca (L.pointer_type (ltype_of_typ )) "s_ptr" builder in
               let s' = lookup s in 
@@ -307,7 +318,7 @@ let translate (globals, structs, functions) =
           enter_scope ();
 
           List.iter (fun (ty, name) ->
-            ignore (add_local builder name (ltype_of_typ ty))
+            ignore (add_local builder name ty (ltype_of_typ ty))
           ) vl;
           
           let result_builder = List.fold_left build_stmt builder sl in
@@ -347,7 +358,7 @@ let translate (globals, structs, functions) =
         ignore(L.build_cond_br bool_val body_bb end_bb while_builder);
         L.builder_at_end context end_bb
       (* | SBreak -> 
-      | SContinue -> ignore(L.build_br while_bb builder) *)
+      | SContinue -> ignore(L.build_br while_bb builder)  *)
     in
     (* Build the code for each statement in the function *)
     let func_builder = build_stmt builder (SBlock (fdecl.slocals, fdecl.sbody)) 
