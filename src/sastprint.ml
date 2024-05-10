@@ -62,7 +62,7 @@ let rec string_of_literal = function
   | SBoolLit b -> string_of_bool b
   | SCharLit c -> "'" ^ String.make 1 c ^ "'"
   | SFloatLit f -> string_of_float f
-  | SStructLit sexprs -> "{" ^ String.concat ", " (List.map string_of_sexpr sexprs) ^ "}"
+  | SStructLit (name, sexprs) -> "{ struct " ^ name ^ " -> " ^ String.concat ", " (List.map string_of_sexpr sexprs) ^ "}"
   | SStringLit s -> "\"" ^ s ^ "\""
   | SArrayLit sexprs -> "[" ^ String.concat ", " (List.map string_of_sexpr sexprs) ^ "]"
 

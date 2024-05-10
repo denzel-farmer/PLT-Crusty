@@ -34,7 +34,7 @@ and sliteral =
   | SBoolLit of bool
   | SCharLit of char
   | SFloatLit of float
-  | SStructLit of sexpr list
+  | SStructLit of string * sexpr list
   | SStringLit of string
   | SArrayLit of sexpr list
 
