@@ -23,6 +23,17 @@ let translate (globals, structs, functions) =
     List.fold_left struct_decl StringMap.empty structs
   in
 
+  (* function to find out the offset of a given field in a struct *)
+  let find_field_num (s: A.struct_def) field = 
+    let all_fields = s.fields in 
+    let rec find_field fields field num = 
+      match fields with 
+      | [] -> -1 
+      | hd :: tl -> if hd = field then num else find_field tl field num + 1 
+    in
+    find_field all_fields field 0 
+  in
+
   (* let rec struct_fields s = 
     let struct_decl = StringMap.find s struct_decls in
     let field_types = List.map (fun (t, _) -> ltype_of_typ t) struct_decl.fields in
@@ -117,6 +128,11 @@ let translate (globals, structs, functions) =
     | _ :: tl -> scopes := tl
   in
   
+  (* let add_local_types var_name typ map = 
+    StringMap.add var_name typ map
+  in 
+  let = add_ *)
+
   let add_local builder var_name lltype =
     let current_map = List.hd !scopes in
     let alloca = L.build_alloca lltype var_name builder in
@@ -157,9 +173,9 @@ let translate (globals, structs, functions) =
     ) fdecl.sargs;
     
     (* Handle local variables *)
-    List.iter (fun (ty, n) ->
+    (* List.iter (fun (ty, n) ->
       ignore (add_local builder n (ltype_of_typ ty))
-    ) fdecl.slocals;
+    ) fdecl.slocals; *)
 
     (* Return the value for a variable or formal argument.
        Check local names first, then global names *)
@@ -169,19 +185,28 @@ let translate (globals, structs, functions) =
     let rec build_expr builder ((_, e) : sexpr) = match e with
         | SId s -> L.build_load (lookup s) s builder
         | SLiteral l  -> build_literal l builder
-        | SAssignment sa -> 
-          (match sa with 
-          | SAssign (s, e) ->
-            let e' = build_expr builder e in
-            ignore(L.build_store e' (lookup s) builder); e'
+        | SAssignment s -> 
+          (match s with 
+          | SAssign (e1, e2) ->
+            let e1' = build_expr builder e1 in
+            let e2' = build_expr builder e2 in
+            ignore(L.build_store e2' e1' builder); e2'
           | SStructAssign (s1, s2, e) -> 
             let e' = build_expr builder e in
-            let struct_ptr = lookup s1 in
-            let field_ptr = L.build_struct_gep struct_ptr 0 s2 builder in
+            let struct' = lookup s1 in
+            (* let t_typ = find_typ s1
+            let field_index = find_field_num t s2 in *)
+            let field' = L.build_struct_gep struct' 0 s2 builder in
+            ignore(L.build_store e' field' builder); e'
+          | SRefStructAssign (s1, s2, e) -> 
+            let e' = build_expr builder e in
+            let s_ptr = lookup s1 in
+            let s' = L.build_load s_ptr "s" builder in
+            let field_ptr = L.build_struct_gep s' 0 s2 builder in
             ignore(L.build_store e' field_ptr builder); e'
           | _ -> raise (Failure "Invalid assignment"))
-        | SOperation so ->
-          (match so with 
+        | SOperation s ->
+          (match s with 
           | SArithOp (e1, op, e2) -> 
               let e1' = build_expr builder e1 
               and e2' = build_expr builder e2 
@@ -234,11 +259,13 @@ let translate (globals, structs, functions) =
                 | Arrow -> 
                   let s_ptr = lookup s1 in
                   let s' = (L.build_load s_ptr "tmp" builder) in 
-                  let field_ptr = L.build_struct_gep s_ptr 0 s2 builder in
-                  L.build_load field_ptr "s1.s2" builder
+                  (* let field_index = find_field_num s2 in *)
+                  let field_ptr = L.build_struct_gep s' 0 s2 builder in
+                  L.build_load field_ptr "s1->s2" builder
                 | Dot -> 
-                  let struct_ptr = lookup s1 in
-                  let field_ptr = L.build_struct_gep struct_ptr 0 s2 builder in
+                  let s_ptr = lookup s1 in
+                  (* let field_index = find_field_num s2 in  *)
+                  let field_ptr = L.build_struct_gep s_ptr 0 s2 builder in
                   L.build_load field_ptr "s1.s2" builder
               )
           | SDeref s -> 

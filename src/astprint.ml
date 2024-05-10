@@ -96,7 +96,7 @@ and string_of_operation = function
   | Index (s, e2) -> s ^ "[" ^ string_of_expr e2 ^ "]"
 
 and string_of_assignment = function
-  | Assign (s, e) -> s ^ " = " ^ string_of_expr e
+  | Assign (e1, e2) -> string_of_expr e1 ^ " = " ^ string_of_expr e2
   | StructAssign (s1, s2, e) -> s1 ^ "." ^ s2 ^ " = " ^ string_of_expr e
   | RefStructAssign (s1, s2, e) -> s1 ^ "->" ^ s2 ^ " = " ^ string_of_expr e
   | StructExplode (fields, e) ->

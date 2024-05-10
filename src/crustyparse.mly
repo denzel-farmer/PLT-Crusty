@@ -200,7 +200,7 @@ expr:
   | ID LPAREN call_args_opt RPAREN { Call ($1, $3)  }
 
 assignment_expression:
-  | ID ASSIGN expr { Assign($1, $3) }
+  | expr ASSIGN expr { Assign($1, $3) }
   | EXPLODE LBRACE id_list RBRACE ASSIGN expr { StructExplode($3, $6) } /* Syntax: : {a,b}*/ // TODO make a really cool explode snytax (consume?)
   | ID DOT ID ASSIGN expr { StructAssign($1, $3, $5) }
   | ID ARROW ID ASSIGN expr { RefStructAssign($1, $3, $5) }

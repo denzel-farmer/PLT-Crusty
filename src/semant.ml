@@ -180,14 +180,14 @@ let struct_map = gen_struct_map program.structs in
       | Literal l -> check_literal l
       | Assignment l -> 
         let a = match l with 
-          | Assign (var, e) -> 
-            let lt = type_of_identifier var
-            and (rt, e') = check_expr e
+          | Assign (e1, e2) -> 
+            let (lt, e1') = check_expr e1
+            and (rt, e2') = check_expr e2
             in
             let err = "illegal assignment " ^ string_of_typ lt ^ " = " ^
-                      string_of_typ rt ^ " in " ^ string_of_expr e
+                      string_of_typ rt ^ " in " ^ string_of_expr e1
             in
-            (check_assign lt rt err, SAssignment(SAssign(var, (rt, e'))))
+            (check_assign lt rt err, SAssignment(SAssign((lt, e1'), (rt, e2'))))
           | StructAssign (var1, var2, e) -> 
             (* Get struct definition from global struct map *)
             let stype = type_of_identifier var1 in 

@@ -5,6 +5,8 @@ struct point {
 
 int main(int y) {
     struct point a;
+    ref struct point p;
+    ref int g;
     int x;
     int z;
     string s;
@@ -13,8 +15,11 @@ int main(int y) {
     char c;
     float f;
 
-    a.x = 2;
+    *g = 3;
+    a.y = 2;
     print(a.x);
+    //p->x = 3;
+    //print(p->y);
 
     x = 3 + 3 - 3 * 4 / 6;
     y = 5;

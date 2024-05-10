@@ -83,7 +83,7 @@ and operation =
 
 (* Assignment Types *)
 and assignment =
-  | Assign of string * expr
+  | Assign of expr * expr
   | StructAssign of string * string * expr
   | RefStructAssign of string * string * expr
   | StructExplode of string list * expr
