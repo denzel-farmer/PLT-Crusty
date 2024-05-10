@@ -243,7 +243,7 @@ let struct_map = gen_struct_map program.structs in
             let (q1, t1') = match_primitive t1 in (* is this just extracting the type? *)
             (* and (_, t2') = match_primitive t2 *)
             (* All binary operators require operands of the same type*)
-            if t1 = t2 then
+            if compare_stripped_types t1 t2 then
               (* Determine expression type based on operator and operand types *)
               let _ = match op with
                   Add | Sub | Mul | Div when t1' = Int -> Int
@@ -273,7 +273,7 @@ let struct_map = gen_struct_map program.structs in
           let q1, t1' = match_primitive t1 in
           let q2, t2' = match_primitive t2 in 
           (* All compare operators require operands of the same type*)
-          if t1' = t2' then
+          if compare_stripped_types t1' t2' then
             let t = match op with
               | Eq | Neq | Lt | Gt | Leq | Geq when t1' = Int -> Bool
               | Eq | Neq | Lt | Gt | Leq | Geq when t1' = Float -> Bool
@@ -289,7 +289,7 @@ let struct_map = gen_struct_map program.structs in
                     string_of_typ t2 ^ " in " ^ string_of_expr e1 ^ string_of_expr e2 in
           let q1, t1' = match_primitive t1 in 
           let q2, t2' = match_primitive t2 in 
-          if t1' = t2' then
+          if compare_stripped_types t1' t2' then
             let _ = match op with
                 And | Or when t1' = Bool -> Bool
               | _ -> raise (Failure err)
@@ -399,7 +399,7 @@ let struct_map = gen_struct_map program.structs in
           | Nonvoid t -> t
           | _ -> raise (Failure ("Missing return statement"))
           in 
-          if t = s then SReturn (t, e')
+          if compare_stripped_types t s then SReturn (t, e')
           else raise (Failure ("return gives "  ^ string_of_typ t))
           (* else raise (
               Failure ("return gives " ^ string_of_typ t ^ " expected " ^
