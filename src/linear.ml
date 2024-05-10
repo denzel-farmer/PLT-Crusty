@@ -297,11 +297,12 @@ let rec linear_check_block
   : linear_map_result
   =
   (* Check an expression *)
-  let rec check_expr (lin_map : linear_map_result) (expr : sexpr) : linear_map_result =
+  let rec check_expr (lin_map : linear_map_result) (is_consumed : bool) (expr : sexpr)
+    : linear_map_result
+    =
     (* Try to consume an assigned identifier, throws an error if in the wrong state. Does
        nothing if not in lin_map. *)
-    let consume_assigned_ident (lin_map : linear_map) (ident : string) : linear_map_result
-      =
+    let consume_ident (lin_map : linear_map) (ident : string) : linear_map_result =
       info_println ("Marking " ^ ident ^ " as consumed");
       match StringMap.find_opt ident lin_map with
       | Some (Assigned, typ) -> Ok (StringMap.add ident (Used, typ) lin_map)
@@ -325,16 +326,36 @@ let rec linear_check_block
       | Some (Ref, typ) -> Error ("Reference " ^ ident ^ " cannot be assigned")
       | None -> Error ("Variable " ^ ident ^ " not declared")
     in
+    (* Check a single-identifier expression. If is_consume is true, this expression is
+       immediately consumed (i.e. is passed as a function argument or assigned to a new variable).*)
+    let check_lone_ident (lin_map : linear_map) (is_consumed : bool) (ident : string)
+      : linear_map_result
+      =
+      if is_consumed
+      then consume_ident lin_map ident
+      else (
+        match StringMap.find_opt ident lin_map with
+        | None ->
+          (* If identifier is unrestricted, we don't care *)
+          Ok lin_map
+        | Some (Assigned, Prim (Linear, _)) | Some (Borrowed, Prim (Linear, _)) ->
+          (* The only time a non-consumed, lone linear identifier is allowed is if it
+             is a primitive, in which case we treat this as sugar for dot access *)
+          Ok lin_map
+        | _ ->
+          (* Otherwise, silent discard is happening *)
+          Error ("Linear variable " ^ ident ^ " cannot be silently discarded"))
+    in
     (* Check an assignment expression *)
     let check_assignment (lin_map : linear_map) (assmt : sassignment) : linear_map_result =
       info_println "Checking assignment expression";
       debug_println ("Assignment is  \"" ^ string_of_sassignment assmt ^ "\"");
       match assmt with
       | SAssign (id, expr) ->
-        (* Regular assignment, mark lhs assigned and check rhs *)
+        (* Regular assignment, mark lhs assigned and check rhs, with 'is_assigned' context *)
         let lin_map = assign_ident lin_map id in
-        check_expr lin_map expr
-      | SStructAssign (s_id, mem_id, expr) -> 
+        check_expr lin_map true expr
+      | SStructAssign (s_id, mem_id, expr) ->
         (* Assignment to a struct member (ex. point.x = 5)*)
         Ok lin_map
       | SRefStructAssign (s_ref_id, mem_id, expr) -> Ok lin_map
@@ -349,13 +370,13 @@ let rec linear_check_block
       (match expr with
        | _, SLiteral _ -> (* Literals have no rules *) Ok lin_map
        | id_typ, SId id ->
-         (* An expression with just an ident consumes it *)
-         consume_assigned_ident lin_map id
+         (* An expression with just an identifier *)
+         check_lone_ident lin_map is_consumed id
        | out_typ, SOperation op -> Ok lin_map
        | out_typ, SAssignment assmt -> check_assignment lin_map assmt
-       | out_typ, SCall (fname, args) -> 
-        (*TODO will need to add a parameter 'is_assigned' to track whether an expression is discarded*)
-        Ok lin_map)
+       | out_typ, SCall (fname, args) ->
+         (*TODO will need to add a parameter 'is_assigned' to track whether an expression is discarded*)
+         Ok lin_map)
   in
   (* Check a list of statements *)
   let rec linear_check_stmt_list (in_lin_map : linear_map_result) (s_list : sstmt list)
@@ -367,14 +388,14 @@ let rec linear_check_block
       match stmt with
       | SBlock (vdecls, stmts) ->
         linear_check_block struct_info func_info lin_map vdecls stmts
-      | SExpr ex -> check_expr lin_map ex
+      | SExpr ex -> check_expr lin_map false ex
       | SIf (cond_ex, true_stmt, false_stmt) ->
-        let lin_map = check_expr lin_map cond_ex in
+        let lin_map = check_expr lin_map false cond_ex in
         let true_map = linear_check_stmt lin_map true_stmt in
         let false_map = linear_check_stmt lin_map false_stmt in
         merge_map true_map false_map
       | SWhile (cond_ex, body_stmt) ->
-        let lin_map = check_expr lin_map cond_ex in
+        let lin_map = check_expr lin_map false cond_ex in
         let end_map = linear_check_stmt lin_map body_stmt in
         merge_map lin_map end_map
       | SBreak | SContinue -> raise (Failure "Break and Continue not supported")
