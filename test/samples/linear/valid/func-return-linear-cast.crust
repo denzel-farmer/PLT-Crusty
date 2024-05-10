@@ -1,0 +1,13 @@
+
+linear int make() {
+    return 5;
+
+}
+
+linear int main() {
+    linear int a; 
+    
+    a = make();
+
+    return a;
+} 
