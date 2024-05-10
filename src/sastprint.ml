@@ -117,20 +117,22 @@ let string_of_sreturn = function
   | SReturn e -> "return " ^ string_of_sexpr e
   | SVoidReturn -> "return"
 
+
+  let string_of_sfunc_prototype rtyp fname args =
+    let rtyp_str = string_of_ret_typ rtyp in
+    let args_str = String.concat ", " (List.map string_of_var_decl args) in
+    rtyp_str ^ " " ^ fname ^ "(" ^ args_str ^ ")"
+
+
 let string_of_sfunc_def func_def =
-  let rtyp_str = string_of_ret_typ func_def.srtyp in
-  let args_str = String.concat ", " (List.map string_of_var_decl func_def.sargs) in
+  let prototype_str = string_of_sfunc_prototype func_def.srtyp func_def.sfname func_def.sargs in
   let locals_str =
     String.concat ";\n" (List.map string_of_var_decl func_def.slocals)
   in
   let body_str = String.concat ";\n" (List.map string_of_sstmt func_def.sbody) in
   let return_str = string_of_sreturn func_def.sreturn in
-  rtyp_str
-  ^ " "
-  ^ func_def.sfname
-  ^ "("
-  ^ args_str
-  ^ ") {\n"
+  prototype_str 
+  ^ " {\n"
   ^ locals_str
   ^ ";\n"
   ^ body_str

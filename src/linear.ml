@@ -269,6 +269,17 @@ let add_linear_decls
   new_map
 ;;
 
+(* Takes in a function that takes in a linear_map, and converts it to a function
+   that takes in a linear_map_result *)
+
+let try_lin_map (input : linear_map_result) (f : linear_map -> linear_map_result)
+  : linear_map_result
+  =
+  match input with
+  | Error err -> Error err
+  | Ok lin_map -> f lin_map
+;;
+
 let merge_map (map1 : linear_map_result) (map2 : linear_map_result) : linear_map_result =
   (* TODO implement *)
   map1
@@ -285,33 +296,66 @@ let rec linear_check_block
   (s_list : sstmt list)
   : linear_map_result
   =
-  (* Try to consume an assigned identifier, throws an error if in the wrong state. Does
-     nothing if not in lin_map. *)
-  let consume_assigned_ident (lin_map : linear_map) (ident : string) : linear_map_result =
-    info_println ("Consuming " ^ ident);
-    match StringMap.find_opt ident lin_map with
-    | Some (Assigned, typ) -> Ok (StringMap.add ident (Used, typ) lin_map)
-    | Some (Borrowed, typ) -> Ok (StringMap.add ident (Used, typ) lin_map)
-    | Some (Unassigned, typ) -> Error ("Variable " ^ ident ^ " consumed before assignment")
-    | Some (Used, typ) -> Error ("Variable " ^ ident ^ " consumed more than once")
-    | Some (Ref, typ) -> Error ("Reference " ^ ident ^ " cannot be consumed")
-    | None -> Ok lin_map
-    (* TODO I am starting to think we should just add everything and double check here...*)
-  in
   (* Check an expression *)
   let rec check_expr (lin_map : linear_map_result) (expr : sexpr) : linear_map_result =
+    (* Try to consume an assigned identifier, throws an error if in the wrong state. Does
+       nothing if not in lin_map. *)
+    let consume_assigned_ident (lin_map : linear_map) (ident : string) : linear_map_result
+      =
+      info_println ("Marking " ^ ident ^ " as consumed");
+      match StringMap.find_opt ident lin_map with
+      | Some (Assigned, typ) -> Ok (StringMap.add ident (Used, typ) lin_map)
+      | Some (Borrowed, typ) -> Ok (StringMap.add ident (Used, typ) lin_map)
+      | Some (Unassigned, typ) ->
+        Error ("Variable " ^ ident ^ " consumed before assignment")
+      | Some (Used, typ) -> Error ("Variable " ^ ident ^ " consumed more than once")
+      | Some (Ref, typ) -> Error ("Reference " ^ ident ^ " cannot be consumed")
+      | None -> Ok lin_map
+      (* TODO I am starting to think we should just add everything and double check here...*)
+    in
+    let assign_ident (lin_map : linear_map) (ident : string) : linear_map_result =
+      info_println ("Marking " ^ ident ^ " as assigned");
+      match StringMap.find_opt ident lin_map with
+      | Some (Unassigned, typ) -> Ok (StringMap.add ident (Assigned, typ) lin_map)
+      | Some (Used, typ) ->
+        debug_println (ident ^ " is being re-asigned after use");
+        Ok (StringMap.add ident (Assigned, typ) lin_map)
+      | Some (Assigned, typ) -> Error ("Variable " ^ ident ^ " assigned more than once")
+      | Some (Borrowed, typ) -> Error ("Variable " ^ ident ^ " borrowed before assignment")
+      | Some (Ref, typ) -> Error ("Reference " ^ ident ^ " cannot be assigned")
+      | None -> Error ("Variable " ^ ident ^ " not declared")
+    in
+    (* Check an assignment expression *)
+    let check_assignment (lin_map : linear_map) (assmt : sassignment) : linear_map_result =
+      info_println "Checking assignment expression";
+      debug_println ("Assignment is  \"" ^ string_of_sassignment assmt ^ "\"");
+      match assmt with
+      | SAssign (id, expr) ->
+        (* Regular assignment, mark lhs assigned and check rhs *)
+        let lin_map = assign_ident lin_map id in
+        check_expr lin_map expr
+      | SStructAssign (s_id, mem_id, expr) -> 
+        (* Assignment to a struct member (ex. point.x = 5)*)
+        Ok lin_map
+      | SRefStructAssign (s_ref_id, mem_id, expr) -> Ok lin_map
+      | SStructExplode (idents, s_expr) -> Ok lin_map
+    in
+    (* Check expression main *)
+    info_println "Checking expression";
+    debug_println ("Expression is  \"" ^ string_of_sexpr expr ^ "\"");
     match lin_map with
     | Error err -> Error err
     | Ok lin_map ->
       (match expr with
-       | _, SLiteral _ -> Ok lin_map
+       | _, SLiteral _ -> (* Literals have no rules *) Ok lin_map
        | id_typ, SId id ->
-         consume_assigned_ident
-           lin_map
-           id (* An expression with just an ident consumes it *)
+         (* An expression with just an ident consumes it *)
+         consume_assigned_ident lin_map id
        | out_typ, SOperation op -> Ok lin_map
-       | out_typ, SAssignment assmt -> Ok lin_map
-       | out_typ, SCall (fname, args) -> Ok lin_map)
+       | out_typ, SAssignment assmt -> check_assignment lin_map assmt
+       | out_typ, SCall (fname, args) -> 
+        (*TODO will need to add a parameter 'is_assigned' to track whether an expression is discarded*)
+        Ok lin_map)
   in
   (* Check a list of statements *)
   let rec linear_check_stmt_list (in_lin_map : linear_map_result) (s_list : sstmt list)
@@ -358,7 +402,8 @@ let rec linear_check_block
     debug_println ("Added locals to lin_map: " ^ string_of_linear_map lin_map);
     (* Check statements *)
     let lin_map = linear_check_stmt_list (Ok lin_map) s_list in
-    debug_println ("Checked statements, lin_map: " ^ string_of_result string_of_linear_map lin_map);
+    debug_println
+      ("Checked statements, lin_map: " ^ string_of_result string_of_linear_map lin_map);
     info_println "Done checking block";
     lin_map
 ;;
