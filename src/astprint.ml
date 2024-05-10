@@ -69,7 +69,7 @@ let rec string_of_literal = function
   | BoolLit b -> string_of_bool b
   | CharLit c -> "'" ^ String.make 1 c ^ "'"
   | FloatLit f -> string_of_float f
-  | StructLit exprs -> "{" ^ String.concat ", " (List.map string_of_expr exprs) ^ "}"
+  | StructLit (name,exprs) -> "{ struct " ^ name ^" -> " ^ String.concat ", " (List.map string_of_expr exprs) ^ "}"
   | StringLit s -> "\"" ^ s ^ "\""
   | ArrayLit exprs -> "[" ^ String.concat ", " (List.map string_of_expr exprs) ^ "]"
 
