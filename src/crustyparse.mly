@@ -242,7 +242,7 @@ literal_expression:
   | FLOATLIT { FloatLit($1) }
   | CHARLIT { CharLit($1) }
   | STRINGLIT { StringLit($1) }
-  | LBRACE exprs_list RBRACE { StructLit($2) }
+  | LBRACE STRUCT ID ARROW exprs_list RBRACE { StructLit($3, $5) }
   | LBRACK exprs_list RBRACK { ArrayLit($2) }
 
 /* Accesses: struct.field, (ref struct)->field, *ref, array[index] */
