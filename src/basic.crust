@@ -1,12 +1,26 @@
 int main(int y) {
     int x;
     int z;
-    x = 3;
+    string s;
+    bool b;
+    bool b1;
+    char c;
+    float f;
+
+    x = 3 + 3 - 3 * 4 / 6;
     y = 5;
+    s = "hello\n";
+    b = true && !true;
+    b1 = 5 > 4;
+    c = 'c';
+    f = 3.1 + 0.04;
+
     {
         int z;
         z = 1;
     }
+
     z = 3;
+
     return 0;
 }

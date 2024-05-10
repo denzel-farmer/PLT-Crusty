@@ -1,14 +1,26 @@
 ; ModuleID = 'Crusty'
 source_filename = "Crusty"
 
+@globalstring = private unnamed_addr constant [7 x i8] c"hello\0A\00", align 1
+
 define i32 @main(i32 %0) {
 entry:
   %y = alloca i32, align 4
   store i32 %0, i32* %y, align 4
   %x = alloca i32, align 4
   %z = alloca i32, align 4
-  store i32 3, i32* %x, align 4
+  %s = alloca i8*, align 8
+  %b = alloca i1, align 1
+  %b1 = alloca i1, align 1
+  %c = alloca i8, align 1
+  %f = alloca float, align 4
+  store i32 4, i32* %x, align 4
   store i32 5, i32* %y, align 4
+  store i8* getelementptr inbounds ([7 x i8], [7 x i8]* @globalstring, i32 0, i32 0), i8** %s, align 8
+  store i1 false, i1* %b, align 1
+  store i1 true, i1* %b1, align 1
+  store i8 99, i8* %c, align 1
+  store float 0x40091EB840000000, float* %f, align 4
   %z1 = alloca i32, align 4
   store i32 1, i32* %z1, align 4
   store i32 3, i32* %z, align 4

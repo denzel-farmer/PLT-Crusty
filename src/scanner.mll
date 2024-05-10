@@ -121,6 +121,8 @@ rule token = parse
 | "break"  { printf "BREAK "; BREAK }
 | "continue" { printf "CONTINUE "; CONTINUE }
 | "return" { printf "RETURN "; RETURN }
+| "true"   { printf "BOOLLIT(true) "; BOOLLIT(true)  }
+| "false"  { printf "BOOLLIT(false) "; BOOLLIT(false) }
 
 (* Identifier *)
 | letter (digit | letter | '_')* as lem { printf "%s " ("ID(" ^ lem ^ ")"); ID(lem) }
@@ -128,8 +130,6 @@ rule token = parse
 (* Literals *)
 | int as lem  { printf "%s " ("INTLIT(" ^ lem ^ ")"); INTLIT(int_of_string lem) }
 | float as lem { printf "%s " ("FLOATLIT(" ^ lem ^ ")"); FLOATLIT(float_of_string lem) }
-| "true"   { printf "BOOLLIT(true) "; BOOLLIT(true)  }
-| "false"  { printf "BOOLLIT(false) "; BOOLLIT(false) }
 | '\'' ascii '\'' as lem { 
     let char_val = process_escapes (String.sub lem 1 (String.length lem - 2)) in
     printf "%s " ("CHARLIT('" ^ Char.escaped char_val.[0] ^ "')");

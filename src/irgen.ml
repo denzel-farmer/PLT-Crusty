@@ -33,7 +33,8 @@ let translate (globals, structs, functions) =
     A.Prim(_, Int) -> i32_t
   | A.Prim(_, Char) -> i8_t
   | A.Prim(_, Bool) -> i1_t
-  | A.Prim(_, Float) -> i64_t
+  | A.Prim(_, Float) -> L.float_type context
+  | A.Prim(_, String) -> L.pointer_type i8_t
   | A.Struct(s) ->
     let struct_decl = StringMap.find s struct_decls in
     let field_types = List.map (fun (t, _) -> ltype_of_typ t) struct_decl.fields in
@@ -61,11 +62,15 @@ let translate (globals, structs, functions) =
     List.fold_left function_decl StringMap.empty functions
   in
     
-  let build_literal = function 
+  let build_literal lit builder =
+    match lit with
     | SIntLit l -> L.const_int i32_t l
-    (* | SBoolLit l -> L.const_int i1_t l
-    | SCharLit l -> L.const_int i8_t l
-    | SFloatLit l -> L.const_int i64_t l *)
+    | SBoolLit l -> L.const_int i1_t (if l then 1 else 0)
+    | SCharLit l -> L.const_int i8_t (Char.code l)
+    | SFloatLit l -> L.const_float (L.float_type context) l
+    | SStringLit s -> 
+      let str = L.build_global_stringptr s "globalstring" builder in
+      L.const_bitcast str (L.pointer_type i8_t) 
   in
 
   (* Create a map of global variables after creating each *)
@@ -149,7 +154,7 @@ let translate (globals, structs, functions) =
     in
     let rec build_expr builder ((_, e) : sexpr) = match e with
         | SId s -> L.build_load (lookup s) s builder
-        | SLiteral l  -> build_literal l
+        | SLiteral l  -> build_literal l builder
         | SAssignment sa -> 
           (match sa with 
           | SAssign (s, e) ->
@@ -160,12 +165,21 @@ let translate (globals, structs, functions) =
           (match so with 
           | SArithOp (e1, op, e2) -> 
               let e1' = build_expr builder e1 
-              and e2' = build_expr builder e2 in 
+              and e2' = build_expr builder e2 
+              and (ty, sx) = e1 in 
               (match op with 
-                  | A.Add -> L.build_add 
-                  | A.Sub -> L.build_sub 
-                  | A.Mul -> L.build_mul
-                  | A.Div -> L.build_sdiv
+                  | A.Add -> (match ty with 
+                      | A.Prim(_, Int) -> L.build_add
+                      | A.Prim(_, Float) -> L.build_fadd)
+                  | A.Sub -> (match ty with 
+                      | A.Prim(_, Int) -> L.build_sub
+                      | A.Prim(_, Float) -> L.build_fsub)
+                  | A.Mul -> (match ty with
+                      | A.Prim(_, Int) -> L.build_mul
+                      | A.Prim(_, Float) -> L.build_fmul)
+                  | A.Div -> (match ty with
+                      | A.Prim(_, Int) -> L.build_sdiv
+                      | A.Prim(_, Float) -> L.build_fdiv)
               ) e1' e2' "tmp" builder 
           | SUnArithOp(op, e) -> 
               let e' = build_expr builder e in
