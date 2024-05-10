@@ -69,7 +69,12 @@ let check program =
       List.fold_left add_struct_field StringMap.empty st.fields;
       StringMap.add n st map;
   in 
-  List.fold_left add_struct StringMap.empty program.structs;
+  let struct_decls = List.fold_left add_struct StringMap.empty program.structs in
+
+  let find_struct s = 
+    try StringMap.find s struct_decls
+      with Not_found -> raise (Failure ("unrecognized struct " ^ s))
+  in
 
   let scopes = ref [] in
   let enter_scope () = scopes := StringMap.empty :: !scopes in
@@ -129,6 +134,16 @@ let check program =
       | _ -> raise (Failure "match_array")
       in t
     in 
+    let check_field s field =
+        let struct_def = find_struct s in
+        let find_field s = 
+          try
+            let s' = List.find (fun (_, name) -> name = field) struct_def.fields
+            in s'
+          with Not_found -> raise (Failure ("Field "^ field ^" not found in struct " ^ s))
+        in
+        find_field field
+    in  
     (* Check literals*)
     let check_literal = function 
         IntLit l -> (Prim(Unrestricted, Int), SLiteral(SIntLit(l)))
@@ -152,8 +167,14 @@ let check program =
                       string_of_typ rt ^ " in " ^ string_of_expr e
             in
             (check_assign lt rt err, SAssignment(SAssign(var, (rt, e'))))
-          (* | StructAssign (var1, var2, e) -> ()
-          | RefStructAssign (var1, var2, e) -> ()
+          | StructAssign (var1, var2, e) -> 
+            let (lt, _ ) = check_field var1 var2 in 
+            let (rt, e') = check_expr e in 
+            let err = "illegal assignment " ^ string_of_typ lt ^ " = " ^
+                      string_of_typ rt ^ " in " ^ string_of_expr e
+            in
+            (check_assign lt rt err, SAssignment(SStructAssign(var1, var2, (rt, e'))))
+          (* | RefStructAssign (var1, var2, e) -> ()
           | StructExplode (var, e) -> () *)
         in a
       | Operation l -> 
@@ -231,12 +252,9 @@ let check program =
           (* if t != Bool then raise (Failure err) *)
           in
           (t, SOperation(SUnLogOp(op, (t, e'))))
-        | AccessOp (e, op, var) -> 
-          let (t, e') = check_expr e in
-          let err = "illegal access operator " ^ string_of_typ t in     
-          let _ = match_struct t (* fix ast definition? struct type is just a struct not stuct of string? *)
-          in
-          (t, SOperation(SAccessOp((t, e'), op, var)))
+        | AccessOp (s, op, var) -> 
+          let (t, _) = check_field s var
+          in (t, SOperation(SAccessOp((s, op, var))))
         | Deref (s) -> 
           let err = "illegal dereference operator " in
           let t = type_of_identifier s in

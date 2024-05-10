@@ -84,7 +84,7 @@ and string_of_soperation = function
   | SLogOp (e1, op, e2) ->
     string_of_sexpr e1 ^ " " ^ string_of_binLogOp op ^ " " ^ string_of_sexpr e2
   | SUnLogOp (op, e) -> string_of_unLogOp op ^ string_of_sexpr e
-  | SAccessOp (e, op, s) -> string_of_sexpr e ^ string_of_accessOp op ^ s
+  | SAccessOp (e, op, s) -> e ^ string_of_accessOp op ^ s
   | SDeref s -> "*" ^ s
   | SBorrow s -> "&" ^ s
   | SIndex (s, e2) -> s ^ "[" ^ string_of_sexpr e2 ^ "]"

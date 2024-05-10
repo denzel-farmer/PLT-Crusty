@@ -247,8 +247,8 @@ literal_expression:
 
 /* Accesses: struct.field, (ref struct)->field, *ref, array[index] */
 access_expression:
-  | ID DOT ID { AccessOp(Id($1), Dot, $3) }
-  | ID ARROW ID { AccessOp(Id($1), Arrow, $3) }
+  | ID DOT ID { AccessOp($1, Dot, $3) }
+  | ID ARROW ID { AccessOp($1, Arrow, $3) }
   | STAR ID { Deref($2) } 
   | ID LBRACK expr RBRACK { Index($1, $3) }
 

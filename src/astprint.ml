@@ -90,7 +90,7 @@ and string_of_operation = function
   | LogOp (e1, op, e2) ->
     string_of_expr e1 ^ " " ^ string_of_binLogOp op ^ " " ^ string_of_expr e2
   | UnLogOp (op, e) -> string_of_unLogOp op ^ string_of_expr e
-  | AccessOp (e, op, s) -> string_of_expr e ^ string_of_accessOp op ^ s
+  | AccessOp (e, op, s) -> e ^ string_of_accessOp op ^ s
   | Deref s -> "*" ^ s
   | Borrow s -> "&" ^ s
   | Index (s, e2) -> s ^ "[" ^ string_of_expr e2 ^ "]"

@@ -17,7 +17,7 @@ and soperation =
   | SCompOp of sexpr * compOp * sexpr
   | SLogOp of sexpr * binLogOp * sexpr
   | SUnLogOp of unLogOp * sexpr
-  | SAccessOp of sexpr * accessOp * string
+  | SAccessOp of string * accessOp * string
   | SDeref of string
   | SBorrow of string
   | SIndex of string * sexpr
