@@ -482,7 +482,11 @@ let process_func (struct_info : struct_info) (func_info : func_info) (func : sfu
   let func_statements =
     match func.sreturn with
     | SVoidReturn -> func.sbody
-    | SReturn ex -> func.sbody @ [ SExpr ex ]
+    | SReturn ex ->
+      (* This is super hacky, treat a return statement like a call to a function named
+         "return" which returns an unrestricted int--hopefully nobody makes their own
+         linear function named "return"...*)
+      func.sbody @ [ SExpr (Prim (Unrestricted, Int), SCall ("return", [ ex ])) ]
   in
   info_println "Checking function body";
   let lin_map =
