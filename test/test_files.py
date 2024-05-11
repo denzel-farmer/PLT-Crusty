@@ -77,7 +77,13 @@ else:
                 file_path = os.path.join(root, file)
                 os.makedirs(test_output_folder, exist_ok=True)
                 output_file_path = f"{test_output_folder}/{filename}.crust.out"
-                print(f"Running binary on file: {filename}")
+
+                parent_dir = os.path.basename(os.path.dirname(file_path))
+                
+                # Get grandparent directory 
+                grandparent_dir = os.path.basename(os.path.dirname(os.path.dirname(file_path)))
+
+                print(f"[{grandparent_dir}/{parent_dir}] Running binary on file: {filename}")
                 # Run the binary on the current file and save the output
                 with open(file_path, "r") as input_file, open(output_file_path, "w") as output_file:
                     subprocess.run([binary_path], stdin=input_file,
@@ -107,15 +113,13 @@ else:
                         actual_output = actual_file.read()
 
                         # If any parent directory is 'valid', fail if compilation or linear checking failed
-
-                        parent_dir = os.path.basename(os.path.dirname(file_path))
-
                         if (valid_folder == parent_dir):
                             check_output(actual_output, True)
                         elif (invalid_folder == parent_dir):
                             check_output(actual_output, False)
                         else:
-                            print("No expected result, printing compilation and linear check results")
+                            print(
+                                "No expected result, printing compilation and linear check results")
                             if (compile_success(actual_output)):
                                 print("Compilation success")
                             else:
