@@ -26,7 +26,10 @@
                     - produce 'end map' by recursively processing body statement 
                     - compare initial/end maps to ensure all elements in matching states
                 - If Expr (Identifier, Literal, Operation, Assignment, Call)
-                    - If literal, do nothing
+                    - If literal
+                        - If struct literal, check each expression with is_consumed the same 
+                        as input (don't want to allow silent discard via struct literal)
+                        - If another literal, do nothing
                     - If identifier
                         - If is_consumed then try Assigned -> Used 
                         - Else if is linear primitive then try Assigned -> Assigned (treated like dot access) 
@@ -47,10 +50,14 @@
                         - If index
                     - If assignment
                         - If Assign (ID = EXPR)
-                            - try Unassiged -> Assigned or Used -> Assigned on ID
                             - check EXPR with is_consumed true
+                            - try Unassiged -> Assigned or Used -> Assigned on ID
                         - If StructAssign (ID.ID = EXPR)
                         - If RefStructAssign (ID->ID = EXPR)
+                        - If DerefAssign (ID.ID = EXPR)
+                        - If StructExplode ({ID, ID} = EXPR)
+                            - check EXPR with is_consumed true 
+                            - try Unassigned -> Assigned or Used -> Assigned on each ID
                     - If call (ID(EXPR list))
                         - Look up func info, see if func returns linear. If so,
                         fail if is_consumed is false.
