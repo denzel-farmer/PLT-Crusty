@@ -90,7 +90,6 @@ and string_of_soperation = function
   | SAccessOp (e, op, s) -> e ^ string_of_accessOp op ^ s
   | SDeref s -> "*" ^ s
   | SBorrow s -> "&" ^ s
-  | SIndex (s, e2) -> s ^ "[" ^ string_of_sexpr e2 ^ "]"
 
 and string_of_sassignment = function
   | SAssign (e1, e2) -> string_of_sexpr e1 ^ " = " ^ string_of_sexpr e2

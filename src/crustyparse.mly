@@ -250,8 +250,7 @@ literal_expression:
 access_expression:
   | ID DOT ID { AccessOp($1, Dot, $3) }
   | ID ARROW ID { AccessOp($1, Arrow, $3) }
-  | STAR ID { Deref($2) } 
-  | ID LBRACK expr RBRACK { Index($1, $3) }
+  | STAR ID { Deref($2) }
 
 /* Returns list of statements OR empty list */
 stmt_list:

@@ -10,8 +10,7 @@ let translate ((globals : A.var_decl list), (structs : A.struct_def list), (func
   let crusty_module = L.create_module context "Crusty" in
 
   (* LLVM integer types *)
-  let i64_t      = L.i64_type       context
-  and i32_t      = L.i32_type       context
+  let i32_t      = L.i32_type       context
   and i8_t       = L.i8_type        context
   and i1_t       = L.i1_type        context 
   in
@@ -190,9 +189,6 @@ let translate ((globals : A.var_decl list), (structs : A.struct_def list), (func
           (match e_expr with
           | SId struct_name -> 
             let (struct_addr, struct_typ) = get_symbol struct_name in
-            let struct_decl = match struct_typ with
-              | A.Struct(sname) -> StringMap.find sname struct_decls
-            in
             List.iteri (fun idx var_name ->
               let field_ptr = L.build_struct_gep struct_addr idx "field_ptr" builder in
               let field_val = L.build_load field_ptr "field_val" builder in
@@ -333,6 +329,7 @@ let translate ((globals : A.var_decl list), (structs : A.struct_def list), (func
 
         ignore(L.build_cond_br bool_val body_bb end_bb while_builder);
         L.builder_at_end context end_bb
+      | _ -> raise (Failure "Not implemented: SContinue, SBreak")
     in
 
     (* Build the code for each statement in the function *)

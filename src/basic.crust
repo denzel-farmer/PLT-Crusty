@@ -14,22 +14,22 @@ int add(ref int x, ref struct point z, ref struct point b){
     b = z;
     b->x = 4;
     
-    //print(y);
+    print(y);
 
     //w = *z;
-    //v = *z;
+    v = *z;
     
     //z->x = 2;
     //print(z -> x);
-    //print(w.x);
-    //print(w.y);
+    print(w.x);
+    print(w.y);
     // StructAssign (w, y, 245)
-    //w.y = 245;
-    //print(w.y);
-    //a = w.y + v.y;
-    //print(a);
-    //print(v.y);
-    //print(z->y);
+    w.y = 245;
+    print(w.y);
+    a = w.y + v.y;
+    print(a);
+    print(v.y);
+    print(z->y);
 
     return 0;
 }
@@ -51,8 +51,8 @@ int main(int y) {
     a.y = 222;
     add(&g, &a, &p);
     print(a.x);
-    //print(a.y);
-    //print(g);
+    print(a.y);
+    print(g);
     
     //g = &x;
     //*g = 3;

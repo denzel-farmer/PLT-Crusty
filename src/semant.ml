@@ -140,18 +140,7 @@ let struct_map = gen_struct_map program.structs in
         | _ -> raise(Failure "match_primitive")
       in t
     in 
-    let match_struct t =
-      let t = match t with 
-        | Struct s -> s
-        | _ -> raise(Failure "match_struct")
-      in t
-    in
-    let match_array t = 
-      let t = match t with 
-      | Arr (t, i) -> t, i
-      | _ -> raise (Failure "match_array")
-      in t
-    in 
+
     (* Return a semantically-checked expression, i.e., with a type *)
    
     let rec check_expr (exp : expr) : sexpr =
@@ -221,6 +210,7 @@ let struct_map = gen_struct_map program.structs in
             let stype = type_of_identifier var1 in 
             let get_sname = function 
               | Ref(Struct s) -> s 
+              | _ -> raise (Failure "RefStructAssign must be a struct type")
             in 
             let s = find_struct (get_sname stype) in 
             let (sdef, smap) = match s with 
@@ -297,7 +287,6 @@ let struct_map = gen_struct_map program.structs in
                     string_of_typ t2 ^ " in " ^ string_of_expr e1 ^ string_of_expr e2 in
           (* TODO: allow compare operator to work for non-primitives ? *)
           let q1, t1' = match_primitive t1 in
-          let q2, t2' = match_primitive t2 in 
           (* All compare operators require operands of the same type*)
           if compare_stripped_types t1 t2 then
             let t = match op with
@@ -314,7 +303,6 @@ let struct_map = gen_struct_map program.structs in
                     string_of_typ t1 ^ " " ^ string_of_operation l ^ " " ^
                     string_of_typ t2 ^ " in " ^ string_of_expr e1 ^ string_of_expr e2 in
           let q1, t1' = match_primitive t1 in 
-          let q2, t2' = match_primitive t2 in 
           if compare_stripped_types t1 t2 then
             let _ = match op with
                 And | Or when t1' = Bool -> Bool
@@ -353,7 +341,6 @@ let struct_map = gen_struct_map program.structs in
           in
           (t, SOperation(SAccessOp((s, op, var))))
         | Deref (s) -> 
-          let err = "illegal dereference operator " in
           let t = type_of_identifier s in
           let err = "illegal dereference operator " ^ string_of_typ t in
           let t' = match t with 
@@ -364,18 +351,6 @@ let struct_map = gen_struct_map program.structs in
         | Borrow (s) -> 
           let t = type_of_identifier s in
           (Ref(t), SOperation(SBorrow(s)))
-        | Index (s, e) -> 
-          let err = "invalid access operation" in
-          let (t, e') = check_expr e in
-          let _, t' = match_primitive t in  
-          if t' != Int then raise (Failure(err))
-          else 
-            let s' = type_of_identifier s in
-            let arr_typ = match s' with 
-              | Arr (t, s) -> t
-              | _ -> raise(Failure(err))
-            in  
-            (t, SOperation(SIndex(s, (t, e'))))
         in o
     | Call (fname, args) as call -> 
       let fd = find_func fname in
