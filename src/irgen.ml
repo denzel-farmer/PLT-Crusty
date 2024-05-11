@@ -206,11 +206,10 @@ let translate (globals, structs, functions) =
             let e2' = build_expr builder e2 in
             ignore(L.build_store e2' e1' builder); e2'
           | SDerefAssign (s, e) -> 
-            (* raise (Failure (s ^ " " ^ (string_of_sexpr e))) *)
             let e' = build_expr builder e in
-            let addr, _ = lookup s in
-            let e'' = L.build_load addr "deref" builder in
-            ignore(L.build_store e' e'' builder); e'
+            let ptr_to_ptr, _ = lookup s in
+            let actual_ptr = L.build_load ptr_to_ptr "deref" builder in
+            L.build_store e' actual_ptr builder
           | SStructAssign (s1, s2, e) -> 
             let e' = build_expr builder e in
             let (struct', st) = lookup s1 in
@@ -218,16 +217,35 @@ let translate (globals, structs, functions) =
               A.Struct(s) -> StringMap.find s all_structs
             in 
             let index = find_field_num s.fields s2 in
-            
+            (* pointer to the field index at this struct *)
             let field' = L.build_struct_gep struct' index "tmp" builder in
-            ignore(L.build_store e' field' builder); e'
+            (* let field'' = L.build_load field' "tmp" builder in *)
+            (* let v = L.build_load field' "tmp" builder in *)
+            L.build_store e' field' builder
           | SRefStructAssign (s1, s2, e) -> 
             let e' = build_expr builder e in
-            let (s_ptr, _) = lookup s1 in
-            let s_val = L.build_load s_ptr "tmp" builder in
-            let s' = L.build_load s_val "s" builder in
-            let field_ptr = L.build_struct_gep s' 0 s2 builder in
-            ignore(L.build_store e' field_ptr builder); e'
+            let (s, st) = lookup s1 in
+            let t' = match st with 
+              A.Ref(Struct(s)) -> StringMap.find s all_structs
+            in 
+            let index = find_field_num t'.fields s2 in
+            let struct' = L.build_load s "tmp" builder in
+            let field' = L.build_struct_gep struct' index "tmp" builder in
+            L.build_store e' field' builder
+          | SStructExplode (var_names, e) -> 
+            let (_, e_expr) = e in
+            (match e_expr with
+            | SId struct_name -> 
+                let (struct_addr, struct_typ) = lookup struct_name in
+                let struct_decl = match struct_typ with
+                  | A.Struct(sname) -> StringMap.find sname all_structs
+                in
+                List.iteri (fun idx var_name ->
+                    let field_ptr = L.build_struct_gep struct_addr idx "field_ptr" builder in
+                    let field_val = L.build_load field_ptr "field_val" builder in
+                    let var_addr, _ = lookup var_name in
+                    ignore (L.build_store field_val var_addr builder)
+                ) var_names; struct_addr)
           | _ -> raise (Failure "Invalid assignment"))
         | SOperation s ->
           (match s with 
@@ -296,11 +314,11 @@ let translate (globals, structs, functions) =
                   in 
                   let index = find_field_num s_def.fields s2 in
                   let field' = L.build_struct_gep struct' index s2 builder in
-                  ignore(L.build_load field' "tmp" builder); field')
+                  L.build_load field' "tmp" builder)
           | SDeref s -> 
               let addr, _ = lookup s in
               let v = L.build_load addr "tmp" builder in
-              L.build_load v (s ^ "_val") builder
+              L.build_load v (s ^ "_val") builder 
           | SBorrow s -> 
               let (s_addr, s') = lookup s in s_addr
           | SIndex (s, e) -> 
@@ -319,16 +337,15 @@ let translate (globals, structs, functions) =
         
     in
 
-     (* LLVM insists each basic block end with exactly one "terminator"
-       instruction that transfers control.  This function runs "instr builder"
-       if the current block does not already have a terminator.  Used,
-       e.g., to handle the "fall off the end of the function" case. *)
-      let add_terminal builder instr =
-        match L.block_terminator (L.insertion_block builder) with
-          Some _ -> ()
-        | None -> ignore (instr builder)
-      in
-
+    (* LLVM insists each basic block end with exactly one "terminator"
+      instruction that transfers control.  This function runs "instr builder"
+      if the current block does not already have a terminator.  Used,
+      e.g., to handle the "fall off the end of the function" case. *)
+    let add_terminal builder instr =
+      match L.block_terminator (L.insertion_block builder) with
+        Some _ -> ()
+      | None -> ignore (instr builder)
+    in
     let rec build_stmt builder = function
         SBlock (vl, sl) -> 
           enter_scope ();
