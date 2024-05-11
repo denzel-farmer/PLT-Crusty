@@ -365,14 +365,43 @@ let rec linear_check_block
       debug_println ("Assignment is  \"" ^ string_of_sassignment assmt ^ "\"");
       match assmt with
       | SAssign (id, expr) ->
-        (* Regular assignment, mark lhs assigned and check rhs, with 'is_consumed' context *)
-        let lin_map = assign_ident lin_map id in
-        check_expr lin_map true expr
+        (match id with
+         | _, SOperation (SDeref ref_name) -> Ok lin_map
+         | _, SId id ->
+           (* Regular assignment, mark lhs assigned and check rhs, with 'is_consumed' context *)
+           let lin_map = assign_ident lin_map id in
+           check_expr lin_map true expr
+         | _ -> raise (Failure "Linear checker error: assigning to invalid expression"))
       | SStructAssign (s_id, mem_id, expr) ->
         (* Assignment to a struct member (ex. point.x = 5)*)
         Ok lin_map
       | SRefStructAssign (s_ref_id, mem_id, expr) -> Ok lin_map
       | SStructExplode (idents, s_expr) -> Ok lin_map
+    in
+    let check_func_call (lin_map : linear_map) (fname : string) (args : sexpr list)
+      : linear_map_result
+      =
+      info_println ("Checking function call to " ^ fname);
+      debug_println ("Function call args: " ^ string_of_sexpr_list args);
+      (* Check each function arguement; if linear, it gets consumed *)
+      let lin_map =
+        List.fold_left (fun acc arg -> check_expr acc true arg) (Ok lin_map) args
+      in
+      (* Check function return type *)
+      match StringMap.find_opt fname func_info with
+      | None ->
+        (* Function is not linear, we don't care about its return type *)
+        lin_map
+      | Some def ->
+        (* Function is linear, check return type *)
+        (match def.srtyp with
+         | Void -> lin_map
+         | Nonvoid ret_typ ->
+           if is_linear_type struct_info ret_typ && not is_consumed
+           then
+             (* Function returns linear but value is not consumed, silent discard*)
+             Error ("Function " ^ fname ^ " returns linear value that is not consumed")
+           else lin_map)
     in
     (* Check expression *)
     info_println "Checking expression";
@@ -387,7 +416,7 @@ let rec linear_check_block
          check_lone_ident lin_map is_consumed id
        | out_typ, SOperation op -> Ok lin_map
        | out_typ, SAssignment assmt -> check_assignment lin_map assmt
-       | out_typ, SCall (fname, args) -> Ok lin_map)
+       | out_typ, SCall (fname, args) -> check_func_call lin_map fname args)
   in
   (* Check a list of statements *)
   let rec linear_check_stmt_list (in_lin_map : linear_map_result) (s_list : sstmt list)
