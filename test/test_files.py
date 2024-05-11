@@ -6,6 +6,36 @@ PASS = '\033[92m'
 FAIL = '\033[91m'
 ENDC = '\033[0m'
 
+
+def linear_check_success(output):
+    return "LINEAR CHECK SUCCESS" in output
+
+
+def compile_success(output):
+    return "COMPILATION SUCCESS" in output
+
+
+def check_output(output, expected_valid):
+    if expected_valid:
+        if not compile_success(output):
+            print(
+                f"{FAIL}FAILED - compilation failed, but should have succeeded {ENDC}")
+        elif not linear_check_success(output):
+            print(
+                f"{FAIL}FAILED - linear check failed, but should have succeeded {ENDC}")
+        else:
+            print(f"{PASS}PASSED{ENDC}")
+    else:
+        if compile_success(output):
+            print(
+                f"{FAIL}FAILED - compilation succeeded, but should have failed {ENDC}")
+        elif linear_check_success(output):
+            print(
+                f"{FAIL}FAILED - linear check succeeded, but should have failed {ENDC}")
+        else:
+            print(f"{PASS}PASSED{ENDC}")
+
+
 # Check if the binary path is provided as an argument
 if len(sys.argv) < 2:
     print("Usage: python test_files.py <binary_path> [-f <string>] [-c]")
@@ -13,6 +43,8 @@ if len(sys.argv) < 2:
 
 binary_path = sys.argv[1]
 samples_folder = "samples"
+valid_folder = "valid"
+invalid_folder = "invalid"
 test_file = "test-file.expected"
 test_output_folder = "test-output"
 compare = False
@@ -32,7 +64,8 @@ if len(sys.argv) > 2 and sys.argv[2] == "-f":
     filename = sys.argv[3]
     print(f"Running binary on file: {samples_folder}/{filename}")
     with open(f"{samples_folder}/{filename}", "r") as file:
-        subprocess.run([binary_path], stdin=file, stdout=sys.stdout, stderr=sys.stdout)
+        subprocess.run([binary_path], stdin=file,
+                       stdout=sys.stdout, stderr=sys.stdout)
 else:
     # Iterate over all files in the 'samples' folder
     for root, dirs, files in os.walk(os.path.join(os.getcwd(), samples_folder)):
@@ -47,11 +80,13 @@ else:
                 print(f"Running binary on file: {filename}")
                 # Run the binary on the current file and save the output
                 with open(file_path, "r") as input_file, open(output_file_path, "w") as output_file:
-                    subprocess.run([binary_path], stdin=input_file, stdout=output_file, stderr=output_file)
+                    subprocess.run([binary_path], stdin=input_file,
+                                   stdout=output_file, stderr=output_file)
 
                 if compare:
                     # Compare the output with the expected output
-                    expected_output_file = os.path.join(samples_folder, f"{filename}.expected")
+                    expected_output_file = os.path.join(
+                        samples_folder, f"{filename}.expected")
                     if os.path.isfile(expected_output_file):
                         print("Comparing output with expected...")
                         with open(expected_output_file, "r") as expected_file, open(output_file_path, "r") as actual_file:
@@ -71,7 +106,21 @@ else:
                     with open(output_file_path, "r") as actual_file:
                         actual_output = actual_file.read()
 
-                        if "Failure" in actual_output:
-                            print(f"{FAIL}FAILED{ENDC}")
+                        # If any parent directory is 'valid', fail if compilation or linear checking failed
+
+                        parent_dir = os.path.basename(os.path.dirname(file_path))
+
+                        if (valid_folder == parent_dir):
+                            check_output(actual_output, True)
+                        elif (invalid_folder == parent_dir):
+                            check_output(actual_output, False)
                         else:
-                            print(f"{PASS}PASSED{ENDC}")
+                            print("No expected result, printing compilation and linear check results")
+                            if (compile_success(actual_output)):
+                                print("Compilation success")
+                            else:
+                                print("Compilation failed")
+                            if (linear_check_success(actual_output)):
+                                print("Linear check success")
+                            else:
+                                print("Linear check failed")

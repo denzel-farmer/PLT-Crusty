@@ -1,6 +1,6 @@
 .PHONY: test
 test:
-	python3 test_files.py ../src/scanparse
+	python3 test_files.py ../src/checksemant
 
 .PHONY: clean
 clean:
