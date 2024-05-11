@@ -375,8 +375,41 @@ let rec linear_check_block
             | Ok lin_map -> assign_ident lin_map id)
          | _ -> raise (Failure "Linear checker error: assigning to invalid expression"))
       | SStructAssign (s_id, mem_id, expr) ->
-        (* Assignment to a struct member (ex. point.x = 5)*)
-        Ok lin_map
+        (* Check expression with is_consumed true *)
+        let lin_map = check_expr (Ok lin_map) true expr in
+        (match lin_map with
+         | Error err -> Error err
+         | Ok lin_map ->
+           (* Look up identifier name in lin_map to get struct name *)
+           (match StringMap.find_opt s_id lin_map with
+            | None ->
+              debug_println ("Variable " ^ s_id ^ " not found, assuming unrestricted");
+              Ok lin_map
+            | Some (Ref, _) -> Error ("Cannot dot-assign value to reference " ^ s_id)
+            | Some (Unassigned, _) ->
+              Error
+                ("Cannot assign members of linear variable " ^ s_id ^ " before assignment")
+            | Some (Used, _) ->
+              Error ("Cannot assign members of linear variable " ^ s_id ^ " after use")
+            | Some (Assigned, Struct struct_name) | Some (Borrowed, Struct struct_name) ->
+              (* Check member is not linear *)
+              let struct_def = get_struct struct_info struct_name in
+              (match struct_def with
+               | None ->
+                 debug_println ("Struct " ^ s_id ^ " not found, assuming unrestricted");
+                 Ok lin_map
+               | Some struct_def ->
+                 (* check mem is not linear *)
+                 let field =
+                   List.find (fun (typ, name) -> name = mem_id) struct_def.fields
+                 in
+                 if is_linear_type struct_info (fst field)
+                 then
+                   Error
+                     ("Cannot assign value to linear struct field " ^ s_id ^ "." ^ mem_id)
+                 else Ok lin_map)
+            | Some (Assigned, _) | Some (Borrowed, _) ->
+              raise (Failure "Linear checker error: struct dot-assignment to non-struct")))
       | SRefStructAssign (s_ref_id, mem_id, expr) -> Ok lin_map
       | SStructExplode (idents, s_expr) ->
         (* Try to mark each argument as assigned *)
