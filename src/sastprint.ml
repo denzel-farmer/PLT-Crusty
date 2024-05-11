@@ -75,6 +75,9 @@ and string_of_sexpr (typ, sx) =
   | SCall (fname, args) ->
     fname ^ "(" ^ String.concat ", " (List.map string_of_sexpr args) ^ ")"
 
+and string_of_sexpr_list sexprs =
+  String.concat ", " (List.map string_of_sexpr sexprs)
+
 and string_of_soperation = function
   | SArithOp (e1, op, e2) ->
     string_of_sexpr e1 ^ " " ^ string_of_binArithOp op ^ " " ^ string_of_sexpr e2
