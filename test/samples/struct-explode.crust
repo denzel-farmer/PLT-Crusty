@@ -1,0 +1,25 @@
+
+struct lin_point {
+    int x;
+    int y;
+};
+
+int consume(struct lin_point p) {
+    int a;
+    int b;
+
+    :{a, b} = p;
+
+    return a + b;
+}
+
+int main() {
+    int result;
+    struct lin_point p1; 
+
+    p1 = {struct lin_point -> 1, 2};
+
+    result = consume(p1);
+
+    return result;
+} 
