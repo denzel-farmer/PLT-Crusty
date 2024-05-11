@@ -98,12 +98,12 @@ let translate (globals, structs, functions) =
       L.const_bitcast str (L.pointer_type i8_t) *)
 
   (* Create a map of global variables after creating each *)
-  let global_vars : L.llvalue StringMap.t =
+  let global_vars : (L.llvalue * A.typ) StringMap.t =
     let global_var m (t, n) =
       let init = match t with
         A.Prim (_, _) -> L.const_int (ltype_of_typ t) 0
       (* | A.Arr(_) -> ltype_of_typ t *)
-      in StringMap.add n (L.define_global n init the_module) m 
+      in StringMap.add n (L.define_global n init the_module, t) m 
     in
     List.fold_left global_var StringMap.empty globals
   in
@@ -145,11 +145,11 @@ let translate (globals, structs, functions) =
   in
   
   let find_local var_name =
-    let rec lookup (scopes) = match scopes with
+    let rec search (scopes) = match scopes with
       | [] -> raise (Failure ("Unbound variable " ^ var_name))
       | h :: t -> 
-        try StringMap.find var_name h with Not_found -> lookup t
-    in lookup !scopes   
+        try StringMap.find var_name h with Not_found -> search t
+    in search !scopes   
   in
 
   let printf_t : L.lltype =
@@ -188,38 +188,46 @@ let translate (globals, structs, functions) =
 
     (* Return the value for a variable or formal argument.
        Check local names first, then global names *)
-    let lookup n = try match find_local n with (t, _) -> t 
+    let lookup n = try find_local n
       with Failure _ -> StringMap.find n global_vars
     in
     let rec build_expr builder ((_, e) : sexpr) = match e with
-        | SId s -> L.build_load (lookup s) s builder
+        | SId s -> let addr, _ = lookup s in
+          L.build_load (addr) s builder
         | SLiteral l  -> build_literal l builder
         | SAssignment s -> 
           (match s with 
           | SAssign (e1, e2) ->
             let e1' = match e1 with 
-              | (_, SId(s)) -> lookup s 
+              | (_, SId(s)) -> let addr, _ = lookup s in addr
               | _ -> build_expr builder e1
             in
             (* let e' = L.build_alloca  "tmp" builder in *)
             let e2' = build_expr builder e2 in
             ignore(L.build_store e2' e1' builder); e2'
+          | SDerefAssign (s, e) -> 
+            (* raise (Failure (s ^ " " ^ (string_of_sexpr e))) *)
+            let e' = build_expr builder e in
+            let addr, _ = lookup s in
+            let e'' = L.build_load addr "deref" builder in
+            ignore(L.build_store e' e'' builder); e'
           | SStructAssign (s1, s2, e) -> 
             let e' = build_expr builder e in
-            let (_, st) = find_local s1 in
+            let (struct', st) = lookup s1 in
             let s = match st with 
               A.Struct(s) -> StringMap.find s all_structs
             in 
             let index = find_field_num s.fields s2 in
-            let struct' = lookup s1 in
-            let field' = L.build_struct_gep struct' index s2 builder in
+            
+            let field' = L.build_struct_gep struct' index "tmp" builder in
             ignore(L.build_store e' field' builder); e'
-          (* | SRefStructAssign (s1, s2, e) -> 
+          | SRefStructAssign (s1, s2, e) -> 
             let e' = build_expr builder e in
-            let s_ptr = lookup s1 in
-            let s' = L.build_load s_ptr "s" builder in
+            let (s_ptr, _) = lookup s1 in
+            let s_val = L.build_load s_ptr "tmp" builder in
+            let s' = L.build_load s_val "s" builder in
             let field_ptr = L.build_struct_gep s' 0 s2 builder in
-            ignore(L.build_store e' field_ptr builder); e' *)
+            ignore(L.build_store e' field_ptr builder); e'
           | _ -> raise (Failure "Invalid assignment"))
         | SOperation s ->
           (match s with 
@@ -273,35 +281,33 @@ let translate (globals, structs, functions) =
           | SAccessOp (s1, op, s2) -> 
               (match op with 
                 | Arrow -> 
-                  let s_ptr = lookup s1 in
-                  let s' = (L.build_load s_ptr "tmp" builder) in 
-                  
-                  let field_ptr = L.build_struct_gep s' 0 s2 builder in
-                  L.build_load field_ptr "s1->s2" builder
-                | Dot -> 
-                  let (_, st) = find_local s1 in
+                  let (struct', st) = lookup s1 in
+                  let struct_val = L.build_load struct' "tmp" builder in
                   let s = match st with 
-                    A.Struct(s) -> StringMap.find s all_structs
+                    A.Ref(Struct(s)) -> StringMap.find s all_structs
                   in 
                   let index = find_field_num s.fields s2 in
-                  let struct' = lookup s1 in
+                  let field' = L.build_struct_gep struct_val index s2 builder in
+                  L.build_load field' "tmp" builder
+                | Dot -> 
+                  let (struct', st) = lookup s1 in
+                  let s_def = match st with 
+                    A.Struct(s) -> StringMap.find s all_structs
+                  in 
+                  let index = find_field_num s_def.fields s2 in
                   let field' = L.build_struct_gep struct' index s2 builder in
-                  L.build_load field' "tmp" builder)
-          (* | SDeref s -> 
-              let s' = lookup s in
-              s
-              (* let d = L.build_load s' "value" builder in
-              d *) *)
-          (* | SBorrow s -> 
-              let s_ptr = L.build_alloca (L.pointer_type (ltype_of_typ )) "s_ptr" builder in
-              let s' = lookup s in 
-              ignore (L.build_store s' s_ptr builder); s_ptr  *)
+                  ignore(L.build_load field' "tmp" builder); field')
+          | SDeref s -> 
+              let addr, _ = lookup s in
+              let v = L.build_load addr "tmp" builder in
+              L.build_load v (s ^ "_val") builder
+          | SBorrow s -> 
+              let (s_addr, s') = lookup s in s_addr
           | SIndex (s, e) -> 
-              let s_ptr = lookup s in
+              let s_ptr, _ = lookup s in
               let e' = build_expr builder e in
               let index = L.build_gep s_ptr [| e' |] "index" builder in
-              L.build_load index "tmp" builder
-          | _ -> raise (Failure "Not implemented: SAccessOp, SDerefOp, SBorrow, SIndex"))
+              L.build_load index "tmp" builder)
         | SCall ("print", [e]) -> 
             L.build_call printf_func [| int_format_str ; (build_expr builder e) |]
               "printf" builder

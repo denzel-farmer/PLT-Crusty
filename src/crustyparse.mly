@@ -201,6 +201,7 @@ expr:
 
 assignment_expression:
   | expr ASSIGN expr { Assign($1, $3) }
+  | STAR ID ASSIGN expr { DerefAssign($2, $4)} 
   | EXPLODE LBRACE id_list RBRACE ASSIGN expr { StructExplode($3, $6) } /* Syntax: : {a,b}*/ // TODO make a really cool explode snytax (consume?)
   | ID DOT ID ASSIGN expr { StructAssign($1, $3, $5) }
   | ID ARROW ID ASSIGN expr { RefStructAssign($1, $3, $5) }

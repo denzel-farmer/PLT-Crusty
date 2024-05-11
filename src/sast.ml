@@ -25,6 +25,7 @@ and soperation =
 (* Assignment Types *)
 and sassignment =
   | SAssign of sexpr * sexpr
+  | SDerefAssign of string * sexpr
   | SStructAssign of string * string * sexpr
   | SRefStructAssign of string * string * sexpr
   | SStructExplode of string list * sexpr
