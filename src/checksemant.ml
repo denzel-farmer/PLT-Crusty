@@ -9,5 +9,6 @@ let _ =
   print_endline (Sastprint.string_of_sprogram sprogram);
   print_endline ("\nLinearity Results:");
   print_endline (Linear.string_of_linear_result linear_result);
+  print_endline ("\nCOMPILATION SUCCESS");
   print_endline ("\nScanned tokens:");
 ;;
