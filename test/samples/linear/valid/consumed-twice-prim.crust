@@ -6,7 +6,6 @@ int main() {
 /* This is okay because a linear primitive in an expression that does not consume it 
 implicitly treats that like a dot-access rather than a consumption/explosion */
     a;
-    a;
-
-    return 0;
+    
+    return a;
 } 
