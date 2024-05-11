@@ -1,0 +1,24 @@
+unrestricted struct lin_point {
+    int x;
+    int y;
+};
+
+
+int sum(ref struct lin_point p) {
+    return p->x + p->y;
+}
+
+bool main() {
+    struct lin_point new;
+    int result;
+    int x;
+    int y;
+
+    new = {struct lin_point -> 1,2};
+
+    :{x, y} = new;
+
+    result = sum(&new);
+
+    return (result == (x + y));
+} 

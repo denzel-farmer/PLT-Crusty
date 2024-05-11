@@ -1,0 +1,25 @@
+unrestricted struct point {
+    int x;
+    int y;
+};
+
+
+int sum(ref struct point p) {
+     // This should fail before linear checker, b/c of types
+    return p.x + p.y;
+}
+
+bool main() {
+    struct point new;
+    int result;
+    int x;
+    int y;
+
+    new = {struct point -> 1,2};
+
+    :{x, y} = new;
+
+    result = sum(&new);
+
+    return (result == (x + y));
+} 

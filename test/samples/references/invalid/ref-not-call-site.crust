@@ -1,0 +1,26 @@
+unrestricted struct point {
+    int x;
+    int y;
+};
+
+
+int sum(ref struct point p) {
+    return p->x + p->y;
+}
+
+bool main() {
+    struct point new;
+    ref struct point new_ref;
+    int result;
+    int x;
+    int y;
+
+    new = {struct point -> 1,2};
+
+    :{x, y} = new;
+
+    new_ref = &new;
+    result = sum(new_ref);
+
+    return (result == (x + y));
+} 
