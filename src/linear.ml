@@ -423,7 +423,14 @@ let rec linear_check_block
     | Error err -> Error err
     | Ok lin_map ->
       (match expr with
-       | _, SLiteral _ -> (* Literals have no rules *) Ok lin_map
+       | _, SLiteral (SStructLit (sname, fields)) ->
+         (* Struct literals have some rules, since they can contain expressions *)
+         (* Check each expression, marking as consumed only if struct overall is consumed *)
+         List.fold_left
+           (fun acc expr -> check_expr acc is_consumed expr)
+           (Ok lin_map)
+           fields
+       | _, SLiteral _ -> (* Other literals have no rules *) Ok lin_map
        | id_typ, SId id ->
          (* An expression with just an identifier *)
          check_lone_ident lin_map is_consumed id
