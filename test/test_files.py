@@ -80,7 +80,12 @@ else:
                 # Get grandparent directory 
                 grandparent_dir = os.path.basename(os.path.dirname(os.path.dirname(file_path)))
 
-                print(f"[{grandparent_dir}/{parent_dir}] Running binary on file: {filename}")
+                short_file_path = os.path.relpath(file_path, samples_folder)
+                
+                # Print short file path, but pad with spaces so the next print statement aligns
+                print(f"{short_file_path[-80:]:80}", end="")
+
+                # print(f"{grandparent_dir}/{parent_dir}/{filename}: ", end="")
                 # Run the binary on the current file and save the output
                 with open(file_path, "r") as input_file, open(output_file_path, "w") as output_file:
                     subprocess.run([binary_path], stdin=input_file,
