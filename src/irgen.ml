@@ -35,7 +35,6 @@ let translate ((globals : A.var_decl list), (structs : A.struct_def list), (func
       let field_types = List.map (fun (t, _) -> ltype_of_typ t) struct_def.fields in
       L.struct_type context (Array.of_list field_types)
     | A.Ref(t) -> L.pointer_type (ltype_of_typ t)
-    (* | A.Arr(t, n) -> L.array_type (ltype_of_typ t) n  *)
   in 
 
   let rec ltype_of_rtyp : (A.ret_typ -> L.lltype) = function 
@@ -50,7 +49,9 @@ let translate ((globals : A.var_decl list), (structs : A.struct_def list), (func
     | SBoolLit l -> L.const_int i1_t (if l then 1 else 0)
     | SCharLit l -> L.const_int i8_t (Char.code l)
     | SFloatLit l -> L.const_float (L.float_type context) l
-    | SStringLit s -> L.build_global_stringptr s "globalstring" builder in
+    | SStringLit s -> L.build_global_stringptr s "globalstring" builder
+    | _ -> raise (Failure "Not implemented: StructLit")
+  in
 
   (* Map of function name to (LLVM type, function definition) *)
   let function_decls : (L.llvalue * sfunc_def) StringMap.t =
@@ -80,6 +81,7 @@ let translate ((globals : A.var_decl list), (structs : A.struct_def list), (func
     let add_global_var m (t, n) =
       let init = match t with
         A.Prim (_, _) -> L.const_int (ltype_of_typ t) 0
+        | _ -> raise (Failure "Global variable not a primitive type")
       in 
       StringMap.add n (L.define_global n init crusty_module, t) m 
     in
@@ -170,6 +172,7 @@ let translate ((globals : A.var_decl list), (structs : A.struct_def list), (func
           let (struct', st) = get_symbol s1 in
           let s_decl = match st with 
             A.Struct(s) -> StringMap.find s struct_decls
+            | _ -> raise (Failure "StructAssign: Not a struct")
           in 
           let index = get_field_idx s_decl.fields s2 in
           let field' = L.build_struct_gep struct' index "tmp" builder in
@@ -179,6 +182,7 @@ let translate ((globals : A.var_decl list), (structs : A.struct_def list), (func
           let (s, st) = get_symbol s1 in
           let t' = match st with 
             A.Ref(Struct(s)) -> StringMap.find s struct_decls
+            | _ -> raise (Failure "RefStructAssign: Not a struct")
           in 
           let index = get_field_idx t'.fields s2 in
           let struct' = L.build_load s "tmp" builder in
@@ -187,15 +191,17 @@ let translate ((globals : A.var_decl list), (structs : A.struct_def list), (func
         | SStructExplode (var_names, e) -> 
           let (_, e_expr) = e in
           (match e_expr with
-          | SId struct_name -> 
-            let (struct_addr, struct_typ) = get_symbol struct_name in
-            List.iteri (fun idx var_name ->
-              let field_ptr = L.build_struct_gep struct_addr idx "field_ptr" builder in
-              let field_val = L.build_load field_ptr "field_val" builder in
-              let var_addr, _ = get_symbol var_name in
-              ignore (L.build_store field_val var_addr builder)
-            ) var_names; struct_addr)
-        | _ -> raise (Failure "Invalid assignment"))
+            | SId struct_name -> 
+              let (struct_addr, struct_typ) = get_symbol struct_name in
+              List.iteri (fun idx var_name ->
+                let field_ptr = L.build_struct_gep struct_addr idx "field_ptr" builder in
+                let field_val = L.build_load field_ptr "field_val" builder in
+                let var_addr, _ = get_symbol var_name in
+                ignore (L.build_store field_val var_addr builder)
+              ) var_names; struct_addr
+            |_ -> raise (Failure "StructExplode: Not a struct")
+          )
+        )
       | SOperation s ->
         (match s with 
         | SArithOp (e1, op, e2) -> 
@@ -205,16 +211,20 @@ let translate ((globals : A.var_decl list), (structs : A.struct_def list), (func
           (match op with 
             | A.Add -> (match ty with 
               | A.Prim(_, Int) -> L.build_add
-              | A.Prim(_, Float) -> L.build_fadd)
+              | A.Prim(_, Float) -> L.build_fadd
+              | _ -> raise (Failure "Add: Not a Int or Float"))
             | A.Sub -> (match ty with 
               | A.Prim(_, Int) -> L.build_sub
-              | A.Prim(_, Float) -> L.build_fsub)
+              | A.Prim(_, Float) -> L.build_fsub
+              | _ -> raise (Failure "Sub: Not a Int or Float"))
             | A.Mul -> (match ty with
               | A.Prim(_, Int) -> L.build_mul
-              | A.Prim(_, Float) -> L.build_fmul)
+              | A.Prim(_, Float) -> L.build_fmul
+              | _ -> raise (Failure "Mul: Not a Int or Float"))
             | A.Div -> (match ty with
               | A.Prim(_, Int) -> L.build_sdiv
-              | A.Prim(_, Float) -> L.build_fdiv)
+              | A.Prim(_, Float) -> L.build_fdiv
+              | _ -> raise (Failure "Div: Not a Int or Float"))
           ) e1' e2' "tmp" builder 
         | SUnArithOp(op, e) -> 
           let e' = build_expr builder e in
@@ -252,6 +262,7 @@ let translate ((globals : A.var_decl list), (structs : A.struct_def list), (func
               let struct_val = L.build_load struct' "tmp" builder in
               let s = match st with 
                 A.Ref(Struct(s)) -> StringMap.find s struct_decls
+                | _ -> raise (Failure "Arrow: Not a struct")
               in
               let index = get_field_idx s.fields s2 in
               let field' = L.build_struct_gep struct_val index s2 builder in
@@ -260,6 +271,7 @@ let translate ((globals : A.var_decl list), (structs : A.struct_def list), (func
               let (struct', st) = get_symbol s1 in
               let s_def = match st with 
                 A.Struct(s) -> StringMap.find s struct_decls
+                | _ -> raise (Failure "Dot: Not a struct")
               in 
               let index = get_field_idx s_def.fields s2 in
               let field' = L.build_struct_gep struct' index s2 builder in

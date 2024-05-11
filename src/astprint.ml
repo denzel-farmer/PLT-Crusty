@@ -15,7 +15,6 @@ let string_of_lin = function
 let rec string_of_typ : typ -> string = function
   | Prim (lin, prim) -> string_of_lin lin ^ " " ^ string_of_prim_typ prim
   | Struct s -> "struct " ^ s
-  | Arr (t, s) -> string_of_typ t ^ "[" ^ string_of_int s ^ "]"
   | Ref t -> "ref " ^ string_of_typ t
 ;;
 
@@ -28,7 +27,6 @@ let string_of_binArithOp = function
   | Sub -> "-"
   | Mul -> "*"
   | Div -> "/"
-  | Mod -> "%"
 ;;
 
 let string_of_binLogOp = function
@@ -39,8 +37,6 @@ let string_of_binLogOp = function
 let string_of_unLogOp : unLogOp -> string = function
   | Not -> "!"
 ;;
-
-(* TODO how to differentiate pre/post *)
 
 let string_of_compOp = function
   | Eq -> "=="
@@ -71,7 +67,6 @@ let rec string_of_literal = function
   | FloatLit f -> string_of_float f
   | StructLit (name,exprs) -> "{ struct " ^ name ^" -> " ^ String.concat ", " (List.map string_of_expr exprs) ^ "}"
   | StringLit s -> "\"" ^ s ^ "\""
-  | ArrayLit exprs -> "[" ^ String.concat ", " (List.map string_of_expr exprs) ^ "]"
 
 and string_of_expr = function
   | Id s -> s
@@ -96,6 +91,7 @@ and string_of_operation = function
 
 and string_of_assignment = function
   | Assign (e1, e2) -> string_of_expr e1 ^ " = " ^ string_of_expr e2
+  | DerefAssign (e1, e2) -> "*" ^ e1 ^ " = " ^ string_of_expr e2
   | StructAssign (s1, s2, e) -> s1 ^ "." ^ s2 ^ " = " ^ string_of_expr e
   | RefStructAssign (s1, s2, e) -> s1 ^ "->" ^ s2 ^ " = " ^ string_of_expr e
   | StructExplode (fields, e) ->

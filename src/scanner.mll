@@ -87,11 +87,8 @@ rule token = parse
 | '-'      { printf "MINUS "; MINUS }
 | '*'      { printf "STAR "; STAR }
 | '/'      { printf "DIVIDE "; DIVIDE }
-| '%'      { printf "MOD "; MOD }
 | "++"     { printf "INCR "; INCR }
 | "--"     { printf "DECR "; DECR }
-
-(* TODO Bitwise Operators *)
 
 (* Comparison Operators*)
 | "=="     { printf "EQ "; EQ }
@@ -111,7 +108,6 @@ rule token = parse
 
 (* Borrowing Operators *)
 | '&'      { printf "BORROW "; BORROW }
-(* | '*'      { printf " DEREF"; DEREF }  *) (* TODO: *)
 | "->"     { printf "ARROW "; ARROW }
 
 (* Control Flow *)

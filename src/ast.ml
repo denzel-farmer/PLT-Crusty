@@ -1,5 +1,4 @@
 (* Abstract Syntax Tree for Crusty *)
-(* TODO strings *)
 
 (* Type Types *)
 type lin_qual =
@@ -16,7 +15,6 @@ type primType =
 type typ =
   | Prim of lin_qual * primType
   | Struct of string
-  | Arr of typ * int
   | Ref of typ
 
 type ret_typ =
@@ -24,17 +22,11 @@ type ret_typ =
   | Void
 
 (* Operations *)
-
-(* TODO add string operations? concat, split, etc. (probably too much work)*)
-(* TODO add array operations? index (have it), concat, slice *)
-(* Could alternatively make strings into arrays *)
-
 type binArithOp =
   | Add
   | Sub
   | Mul
   | Div
-  | Mod
 
 type binLogOp =
   | And
@@ -96,7 +88,6 @@ and literal =
   | FloatLit of float
   | StructLit of string * expr list
   | StringLit of string
-  | ArrayLit of expr list
 
 (* Declaration Types *)
 type var_decl = typ * string
@@ -109,8 +100,6 @@ type stmt =
   | While of expr * stmt
   | Break
   | Continue
-
-(*TODO re add const?*)
 
 type return_stmt =
   | Return of expr
@@ -136,6 +125,6 @@ type struct_def =
 (* Program Type *)
 type program =
   { globals : var_decl list
-  ; structs : struct_def list (*TODO replace struct_def list with string map*)
+  ; structs : struct_def list
   ; funcs : func_def list
   }

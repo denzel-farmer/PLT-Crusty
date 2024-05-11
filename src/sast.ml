@@ -36,7 +36,6 @@ and sliteral =
   | SFloatLit of float
   | SStructLit of string * sexpr list
   | SStringLit of string
-  | SArrayLit of sexpr list
 
 (* Statement Types *)
 type sstmt =
