@@ -53,6 +53,9 @@
                             - check EXPR with is_consumed true
                             - try Unassiged -> Assigned or Used -> Assigned on ID
                         - If StructAssign (ID.ID = EXPR)
+                            - check EXPR with is_consumed true
+                            - lookup struct, lookup member in struct, fail if type is linear 
+                            - try Assigned -> Assigned on struct id
                         - If RefStructAssign (ID->ID = EXPR)
                         - If DerefAssign (ID.ID = EXPR)
                         - If StructExplode ({ID, ID} = EXPR)
