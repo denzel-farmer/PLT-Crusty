@@ -377,8 +377,10 @@ let struct_map = gen_struct_map program.structs in
             in (check_assign ft et err, e')
         in
         let args' = List.map2 check_call fd.args args in
-        (* TODO: Fix this unrestricted int primitive being returned *)
-        (Prim(Unrestricted, Int), SCall(fname, args'))
+        (* TODO: Fix this? Void becomes unrestricted int primitive *)
+        match fd.rtyp with
+        | Nonvoid t -> (t, SCall(fname, args'))
+        | Void -> (Prim(Unrestricted, Int), SCall(fname, args'))
     in
     let check_bool_expr e =
       let (t, e') = check_expr e in
