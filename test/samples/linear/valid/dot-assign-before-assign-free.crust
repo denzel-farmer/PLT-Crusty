@@ -1,0 +1,33 @@
+
+struct point_info {
+    char c;
+};
+
+struct lin_point {
+    int x;
+    int y;
+    struct point_info info;
+};
+
+char main() {
+    struct lin_point new;
+    struct point_info init_info;
+    struct point_info second_info;
+    int x; 
+    int y;
+    char c;
+
+    // Dot assigning to free should be okay here, but is not currently
+    // This is probably fine, though
+    new.x = 1;
+
+    init_info = {struct point_info -> 'a'};
+
+    new = {struct lin_point -> 1,2, init_info};
+
+    :{x, y, second_info} = new;
+
+    :{c} = second_info;
+
+    return c;
+} 
