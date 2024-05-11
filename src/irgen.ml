@@ -232,15 +232,20 @@ let translate (globals, structs, functions) =
             let struct' = L.build_load s "tmp" builder in
             let field' = L.build_struct_gep struct' index "tmp" builder in
             L.build_store e' field' builder
-          | SStructExplode (s1, s2, e) -> 
-            (* let e' = build_expr builder e in
-            let (struct', st) = lookup s1 in
-            let s = match st with 
-              A.Struct(s) -> StringMap.find s all_structs
-            in 
-            let index = find_field_num s.fields s2 in
-            let field' = L.build_struct_gep struct' index s2 builder in
-            L.build_store e' field' builder *)
+          | SStructExplode (var_names, e) -> 
+            let (_, e_expr) = e in
+            (match e_expr with
+            | SId struct_name -> 
+                let (struct_addr, struct_typ) = lookup struct_name in
+                let struct_decl = match struct_typ with
+                  | A.Struct(sname) -> StringMap.find sname all_structs
+                in
+                List.iteri (fun idx var_name ->
+                    let field_ptr = L.build_struct_gep struct_addr idx "field_ptr" builder in
+                    let field_val = L.build_load field_ptr "field_val" builder in
+                    let var_addr, _ = lookup var_name in
+                    ignore (L.build_store field_val var_addr builder)
+                ) var_names; struct_addr)
           | _ -> raise (Failure "Invalid assignment"))
         | SOperation s ->
           (match s with 
