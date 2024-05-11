@@ -1,47 +1,12 @@
 # The Crusty Language 
 
-# Summary
-We have implemented the basic structure, syntax, and semantics for our Crusty
-language. Our scanner and parser works for the general components of the language,
-but additional work is needed as outlined in the TODOs below.
-
-Our focus moving forward will be to complete the implementation of our language and then to
-transition to working on the linear type system checking aspect of it.
+# Summary 
+This is our final implementation for Crusty, with both semantic type checking and linear type checking included. 
 
 # Testing
-- `test/testcases.sh`: runs a few basic test cases.
-- `src/Makefile`: on complilation, reads the sample program in `hello.cp` as input, scans, parses, and
-then pretty prints to `hello.out`.
+To generate all programs, simply run ocamlbuild -pkgs llvm crusty.native, which will build all relevant modules, including the scanner, parser, semantic type checker, linear type checker, and IR generation. These modules are compatible with Ocaml version 4.14.2, Opam version 2.1.5, and 
+LLVM verison 14.0.6. 
 
-Additional tests will be added to the `test` directory before final submission.
+The crusty.native accepts input (a program) from stdin via a lexbuf stream, runs the code through all the different stages, and eventually sends the output of the IR generation program (assembly-like instructions) to stdout. We used redirection to test our code more easily, writing an initial program in a .crust file that acted as stdin, and sending stdout to a .out file. With the .out file, running lli .out will essentially run the program as if it were an executable. 
 
-# TODOs
-## General
-- Arrays
-- Strings
-- **Linear type checking**
-
-## scanner.ml
-- Special characters
-- Escape sequences
-- Bitwise operators
-
-## ast.mli
-- VOID function return type
-
-## crustyparse.mly
-- COLON
-- Prefix and postfix increment and decrement operators
-- unary plus and minus
-- type casting
-- more complex assignment operators
-- comma operator
-- arrays
-- allow declaring structs in function body
-- allow mixed declaration and assignment
-- add returning void
-- differentiate struct and arraylit
-- explode/consume syntax
-
-## astprint.ml
-- differentiate pre/post
+For instance, we ran ./crusty.native < basic.crust > basic.out, and then lli basic.out. When running lli basic.out, all print statements then appear in the terminal as when running a standard executable program. 
