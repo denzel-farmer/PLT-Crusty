@@ -366,7 +366,7 @@ let rec linear_check_block
       match assmt with
       | SAssign (id, expr) ->
         (match id with
-         | _, SOperation (SDeref ref_name) -> Ok lin_map
+         (* | _, SOperation (SDeref ref_name) -> Ok lin_map *)
          | _, SId id ->
            (* Regular assignment, mark lhs assigned and check rhs, with 'is_consumed' context *)
            let lin_map = assign_ident lin_map id in
@@ -376,7 +376,20 @@ let rec linear_check_block
         (* Assignment to a struct member (ex. point.x = 5)*)
         Ok lin_map
       | SRefStructAssign (s_ref_id, mem_id, expr) -> Ok lin_map
-      | SStructExplode (idents, s_expr) -> Ok lin_map
+      | SStructExplode (idents, s_expr) ->
+        (* Try to mark each argument as assigned *)
+        let lin_map =
+          List.fold_left
+            (fun acc id ->
+              match acc with
+              | Error err -> Error err
+              | Ok lin_map -> assign_ident lin_map id)
+            (Ok lin_map)
+            idents
+        in
+        (* Check the right-hand side, noting that it is consumed *)
+        check_expr lin_map true s_expr
+      | SDerefAssign (deref_id, expr) -> Ok lin_map
     in
     let check_func_call (lin_map : linear_map) (fname : string) (args : sexpr list)
       : linear_map_result
