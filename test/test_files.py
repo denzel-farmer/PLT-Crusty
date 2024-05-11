@@ -26,12 +26,9 @@ def check_output(output, expected_valid):
         else:
             print(f"{PASS}PASSED{ENDC}")
     else:
-        if compile_success(output):
+        if compile_success(output) and linear_check_success(output):
             print(
-                f"{FAIL}FAILED - compilation succeeded, but should have failed {ENDC}")
-        elif linear_check_success(output):
-            print(
-                f"{FAIL}FAILED - linear check succeeded, but should have failed {ENDC}")
+                f"{FAIL}FAILED - compilation and linear check succeeded, but at least one should have failed {ENDC}")
         else:
             print(f"{PASS}PASSED{ENDC}")
 
