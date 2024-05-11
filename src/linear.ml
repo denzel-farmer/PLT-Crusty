@@ -418,6 +418,16 @@ let rec linear_check_block
        | out_typ, SAssignment assmt -> check_assignment lin_map assmt
        | out_typ, SCall (fname, args) -> check_func_call lin_map fname args)
   in
+  (* Returns list of keys-value pairs in map in a state other than 'Used' *)
+  let get_unused (lin_map : linear_map) : (string * linear_state) list =
+    StringMap.fold
+      (fun key value acc ->
+        match value with
+        | Used, _ -> acc
+        | _ -> (key, fst value) :: acc)
+      lin_map
+      []
+  in
   (* Check a list of statements *)
   let rec linear_check_stmt_list (in_lin_map : linear_map_result) (s_list : sstmt list)
     : linear_map_result
@@ -465,8 +475,23 @@ let rec linear_check_block
     let lin_map = linear_check_stmt_list (Ok lin_map) s_list in
     debug_println
       ("Checked statements, lin_map: " ^ string_of_result string_of_linear_map lin_map);
-    info_println "Done checking block";
-    lin_map
+    info_println "Done checking block, evaluating lin_map";
+    (match lin_map with
+     | Error err -> Error err
+     | Ok lin_map ->
+       (* Check that all variables are consumed *)
+       let remaining_values = get_unused lin_map in
+       (match remaining_values with
+        | [] -> Ok lin_map
+        | _ ->
+          let err_msg =
+            List.fold_left
+              (fun acc (key, state) ->
+                acc ^ key ^ " is " ^ string_of_linear_state state ^ ", ")
+              "Variables not consumed: "
+              remaining_values
+          in
+          Error err_msg))
 ;;
 
 (* Check a function to ensure it follows linearity rules, return
