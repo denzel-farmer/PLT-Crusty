@@ -188,6 +188,15 @@ let struct_map = gen_struct_map program.structs in
                       string_of_typ rt ^ " in " ^ string_of_expr e1
             in
             (check_assign lt rt err, SAssignment(SAssign((lt, e1'), (rt, e2'))))
+          | DerefAssign (var, e) -> 
+            let ty = type_of_identifier var in
+            let err = "illegal dereference assignment " ^ string_of_typ ty in
+            let ref_ty = match ty with 
+              | Ref s -> s
+              | _ -> raise (Failure(err))
+            in 
+            let (rt, e') = check_expr e in
+            (check_assign ref_ty rt err, SAssignment(SDerefAssign(var, (rt, e'))))
           | StructAssign (var1, var2, e) -> 
             (* Get struct definition from global struct map *)
             let stype = type_of_identifier var1 in 
@@ -326,9 +335,13 @@ let struct_map = gen_struct_map program.structs in
           (t, SOperation(SUnLogOp(op, (t, e'))))
         | AccessOp (s, op, var) -> 
           let stype = type_of_identifier s in
+          let op' = match op with 
+            | Dot -> "Dot"
+            | Arrow -> "Arrow" in
           let get_sname = function 
-              | Struct s -> s 
-              | _ -> raise (Failure "Not a struct type")
+            | Ref(Struct s) when op' = "Arrow" -> s
+            | Struct s when op' = "Dot" -> s 
+            | _ -> raise (Failure "Not a struct type")
           in 
           let s' = find_struct (get_sname stype) in
           let (sdef, smap) = match s' with 
