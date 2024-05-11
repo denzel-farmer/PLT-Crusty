@@ -365,14 +365,56 @@ let rec linear_check_block
       debug_println ("Assignment is  \"" ^ string_of_sassignment assmt ^ "\"");
       match assmt with
       | SAssign (id, expr) ->
-        (* Regular assignment, mark lhs assigned and check rhs, with 'is_consumed' context *)
-        let lin_map = assign_ident lin_map id in
-        check_expr lin_map true expr
+        (match id with
+         (* | _, SOperation (SDeref ref_name) -> Ok lin_map *)
+         | _, SId id ->
+           (* Regular assignment, mark lhs assigned and check rhs, with 'is_consumed' context *)
+           let lin_map = assign_ident lin_map id in
+           check_expr lin_map true expr
+         | _ -> raise (Failure "Linear checker error: assigning to invalid expression"))
       | SStructAssign (s_id, mem_id, expr) ->
         (* Assignment to a struct member (ex. point.x = 5)*)
         Ok lin_map
       | SRefStructAssign (s_ref_id, mem_id, expr) -> Ok lin_map
-      | SStructExplode (idents, s_expr) -> Ok lin_map
+      | SStructExplode (idents, s_expr) ->
+        (* Try to mark each argument as assigned *)
+        let lin_map =
+          List.fold_left
+            (fun acc id ->
+              match acc with
+              | Error err -> Error err
+              | Ok lin_map -> assign_ident lin_map id)
+            (Ok lin_map)
+            idents
+        in
+        (* Check the right-hand side, noting that it is consumed *)
+        check_expr lin_map true s_expr
+      | SDerefAssign (deref_id, expr) -> Ok lin_map
+    in
+    let check_func_call (lin_map : linear_map) (fname : string) (args : sexpr list)
+      : linear_map_result
+      =
+      info_println ("Checking function call to " ^ fname);
+      debug_println ("Function call args: " ^ string_of_sexpr_list args);
+      (* Check each function arguement; if linear, it gets consumed *)
+      let lin_map =
+        List.fold_left (fun acc arg -> check_expr acc true arg) (Ok lin_map) args
+      in
+      (* Check function return type *)
+      match StringMap.find_opt fname func_info with
+      | None ->
+        (* Function is not linear, we don't care about its return type *)
+        lin_map
+      | Some def ->
+        (* Function is linear, check return type *)
+        (match def.srtyp with
+         | Void -> lin_map
+         | Nonvoid ret_typ ->
+           if is_linear_type struct_info ret_typ && not is_consumed
+           then
+             (* Function returns linear but value is not consumed, silent discard*)
+             Error ("Function " ^ fname ^ " returns linear value that is not consumed")
+           else lin_map)
     in
     (* Check expression *)
     info_println "Checking expression";
@@ -381,13 +423,30 @@ let rec linear_check_block
     | Error err -> Error err
     | Ok lin_map ->
       (match expr with
-       | _, SLiteral _ -> (* Literals have no rules *) Ok lin_map
+       | _, SLiteral (SStructLit (sname, fields)) ->
+         (* Struct literals have some rules, since they can contain expressions *)
+         (* Check each expression, marking as consumed only if struct overall is consumed *)
+         List.fold_left
+           (fun acc expr -> check_expr acc is_consumed expr)
+           (Ok lin_map)
+           fields
+       | _, SLiteral _ -> (* Other literals have no rules *) Ok lin_map
        | id_typ, SId id ->
          (* An expression with just an identifier *)
          check_lone_ident lin_map is_consumed id
        | out_typ, SOperation op -> Ok lin_map
        | out_typ, SAssignment assmt -> check_assignment lin_map assmt
-       | out_typ, SCall (fname, args) -> Ok lin_map)
+       | out_typ, SCall (fname, args) -> check_func_call lin_map fname args)
+  in
+  (* Returns list of keys-value pairs in map in a state other than 'Used' *)
+  let get_unused (lin_map : linear_map) : (string * linear_state) list =
+    StringMap.fold
+      (fun key value acc ->
+        match value with
+        | Used, _ -> acc
+        | _ -> (key, fst value) :: acc)
+      lin_map
+      []
   in
   (* Check a list of statements *)
   let rec linear_check_stmt_list (in_lin_map : linear_map_result) (s_list : sstmt list)
@@ -436,8 +495,23 @@ let rec linear_check_block
     let lin_map = linear_check_stmt_list (Ok lin_map) s_list in
     debug_println
       ("Checked statements, lin_map: " ^ string_of_result string_of_linear_map lin_map);
-    info_println "Done checking block";
-    lin_map
+    info_println "Done checking block, evaluating lin_map";
+    (match lin_map with
+     | Error err -> Error err
+     | Ok lin_map ->
+       (* Check that all variables are consumed *)
+       let remaining_values = get_unused lin_map in
+       (match remaining_values with
+        | [] -> Ok lin_map
+        | _ ->
+          let err_msg =
+            List.fold_left
+              (fun acc (key, state) ->
+                acc ^ key ^ " is " ^ string_of_linear_state state ^ ", ")
+              "Variables not consumed: "
+              remaining_values
+          in
+          Error err_msg))
 ;;
 
 (* Check a function to ensure it follows linearity rules, return
@@ -453,7 +527,11 @@ let process_func (struct_info : struct_info) (func_info : func_info) (func : sfu
   let func_statements =
     match func.sreturn with
     | SVoidReturn -> func.sbody
-    | SReturn ex -> func.sbody @ [ SExpr ex ]
+    | SReturn ex ->
+      (* This is super hacky, treat a return statement like a call to a fake function named
+         "return" which returns an unrestricted int--hopefully nobody makes their own
+         linear function named "return"...*)
+      func.sbody @ [ SExpr (Prim (Unrestricted, Int), SCall ("return", [ ex ])) ]
   in
   info_println "Checking function body";
   let lin_map =
