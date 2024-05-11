@@ -335,10 +335,13 @@ let struct_map = gen_struct_map program.structs in
           (t, SOperation(SUnLogOp(op, (t, e'))))
         | AccessOp (s, op, var) -> 
           let stype = type_of_identifier s in
+          let op' = match op with 
+            | Dot -> "Dot"
+            | Arrow -> "Arrow" in
           let get_sname = function 
-              \
-              | Struct s when op = DOT -> s 
-              | _ -> raise (Failure "Not a struct type")
+            | Ref(Struct s) when op' = "Arrow" -> s
+            | Struct s when op' = "Dot" -> s 
+            | _ -> raise (Failure "Not a struct type")
           in 
           let s' = find_struct (get_sname stype) in
           let (sdef, smap) = match s' with 
