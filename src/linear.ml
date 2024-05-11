@@ -369,8 +369,10 @@ let rec linear_check_block
          (* | _, SOperation (SDeref ref_name) -> Ok lin_map *)
          | _, SId id ->
            (* Regular assignment, mark lhs assigned and check rhs, with 'is_consumed' context *)
-           let lin_map = assign_ident lin_map id in
-           check_expr lin_map true expr
+           let lin_map = check_expr (Ok lin_map) true expr in
+           (match lin_map with
+            | Error err -> Error err
+            | Ok lin_map -> assign_ident lin_map id)
          | _ -> raise (Failure "Linear checker error: assigning to invalid expression"))
       | SStructAssign (s_id, mem_id, expr) ->
         (* Assignment to a struct member (ex. point.x = 5)*)
@@ -379,16 +381,16 @@ let rec linear_check_block
       | SStructExplode (idents, s_expr) ->
         (* Try to mark each argument as assigned *)
         let lin_map =
-          List.fold_left
-            (fun acc id ->
-              match acc with
-              | Error err -> Error err
-              | Ok lin_map -> assign_ident lin_map id)
-            (Ok lin_map)
-            idents
+          (* Check the right-hand side, noting that it is consumed *)
+          check_expr (Ok lin_map) true s_expr
         in
-        (* Check the right-hand side, noting that it is consumed *)
-        check_expr lin_map true s_expr
+        List.fold_left
+          (fun acc id ->
+            match acc with
+            | Error err -> Error err
+            | Ok lin_map -> assign_ident lin_map id)
+          lin_map
+          idents
       | SDerefAssign (deref_id, expr) -> Ok lin_map
     in
     let check_func_call (lin_map : linear_map) (fname : string) (args : sexpr list)
