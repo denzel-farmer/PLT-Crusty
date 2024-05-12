@@ -36,7 +36,7 @@
 let whitespace = [' ' '\t' '\r' '\n']
 let newline = '\r' | '\n' | "\r\n"
 
-let ascii = [^'\'' '\\'] | '\\' ['\\' '\'' 'n' 't' 'r']
+let ascii = [^'\'' '\\' '\"'] | '\\' ['\\' '\'' 'n' 't' 'r']
 let letter = ['a'-'z' 'A'-'Z']
 let digit = ['0'-'9']
 let int = ['+' '-']? digit+
@@ -132,7 +132,7 @@ rule token = parse
     printf "%s " ("CHARLIT('" ^ Char.escaped char_val.[0] ^ "')");
     CHARLIT(char_val.[0])
   }
-| '"' (ascii)* '"' as lem {
+| '\"' (ascii)* '\"' as lem {
     let string_val = String.sub lem 1 (String.length lem - 2) in
     let processed_string = process_escapes string_val in
     printf "%s " ("STRINGLIT(\"" ^ String.escaped processed_string ^ "\")");

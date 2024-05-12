@@ -137,7 +137,7 @@ let translate ((globals : A.var_decl list), (structs : A.struct_def list), (func
     let int_format_str = L.build_global_stringptr "%d\n" "fmt" builder in
     let char_format_str = L.build_global_stringptr "%c\n" "char_fmt" builder in
     let float_format_str = L.build_global_stringptr "%f\n" "float_fmt" builder in
-    let string_format_str = L.build_global_stringptr "%s\n" "str_fmt" builder in
+    let string_format_str = L.build_global_stringptr "%s" "str_fmt" builder in
 
     (* Add args and locals to symbol table *)
     let params = Array.to_list (L.params function_addr) in
