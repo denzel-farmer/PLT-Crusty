@@ -15,6 +15,7 @@ type primType =
 type typ =
   | Prim of lin_qual * primType
   | Struct of string
+  | Arr of typ * int
   | Ref of typ
 
 type ret_typ =
@@ -27,6 +28,7 @@ type binArithOp =
   | Sub
   | Mul
   | Div
+  | Mod
 
 type binLogOp =
   | And
@@ -88,6 +90,7 @@ and literal =
   | FloatLit of float
   | StructLit of string * expr list
   | StringLit of string
+  | ArrayLit of expr list
 
 (* Declaration Types *)
 type var_decl = typ * string

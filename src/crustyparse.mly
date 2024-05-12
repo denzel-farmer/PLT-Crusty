@@ -15,7 +15,7 @@ open Ast
 %token STRUCT EXPLODE
 
 %token ASSIGN
-%token PLUS MINUS DIVIDE INCR DECR STAR
+%token PLUS MINUS DIVIDE MOD INCR DECR STAR
 %token EQ NEQ LT LTE GT GTE
 %token AND OR NOT
 %token DOT
@@ -35,7 +35,7 @@ open Ast
 %left EQ NEQ
 %left LT GT LTE GTE
 %left PLUS MINUS
-%left DIVIDE
+%left DIVIDE MOD
 %left STAR
 
 %right INCR DECR NOT
@@ -101,6 +101,7 @@ single_type:
 /* Returns record of type (lin qual + base) and name for variable declaration */
 var_decl:
   | single_type ID { ($1, $2) }
+  | single_type ID LBRACK INTLIT RBRACK { (Arr($1, $4), $2) }
 
 /* Returns semicolon-separated list of variable declarations */
 var_decl_list:
@@ -208,6 +209,7 @@ arithmetic_expression:
   | expr MINUS expr { ArithOp($1, Sub, $3) }
   | expr STAR expr { ArithOp($1, Mul, $3) }
   | expr DIVIDE expr { ArithOp($1, Div, $3) }
+  | expr MOD expr { ArithOp($1, Mod, $3) }
   | expr INCR { UnArithOp(PreInc, $1) }
   | expr DECR { UnArithOp(PreDec, $1) }
   | INCR expr { UnArithOp(PostInc, $2) }
@@ -235,6 +237,7 @@ literal_expression:
   | CHARLIT { CharLit($1) }
   | STRINGLIT { StringLit($1) }
   | LBRACE STRUCT ID ARROW exprs_list RBRACE { StructLit($3, $5) }
+  | LBRACK exprs_list RBRACK { ArrayLit($2) }
 
 /* Accesses: struct.field, (ref struct)->field, *ref */
 access_expression:

@@ -35,6 +35,7 @@ let translate ((globals : A.var_decl list), (structs : A.struct_def list), (func
       let field_types = List.map (fun (t, _) -> ltype_of_typ t) struct_def.fields in
       L.struct_type context (Array.of_list field_types)
     | A.Ref(t) -> L.pointer_type (ltype_of_typ t)
+    | A.Arr(t, n) -> raise (Failure "Not implemented: Array")
   in 
 
   let rec ltype_of_rtyp : (A.ret_typ -> L.lltype) = function 
@@ -228,6 +229,7 @@ let translate ((globals : A.var_decl list), (structs : A.struct_def list), (func
               | A.Prim(_, Int) -> L.build_sdiv
               | A.Prim(_, Float) -> L.build_fdiv
               | _ -> raise (Failure "Div: Not a Int or Float"))
+            | A.Mod -> raise (Failure "Not implemented: Mod")
           ) e1' e2' "tmp" builder 
         | SUnArithOp(op, e) -> 
           let e' = build_expr builder e in

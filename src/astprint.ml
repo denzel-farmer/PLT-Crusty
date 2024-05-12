@@ -15,6 +15,7 @@ let string_of_lin = function
 let rec string_of_typ : typ -> string = function
   | Prim (lin, prim) -> string_of_lin lin ^ " " ^ string_of_prim_typ prim
   | Struct s -> "struct " ^ s
+  | Arr (t, s) -> string_of_typ t ^ "[" ^ string_of_int s ^ "]"
   | Ref t -> "ref " ^ string_of_typ t
 ;;
 
@@ -27,6 +28,7 @@ let string_of_binArithOp = function
   | Sub -> "-"
   | Mul -> "*"
   | Div -> "/"
+  | Mod -> "%"
 ;;
 
 let string_of_binLogOp = function
@@ -67,6 +69,7 @@ let rec string_of_literal = function
   | FloatLit f -> string_of_float f
   | StructLit (name,exprs) -> "{ struct " ^ name ^" -> " ^ String.concat ", " (List.map string_of_expr exprs) ^ "}"
   | StringLit s -> "\"" ^ s ^ "\""
+  | ArrayLit exprs -> "[" ^ String.concat ", " (List.map string_of_expr exprs) ^ "]"
 
 and string_of_expr = function
   | Id s -> s

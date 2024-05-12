@@ -2,7 +2,13 @@
 source_filename = "Crusty"
 
 @fmt = private unnamed_addr constant [4 x i8] c"%d\0A\00", align 1
+@char_fmt = private unnamed_addr constant [4 x i8] c"%c\0A\00", align 1
+@float_fmt = private unnamed_addr constant [4 x i8] c"%f\0A\00", align 1
+@str_fmt = private unnamed_addr constant [4 x i8] c"%s\0A\00", align 1
 @fmt.1 = private unnamed_addr constant [4 x i8] c"%d\0A\00", align 1
+@char_fmt.2 = private unnamed_addr constant [4 x i8] c"%c\0A\00", align 1
+@float_fmt.3 = private unnamed_addr constant [4 x i8] c"%f\0A\00", align 1
+@str_fmt.4 = private unnamed_addr constant [4 x i8] c"%s\0A\00", align 1
 @globalstring = private unnamed_addr constant [7 x i8] c"hello\0A\00", align 1
 
 define i32 @add(i32* %0, { i32, i32 }* %1, { i32, i32 }* %2) {

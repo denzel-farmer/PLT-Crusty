@@ -17,6 +17,7 @@ let string_of_lin = function
 let rec string_of_typ = function
   | Prim (lin, prim) -> string_of_lin lin ^ " " ^ string_of_prim_typ prim
   | Struct s -> "struct " ^ s
+  | Arr (t, s) -> string_of_typ t ^ "[" ^ string_of_int s ^ "]"
   | Ref t -> "ref " ^ string_of_typ t
 
 let string_of_ret_typ = function
@@ -28,6 +29,7 @@ let string_of_binArithOp = function
   | Sub -> "-"
   | Mul -> "*"
   | Div -> "/"
+  | Mod -> "%"
 
 let string_of_binLogOp = function
   | And -> "&&"
@@ -62,6 +64,7 @@ let rec string_of_literal = function
   | SFloatLit f -> string_of_float f
   | SStructLit (name, sexprs) -> "{ struct " ^ name ^ " -> " ^ String.concat ", " (List.map string_of_sexpr sexprs) ^ "}"
   | SStringLit s -> "\"" ^ s ^ "\""
+  | SArrayLit sexprs -> "[" ^ String.concat ", " (List.map string_of_sexpr sexprs) ^ "]"
 
 and string_of_sexpr (typ, sx) =
   string_of_typ typ ^ " " ^ match sx with

@@ -87,6 +87,7 @@ rule token = parse
 | '-'      { printf "MINUS "; MINUS }
 | '*'      { printf "STAR "; STAR }
 | '/'      { printf "DIVIDE "; DIVIDE }
+| '%'      { printf "MOD "; MOD }
 | "++"     { printf "INCR "; INCR }
 | "--"     { printf "DECR "; DECR }
 

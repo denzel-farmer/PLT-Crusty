@@ -22,6 +22,7 @@ let rec compare_stripped_types (first : typ) (second : typ) : bool =
   | Prim(_, t1), Prim(_, t2) -> t1 = t2
   | Ref(t1), Ref(t2) -> compare_stripped_types t1 t2
   | Struct(s1), Struct(s2) -> s1 = s2
+  | Arr(t1, i1), Arr(t2, i2) -> compare_stripped_types t1 t2 && i1 = i2
   | _ -> false 
 ;;
 
@@ -166,6 +167,7 @@ let struct_map = gen_struct_map program.structs in
         | CharLit l -> (Prim(Unrestricted, Char), SLiteral(SCharLit(l)))
         | FloatLit l -> (Prim(Unrestricted, Float), SLiteral(SFloatLit(l)))
         | StringLit l -> (Prim(Unrestricted, String), SLiteral(SStringLit(l)))
+        | ArrayLit l -> raise (Failure "ArrayLit not implemented")
         | StructLit (name, exprs) -> 
           match (StringMap.find_opt name struct_map) with
           | None -> raise (Failure ("undeclared struct \"" ^ name ^ "\""))
