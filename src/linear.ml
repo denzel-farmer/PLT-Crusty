@@ -423,6 +423,7 @@ let rec linear_check_block
           (* Otherwise, silent discard is happening *)
           Error ("Linear variable " ^ ident ^ " cannot be silently discarded"))
     in
+    (*TODO make helper function for parts of var -> struct def -> member accesses *)
     (* Check an assignment expression *)
     let check_assignment (lin_map : linear_map) (assmt : sassignment) : linear_map_result =
       info_println "Checking assignment expression";
@@ -533,6 +534,103 @@ let rec linear_check_block
              Error ("Function " ^ fname ^ " returns linear value that is not consumed")
            else lin_map)
     in
+    let check_operation (lin_map : linear_map) (oper : soperation) : linear_map_result =
+      match oper with
+      (* For regular operations, just check any operands with is_consmed = false *)
+      | SArithOp (operand1, _, operand2) ->
+        let lin_map = check_expr (Ok lin_map) false operand1 in
+        check_expr lin_map false operand2
+      | SUnArithOp (_, operand) -> check_expr (Ok lin_map) false operand
+      | SCompOp (operand1, _, operand2) ->
+        let lin_map = check_expr (Ok lin_map) false operand1 in
+        check_expr lin_map false operand2
+      | SLogOp (operand1, _, operand2) ->
+        let lin_map = check_expr (Ok lin_map) false operand1 in
+        check_expr lin_map false operand2
+      | SUnLogOp (_, operand) -> check_expr (Ok lin_map) false operand
+      | SAccessOp (s_id, Dot, mem_id) ->
+        (* Look up identifier name in lin_map to get struct name *)
+        (match StringMap.find_opt s_id lin_map with
+         | None ->
+           debug_println ("Variable " ^ s_id ^ " not found, assuming unrestricted");
+           Ok lin_map
+         | Some (Ref, _) -> Error ("Cannot dot-access value from reference " ^ s_id)
+         | Some (Unassigned, _) ->
+           Error
+             ("Cannot access members of linear variable " ^ s_id ^ " before assignment")
+         | Some (Used, _) ->
+           Error ("Cannot access members of linear variable " ^ s_id ^ " after use")
+         | Some (Assigned, Struct struct_name) | Some (Borrowed, Struct struct_name) ->
+           (* Check member is not linear *)
+           let struct_def = get_struct struct_info struct_name in
+           (match struct_def with
+            | None ->
+              (* TODO maybe this should raise an error *)
+              debug_println ("Struct " ^ s_id ^ " not found, assuming unrestricted");
+              Ok lin_map
+            | Some struct_def ->
+              (* check mem is not linear *)
+              let field =
+                List.find (fun (typ, name) -> name = mem_id) struct_def.fields
+              in
+              if is_linear_type struct_info (fst field)
+              then
+                Error ("Cannot access value of linear struct field " ^ s_id ^ "." ^ mem_id)
+              else Ok lin_map)
+         | Some (Assigned, _) | Some (Borrowed, _) ->
+           raise (Failure "Linear checker error: struct dot-access from non-struct"))
+      | SAccessOp (s_id, Arrow, mem_id) ->
+        (* Look up identifier name in lin_map to get struct name *)
+        (match StringMap.find_opt s_id lin_map with
+         | None ->
+           debug_println ("Variable " ^ s_id ^ " not found, assuming unrestricted");
+           Ok lin_map
+         | Some (Ref, Ref (Struct struct_name)) ->
+           (* Check member is not linear *)
+           let struct_def = get_struct struct_info struct_name in
+           (match struct_def with
+            | None ->
+              debug_println ("Struct " ^ s_id ^ " not found, assuming unrestricted");
+              Ok lin_map
+            | Some struct_def ->
+              (* check mem is not linear *)
+              let field =
+                List.find (fun (typ, name) -> name = mem_id) struct_def.fields
+              in
+              if is_linear_type struct_info (fst field)
+              then
+                Error ("Cannot arrow access linear struct field " ^ s_id ^ "->" ^ mem_id)
+              else Ok lin_map)
+         | Some (Ref, _) ->
+           raise
+             (Failure ("Linear checker error: struct arrow access to non-struct " ^ s_id))
+         | Some _ -> Error ("Can only arrow-access references, var: " ^ s_id))
+      | SDeref ref_id ->
+        (* Just need to check if in lin_map, if so fail *)
+        (match StringMap.find_opt ref_id lin_map with
+         | None ->
+           debug_println "Not in lin_map, must be unrestricted dereference";
+           Ok lin_map
+         | Some _ -> Error ("Cannot dereference linear reference " ^ ref_id))
+      | SBorrow var_id ->
+        (* Get var name in lin map *)
+        (match StringMap.find_opt var_id lin_map with
+         | None ->
+           debug_println "Not in lin_map, must be unrestricted borrow";
+           Ok lin_map
+         | Some (Assigned, typ) | Some (Borrowed, typ) ->
+           (* Must be borrowing something linear, requires consumption *)
+           if not is_consumed
+           then Error ("Cannot borrow linear " ^ var_id ^ " unless at call site")
+           else (
+             (* Update to have state Borrowed *)
+             debug_println ("Marking var" ^ var_id ^ "as Borrowed");
+             Ok (StringMap.add var_id (Borrowed, typ) lin_map))
+         | Some (Unassigned, _) -> Error ("Cannot borrow " ^ var_id ^ "before assignment")
+         | Some (Ref, _) -> Error ("Cannot borrow reference " ^ var_id)
+         | Some (Used, _) -> Error ("Cannot borrow " ^ var_id ^ "after use"))
+      | SIndex _ -> raise (Failure "Linear checker: Index operation not supported")
+    in
     (* Check expression *)
     info_println "Checking expression";
     debug_println ("Expression is  \"" ^ string_of_sexpr expr ^ "\"");
@@ -551,7 +649,7 @@ let rec linear_check_block
        | id_typ, SId id ->
          (* An expression with just an identifier *)
          check_lone_ident lin_map is_consumed id
-       | out_typ, SOperation op -> Ok lin_map
+       | out_typ, SOperation op -> check_operation lin_map op
        | out_typ, SAssignment assmt -> check_assignment lin_map assmt
        | out_typ, SCall (fname, args) -> check_func_call lin_map fname args)
   in

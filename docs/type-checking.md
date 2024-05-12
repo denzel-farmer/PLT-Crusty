@@ -37,16 +37,23 @@
                     - If operation
                         - If unary operation, check operand expression
                         - If binary operation, check first expr then second expr
-                        - If access operation (EXPR.ID or EXPR->ID)
+                        - If access operation (ID.ID or ID->ID)
                             - If dot 
-                                - Get struct name from type of EXPR (if not struct type, raise error)
-                                - Check struct is Assigned
-                                - Check field ID in struct is unrestricted (if field not found, raise error)
+                                - look up struct var name in lin_map, if not exist assume unrestricted and continue
+                                - check if state is Assigned or Borrowed, otherwise error
+                                - look up struct def in struct info
+                                - check type of member, if linear throw error 
                             - If arrow
-                                - Get struct name from type within Ref (if not ref struct type, raise error)
-                                - Check field ID in struct is unrestricted
-                        - If Deref
-                        - If Borrow
+                                - look up struct var name in lin_map, if not exist assume unrestricted and continue 
+                                - check if state is Ref, otherwise error
+                                - look up struct def in struct info
+                                - check type of member, if linear throw error 
+                        - If Deref (*ID)
+                            - look up var name in lin_map, if not exist assume unrestricted and continue
+                            - if found, throw error (cannot deref linear)
+                        - If Borrow (&ID)
+                            - look up var name in lin_map, if not found assume unrestricted and continune
+                            - Otherwise, try state Assigned -> Borrowed or Borrowed -> Borrowed
                         - If index
                     - If assignment
                         - If Assign (ID = EXPR)
@@ -57,7 +64,11 @@
                             - lookup struct, lookup member in struct, fail if type is linear 
                             - try Assigned -> Assigned on struct id
                         - If RefStructAssign (ID->ID = EXPR)
-                        - If DerefAssign (ID.ID = EXPR)
+                            - Check expr as consumed
+                            - Check struct var, if linear return error, references are read only 
+                        - If DerefAssign (*ID = EXPR)
+                            - Check expr as consumed
+                            - check struct var, if linear return error, references are read only 
                         - If StructExplode ({ID, ID} = EXPR)
                             - check EXPR with is_consumed true 
                             - try Unassigned -> Assigned or Used -> Assigned on each ID
