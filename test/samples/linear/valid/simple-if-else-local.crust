@@ -1,0 +1,18 @@
+linear int main() {
+
+    linear int a; 
+    
+    if (true) {
+        linear int b;
+        int c;
+
+        a = 1;
+        b = 2;
+
+        c = b;
+    } else {
+        a = 2;
+    }
+
+    return a;
+}
