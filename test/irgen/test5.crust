@@ -1,0 +1,14 @@
+int add(ref int a, ref int b){
+    print(*a + *b);
+    return 0;
+}
+
+int main(){
+    int a; 
+    int b; 
+
+    a = 4;
+    b = 5;
+    add(&a, &b);
+    return 0;
+}
