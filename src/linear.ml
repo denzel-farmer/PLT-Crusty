@@ -282,7 +282,9 @@ let remove_decl (lin_map : linear_map_result) (decl : var_decl) : linear_map_res
      | Some (_, typ) ->
        info_println ("Found " ^ name ^ " but is not Used");
        Error ("Declaration " ^ name ^ "is Unconsumed")
-     | None -> Error ("Declaration" ^ name ^ " not in linear map"))
+     | None ->
+       debug_println ("Didn't find decl " ^ name ^ ", assuming unrestricted");
+       Ok lin_map)
 ;;
 
 (* removes new decls from linear map after checking block *)
