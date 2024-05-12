@@ -270,36 +270,29 @@ let add_linear_decls
 ;;
 
 (* Removes declaration if Used *)
-let remove_decl
-  (lin_map : linear_map_result)
-  (decl : var_decl)
-  : linear_map_result
-  =
+let remove_decl (lin_map : linear_map_result) (decl : var_decl) : linear_map_result =
   match lin_map with
   | Error err -> Error err
   | Ok lin_map ->
     let typ, name = decl in
-    match StringMap.find_opt name lin_map with
-    | Some (Used, typ) ->
-      info_println ("Found " ^ name ^ " with state Used");
-      Ok (StringMap.remove name lin_map)
-    | Some (_, typ) ->
-      info_println ("Found " ^ name ^ " but is not Used");
-      Error ("Declaration " ^ name ^ "is Unconsumed")
-    | None -> 
-      Error ("Declaration" ^ name ^ " not in linear map")
+    (match StringMap.find_opt name lin_map with
+     | Some (Used, typ) ->
+       info_println ("Found " ^ name ^ " with state Used");
+       Ok (StringMap.remove name lin_map)
+     | Some (_, typ) ->
+       info_println ("Found " ^ name ^ " but is not Used");
+       Error ("Declaration " ^ name ^ "is Unconsumed")
+     | None -> Error ("Declaration" ^ name ^ " not in linear map"))
 ;;
 
 (* removes new decls from linear map after checking block *)
-let remove_linear_decls
-  (lin_map : linear_map_result)
-  (vdecls : var_decl list)
+let remove_linear_decls (lin_map : linear_map_result) (vdecls : var_decl list)
   : linear_map_result
   =
   match lin_map with
   | Error err -> Error err
   | Ok lin_map ->
-  info_println("Removing locally declared variables");
+    info_println "Removing locally declared variables";
     let new_map = List.fold_left remove_decl (Ok lin_map) vdecls in
     new_map
 ;;
@@ -320,25 +313,36 @@ let merge_map (map1 : linear_map_result) (map2 : linear_map_result) : linear_map
   (* TODO implement *)
   match map1, map2 with
   | Ok map1', Ok map2' ->
-  info_println("Merging two branches");
-    StringMap.fold (fun name state1 acc ->
-      match acc with
-      | Ok check_map ->
-        (match StringMap.find_opt name map2' with
-        | Some state2 ->
-          let lin_state1, _ = state1 in
-          let lin_state2, _ = state2 in
-          if state1 = state2 then (
-            info_println("Variable " ^ name ^ " has same state " ^ string_of_linear_state lin_state1);
-            Ok check_map
-          ) else (
-            debug_println("Variable " ^ name ^ " has unequal states " ^ string_of_linear_state lin_state1 ^ " and " ^ string_of_linear_state lin_state2);
-            Error ("Variable " ^ name ^ " has unequal branches."))
-        | None ->
-          Error ("Variable " ^ name ^ " has unequal branches.")
-        )
-      | Error _ -> acc
-    ) map1' (Ok map1')
+    info_println "Merging two branches";
+    StringMap.fold
+      (fun name state1 acc ->
+        match acc with
+        | Ok check_map ->
+          (match StringMap.find_opt name map2' with
+           | Some state2 ->
+             let lin_state1, _ = state1 in
+             let lin_state2, _ = state2 in
+             if state1 = state2
+             then (
+               info_println
+                 ("Variable "
+                  ^ name
+                  ^ " has same state "
+                  ^ string_of_linear_state lin_state1);
+               Ok check_map)
+             else (
+               debug_println
+                 ("Variable "
+                  ^ name
+                  ^ " has unequal states "
+                  ^ string_of_linear_state lin_state1
+                  ^ " and "
+                  ^ string_of_linear_state lin_state2);
+               Error ("Variable " ^ name ^ " has unequal branches."))
+           | None -> Error ("Variable " ^ name ^ " has unequal branches."))
+        | Error _ -> acc)
+      map1'
+      (Ok map1')
   | Error err, _ -> Error err
   | _, Error err -> Error err
 ;;
@@ -468,7 +472,16 @@ let rec linear_check_block
                  else Ok lin_map)
             | Some (Assigned, _) | Some (Borrowed, _) ->
               raise (Failure "Linear checker error: struct dot-assignment to non-struct")))
-      | SRefStructAssign (s_ref_id, mem_id, expr) -> Ok lin_map
+      | SRefStructAssign (s_ref_id, mem_id, expr) ->
+        (* Consume RHS *)
+        let lin_map = check_expr (Ok lin_map) true expr in
+        (match lin_map with
+         | Error err -> Error err
+         | Ok lin_map ->
+           (* If lhs is in lin_map, raise error *)
+           (match StringMap.find_opt s_ref_id lin_map with
+            | None -> Ok lin_map
+            | Some _ -> raise (Failure ("Linear references are read only: " ^ s_ref_id))))
       | SStructExplode (idents, s_expr) ->
         (* Try to mark each argument as assigned *)
         let lin_map =
@@ -482,7 +495,16 @@ let rec linear_check_block
             | Ok lin_map -> assign_ident lin_map id)
           lin_map
           idents
-      | SDerefAssign (deref_id, expr) -> Ok lin_map
+      | SDerefAssign (deref_id, expr) ->
+        (* Consume RHS *)
+        let lin_map = check_expr (Ok lin_map) true expr in
+        (match lin_map with
+         | Error err -> Error err
+         | Ok lin_map ->
+           (* If lhs is in lin_map, raise error *)
+           (match StringMap.find_opt deref_id lin_map with
+            | None -> Ok lin_map
+            | Some _ -> raise (Failure ("Linear references are read only: " ^ deref_id))))
     in
     let check_func_call (lin_map : linear_map) (fname : string) (args : sexpr list)
       : linear_map_result
@@ -590,24 +612,25 @@ let rec linear_check_block
       ("Checked statements, lin_map: " ^ string_of_result string_of_linear_map lin_map);
     let lin_map = remove_linear_decls lin_map vdecls in
     lin_map
-    (* info_println "Done checking block, evaluating lin_map";
-    (match lin_map with
-     | Error err -> Error err
-     | Ok lin_map ->
-       (* Check that all variables are consumed *)
-       let remaining_values = get_unused lin_map in
-       (match remaining_values with
-        | [] -> Ok lin_map
-        | _ ->
-          let err_msg =
-            List.fold_left
-              (fun acc (key, state) ->
-                acc ^ key ^ " is " ^ string_of_linear_state state ^ ", ")
-              "Variables not consumed: "
-              remaining_values
-          in
-          Error err_msg)) *)
 ;;
+
+(* info_println "Done checking block, evaluating lin_map";
+   (match lin_map with
+   | Error err -> Error err
+   | Ok lin_map ->
+   (* Check that all variables are consumed *)
+   let remaining_values = get_unused lin_map in
+   (match remaining_values with
+   | [] -> Ok lin_map
+   | _ ->
+   let err_msg =
+   List.fold_left
+   (fun acc (key, state) ->
+   acc ^ key ^ " is " ^ string_of_linear_state state ^ ", ")
+   "Variables not consumed: "
+   remaining_values
+   in
+   Error err_msg)) *)
 
 (* Check a function to ensure it follows linearity rules, return
    a tuple of function name and the final lin_map *)
@@ -633,7 +656,10 @@ let process_func (struct_info : struct_info) (func_info : func_info) (func : sfu
     linear_check_block struct_info func_info (Ok lin_map) func.slocals func_statements
   in
   debug_println
-    ("Final lin_map for " ^ func.sfname ^ " " ^ string_of_result string_of_linear_map lin_map);
+    ("Final lin_map for "
+     ^ func.sfname
+     ^ " "
+     ^ string_of_result string_of_linear_map lin_map);
   func.sfname, lin_map
 ;;
 
