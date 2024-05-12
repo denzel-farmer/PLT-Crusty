@@ -6,15 +6,8 @@ open Astprint
 
 module StringMap = Map.Make (String)
 
-(* Types for storing all struct definitions and members by name, could make this 
-into separate module and share with the linear checker/parser  *)
-
-
 type field_map = var_decl StringMap.t
-
-(* TODO inefficient, stores fields as both list and map *)
 type structs_map = (struct_def*field_map) StringMap.t
-
 
 (* Compares two types, not considering linearity *)
 let rec compare_stripped_types (first : typ) (second : typ) : bool =
@@ -48,13 +41,12 @@ let print_arg_map =
 
 let check program =
   (* Collect function declarations for built-in functions: no bodies *)
-  let built_in_decls = (* how do we import built in functions? *)
+  let built_in_decls =
     StringMap.add "print" {
       rtyp = Void;
       fname = "print";
       args = [(Prim(Unrestricted, Int), "x")];
       locals = []; body = []; return = VoidReturn} StringMap.empty
-      (* TODO: Add more built in functions later *)
   in
 
   (* Add function name to symbol table *)
@@ -70,8 +62,8 @@ let check program =
   in
 
   (* Collect all function names into one symbol table *)
-  let function_decls = List.fold_left add_func built_in_decls program.funcs
-  in
+  let function_decls = List.fold_left add_func built_in_decls program.funcs in
+
   (* Return a function from our symbol table *)
   let find_func s =
     try StringMap.find s function_decls
@@ -79,28 +71,27 @@ let check program =
   in
   let _ = find_func "main" in (* Ensure "main" is defined *)
 
-  (*TODO replace 'raise' with result/option *)
-let gen_struct_map (structs : struct_def list) : structs_map =
-  let gen_field_map (fields : var_decl list) : field_map =
-    let add_field (map : field_map) (field : var_decl) =
-      let (field_type, field_name) = field in
-      if (StringMap.mem field_name map) then
-        raise (Failure ("duplicate field name: " ^ field_name))
-      else
-        StringMap.add field_name field map
+  let gen_struct_map (structs : struct_def list) : structs_map =
+    let gen_field_map (fields : var_decl list) : field_map =
+      let add_field (map : field_map) (field : var_decl) =
+        let (field_type, field_name) = field in
+        if (StringMap.mem field_name map) then
+          raise (Failure ("duplicate field name: " ^ field_name))
+        else
+          StringMap.add field_name field map
+      in
+      List.fold_left add_field StringMap.empty fields
     in
-    List.fold_left add_field StringMap.empty fields
-  in
-  let add_struct (map : structs_map) (st : struct_def) : structs_map =
-    if (StringMap.mem st.sname map) then
-      raise (Failure ("duplicate struct name: " ^ st.sname))
-    else
-      let fields = gen_field_map st.fields in
-      StringMap.add st.sname (st, fields) map
-  in
-  List.fold_left add_struct StringMap.empty structs
-in 
-let struct_map = gen_struct_map program.structs in
+    let add_struct (map : structs_map) (st : struct_def) : structs_map =
+      if (StringMap.mem st.sname map) then
+        raise (Failure ("duplicate struct name: " ^ st.sname))
+      else
+        let fields = gen_field_map st.fields in
+        StringMap.add st.sname (st, fields) map
+    in
+    List.fold_left add_struct StringMap.empty structs
+  in 
+  let struct_map = gen_struct_map program.structs in
 
   (* looks up a struct name (point) *)
   let find_struct (sname : string) = 
@@ -157,9 +148,8 @@ let struct_map = gen_struct_map program.structs in
     in 
 
     (* Return a semantically-checked expression, i.e., with a type *)
-   
     let rec check_expr (exp : expr) : sexpr =
-        (* Check literals*)
+      (* Check literals*)
       let check_literal (lit : literal): sexpr =
         match lit with 
           IntLit l -> (Prim(Unrestricted, Int), SLiteral(SIntLit(l)))
@@ -178,7 +168,7 @@ let struct_map = gen_struct_map program.structs in
               raise (Failure ("type mismatch in struct literal \"" ^ name ^ "\""))
             else
             (Struct(name), SLiteral(SStructLit(name, sexprs)))
-        in
+      in
       match exp with
       | Id var -> (type_of_identifier var, SId var)
       | Literal l -> check_literal l
@@ -233,19 +223,13 @@ let struct_map = gen_struct_map program.structs in
             in
             let (lt, _) = 
             try StringMap.find var2 smap 
-            with Not_found -> raise (Failure ("Field "^ var2 ^" not found in struct " ^ var1))
-            in
+            with Not_found -> raise (Failure ("Field "^ var2 ^" not found in struct " ^ var1)) in
             let (rt, e') = check_expr e in
             let err = "illegal assignment " ^ string_of_typ lt ^ " = " ^
                       string_of_typ rt ^ " in " ^ string_of_expr e
             in
             (check_assign lt rt err, SAssignment(SRefStructAssign(var1, var2, (rt, e'))))
           | StructExplode (var, e) -> 
-(* 
-            let (t, e) = check_expr e in 
-            (t, SStructExplode(var, (t, e)))
-            ) *)
-
             let (struct_type, struct_expr) = check_expr e in
             match struct_type with
             | Struct sname ->
@@ -261,7 +245,6 @@ let struct_map = gen_struct_map program.structs in
                 ) field_types var_types;
                 (struct_type, SAssignment(SStructExplode (var, (struct_type, struct_expr))))
             | _ -> raise (Failure "Right hand side of StructExplode is not a structure")
-                    
         in a
       | Operation l -> 
         let o = match l with 
@@ -271,9 +254,8 @@ let struct_map = gen_struct_map program.structs in
             let err = "illegal binary operator " ^
                       string_of_typ t1 ^ " " ^ string_of_operation l ^ " " ^
                       string_of_typ t2 ^ " in " ^ string_of_expr e1 ^ string_of_expr e2 in
-            let (q1, t1') = match_primitive t1 in (* is this just extracting the type? *)
-            (* and (_, t2') = match_primitive t2 *)
-            (* All binary operators require operands of the same type*)
+            let (q1, t1') = match_primitive t1 in
+            (* All binary operators require operands of the same type *)
             if compare_stripped_types t1 t2 then
               (* Determine expression type based on operator and operand types *)
               let _ = match op with
@@ -300,9 +282,8 @@ let struct_map = gen_struct_map program.structs in
           let err = "illegal compare operator " ^
                     string_of_typ t1 ^ " " ^ string_of_operation l ^ " " ^
                     string_of_typ t2 ^ " in " ^ string_of_expr e1 ^ string_of_expr e2 in
-          (* TODO: allow compare operator to work for non-primitives ? *)
           let q1, t1' = match_primitive t1 in
-          (* All compare operators require operands of the same type*)
+          (* All compare operators require operands of the same type *)
           if compare_stripped_types t1 t2 then
             let t = match op with
               | Eq | Neq | Lt | Gt | Leq | Geq when t1' = Int -> Bool
@@ -389,7 +370,6 @@ let struct_map = gen_struct_map program.structs in
             in (check_assign ft et err, e')
         in
         let args' = List.map2 check_call fd.args args in
-        (* TODO: Fix this? Void becomes unrestricted int primitive *)
         match fd.rtyp with
         | Nonvoid t -> (t, SCall(fname, args'))
         | Void -> (Prim(Unrestricted, Int), SCall(fname, args'))
@@ -404,7 +384,6 @@ let struct_map = gen_struct_map program.structs in
     let rec check_stmt_list l = 
     match l with 
     [] -> []
-    (* | Block sl :: sl' -> check_stmt_list (sl @ sl') *)
     | s :: sl -> check_stmt s :: check_stmt_list sl
     (* return a statement *)
     and check_stmt s = 
@@ -432,9 +411,6 @@ let struct_map = gen_struct_map program.structs in
           in 
           if compare_stripped_types t s then SReturn (t, e')
           else raise (Failure ("return gives "  ^ string_of_typ t))
-          (* else raise (
-              Failure ("return gives " ^ string_of_typ t ^ " expected " ^
-                        string_of_typ func.rtyp ^ " in " ^ string_of_expr e))  *)
         | VoidReturn -> 
           let s = match func.rtyp with 
           | Void -> SVoidReturn 
