@@ -134,6 +134,9 @@ let translate ((globals : A.var_decl list), (structs : A.struct_def list), (func
     let builder = L.builder_at_end context (L.entry_block function_addr) in
 
     let int_format_str = L.build_global_stringptr "%d\n" "fmt" builder in
+    let char_format_str = L.build_global_stringptr "%c\n" "char_fmt" builder in
+    let float_format_str = L.build_global_stringptr "%f\n" "float_fmt" builder in
+    let string_format_str = L.build_global_stringptr "%s\n" "str_fmt" builder in
 
     (* Add args and locals to symbol table *)
     let params = Array.to_list (L.params function_addr) in
@@ -284,8 +287,17 @@ let translate ((globals : A.var_decl list), (structs : A.struct_def list), (func
           let (s_addr, s') = get_symbol s in s_addr
         )
       | SCall ("print", [e]) -> 
-        L.build_call printf_func [| int_format_str ;
-        (build_expr builder e) |] "printf" builder
+        let ty, _ = e in
+        let e' = build_expr builder e in
+        let format_str = (match ty with
+          | A.Prim(_, Int) -> int_format_str
+          | A.Prim(_, Char) -> char_format_str
+          | A.Prim(_, Bool) -> int_format_str
+          | A.Prim(_, Float) -> float_format_str
+          | A.Prim(_, String) -> string_format_str
+          | _ -> raise (Failure "Print: Not a primitive type"))
+        in
+        L.build_call printf_func [| format_str; e' |] "printf" builder
       | SCall (f, args) ->
         let (fdef, fdecl) = StringMap.find f function_decls in
         let llargs = List.rev (List.map (build_expr builder) (List.rev args)) in

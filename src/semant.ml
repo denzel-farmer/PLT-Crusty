@@ -30,14 +30,29 @@ let rec compare_sexpr_decl_stripped_types (first : var_decl) (second : sexpr) : 
   let (t2, _) = second in
   compare_stripped_types t1 t2
 
+type print_arg_type = IntArg | BoolArg | CharArg | FloatArg | StringArg
+
+let print_arg_map = 
+  let m = StringMap.empty in
+  let m = StringMap.add "int" (Prim(Unrestricted, Int), IntArg) m in
+  let m = StringMap.add "int" (Prim(Linear, Int), IntArg) m in
+  let m = StringMap.add "bool" (Prim(Unrestricted, Bool), BoolArg) m in
+  let m = StringMap.add "bool" (Prim(Linear, Bool), BoolArg) m in
+  let m = StringMap.add "char" (Prim(Unrestricted, Char), CharArg) m in
+  let m = StringMap.add "char" (Prim(Linear, Char), CharArg) m in
+  let m = StringMap.add "float" (Prim(Unrestricted, Float), FloatArg) m in
+  let m = StringMap.add "float" (Prim(Linear, Float), FloatArg) m in
+  let m = StringMap.add "string" (Prim(Unrestricted, String), StringArg) m in
+  StringMap.add "string" (Prim(Linear, String), StringArg) m
+
 let check program =
   (* Collect function declarations for built-in functions: no bodies *)
   let built_in_decls = (* how do we import built in functions? *)
     StringMap.add "print" {
-      rtyp = Nonvoid(Prim(Unrestricted, Int));
+      rtyp = Void;
       fname = "print";
       args = [(Prim(Unrestricted, Int), "x")];
-      locals = []; body = []; return = Return(Literal(IntLit(1)))} StringMap.empty
+      locals = []; body = []; return = VoidReturn} StringMap.empty
       (* TODO: Add more built in functions later *)
   in
 
@@ -356,6 +371,15 @@ let struct_map = gen_struct_map program.structs in
       if List.length args != param_length then
         raise (Failure ("expecting " ^ string_of_int param_length ^
                         " arguments in " ^ string_of_expr call))
+      else if fname = "print" then
+        match args with
+        | [arg] ->
+          let (arg_type, sarg) = check_expr arg in
+          if StringMap.exists (fun _ (t, _) -> compare_stripped_types t arg_type) print_arg_map then
+            (Prim(Unrestricted, Int), SCall("print", [arg_type, sarg]))
+          else
+            raise (Failure ("invalid argument type for print: " ^ string_of_typ arg_type))
+        | _ -> raise (Failure "print expects exactly one argument")
       else let check_call (ft, _) e =
             let (et, e') = check_expr e in
             let err = "illegal argument found " ^ string_of_typ et ^
