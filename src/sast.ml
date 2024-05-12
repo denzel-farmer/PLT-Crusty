@@ -20,7 +20,6 @@ and soperation =
   | SAccessOp of string * accessOp * string
   | SDeref of string
   | SBorrow of string
-  | SIndex of string * sexpr
 
 (* Assignment Types *)
 and sassignment =

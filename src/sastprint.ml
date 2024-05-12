@@ -90,10 +90,10 @@ and string_of_soperation = function
   | SAccessOp (e, op, s) -> e ^ string_of_accessOp op ^ s
   | SDeref s -> "*" ^ s
   | SBorrow s -> "&" ^ s
-  | SIndex (s, e2) -> s ^ "[" ^ string_of_sexpr e2 ^ "]"
 
 and string_of_sassignment = function
   | SAssign (e1, e2) -> string_of_sexpr e1 ^ " = " ^ string_of_sexpr e2
+  | SDerefAssign (e1, e2) -> "*" ^ e1 ^ " = " ^ string_of_sexpr e2
   | SStructAssign (s1, s2, e) -> s1 ^ "." ^ s2 ^ " = " ^ string_of_sexpr e
   | SRefStructAssign (s1, s2, e) -> s1 ^ "->" ^ s2 ^ " = " ^ string_of_sexpr e
   | SStructExplode (fields, e) ->

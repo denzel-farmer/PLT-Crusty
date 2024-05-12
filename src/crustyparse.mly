@@ -14,13 +14,12 @@ open Ast
 %token REF LINEAR UNRESTRICTED CONST
 %token STRUCT EXPLODE
 
-/* TODO: Keep an eye on deref versus times and precedence now that they are combined as 'star' */
 %token ASSIGN
-%token PLUS MINUS DIVIDE MOD INCR DECR STAR  /*TIMES*/
+%token PLUS MINUS DIVIDE MOD INCR DECR STAR
 %token EQ NEQ LT LTE GT GTE
 %token AND OR NOT
 %token DOT
-%token BORROW /*DEREF*/ ARROW
+%token BORROW ARROW
 
 %token IF ELSE WHILE BREAK CONTINUE RETURN
 
@@ -36,19 +35,13 @@ open Ast
 %left EQ NEQ
 %left LT GT LTE GTE
 %left PLUS MINUS
-%left /*TIMES*/ DIVIDE MOD
-%left STAR /* TODO is deref left associative? Probably should enforce this 'by hand' for deref/times */
+%left DIVIDE MOD
+%left STAR
 
 %right INCR DECR NOT
 
 %nonassoc LOWER_THAN_ELSE
 %nonassoc ELSE
-// %left DOT BORROW TODO why doesnt this matter
-
-/*TODO: type casting */
-/*TODO: more complex assignment operators */
-/*TODO: comma operator */
-/*TODO: re-add const */
 
 %%
 program:
@@ -246,12 +239,11 @@ literal_expression:
   | LBRACE STRUCT ID ARROW exprs_list RBRACE { StructLit($3, $5) }
   | LBRACK exprs_list RBRACK { ArrayLit($2) }
 
-/* Accesses: struct.field, (ref struct)->field, *ref, array[index] */
+/* Accesses: struct.field, (ref struct)->field, *ref */
 access_expression:
   | ID DOT ID { AccessOp($1, Dot, $3) }
   | ID ARROW ID { AccessOp($1, Arrow, $3) }
-  | STAR ID { Deref($2) } 
-  | ID LBRACK expr RBRACK { Index($1, $3) }
+  | STAR ID { Deref($2) }
 
 /* Returns list of statements OR empty list */
 stmt_list:
@@ -260,7 +252,7 @@ stmt_list:
 
 /* Statements */
 stmt:
-  | LBRACE var_decl_list stmt_list RBRACE                 { Block ($2, $3) }
+  | LBRACE var_decl_list stmt_list RBRACE   { Block ($2, $3) }
   | expr SEMI                               { Expr $1      }
   | ifstmt                                  { $1 }
   | WHILE LPAREN expr RPAREN stmt           { While ($3, $5)  }
@@ -274,6 +266,3 @@ ifstmt:
 return_stmt : 
   RETURN expr SEMI { Return($2) }
   | RETURN SEMI { VoidReturn }
-
-/*TODO allow declaring structs in function body? */
-/*TODO allow mixed declaration and assignment? */

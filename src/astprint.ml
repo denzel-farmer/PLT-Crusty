@@ -40,8 +40,6 @@ let string_of_unLogOp : unLogOp -> string = function
   | Not -> "!"
 ;;
 
-(* TODO how to differentiate pre/post *)
-
 let string_of_compOp = function
   | Eq -> "=="
   | Neq -> "!="
@@ -93,10 +91,10 @@ and string_of_operation = function
   | AccessOp (e, op, s) -> e ^ string_of_accessOp op ^ s
   | Deref s -> "*" ^ s
   | Borrow s -> "&" ^ s
-  | Index (s, e2) -> s ^ "[" ^ string_of_expr e2 ^ "]"
 
 and string_of_assignment = function
   | Assign (e1, e2) -> string_of_expr e1 ^ " = " ^ string_of_expr e2
+  | DerefAssign (e1, e2) -> "*" ^ e1 ^ " = " ^ string_of_expr e2
   | StructAssign (s1, s2, e) -> s1 ^ "." ^ s2 ^ " = " ^ string_of_expr e
   | RefStructAssign (s1, s2, e) -> s1 ^ "->" ^ s2 ^ " = " ^ string_of_expr e
   | StructExplode (fields, e) ->

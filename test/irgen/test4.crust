@@ -1,0 +1,23 @@
+struct point {
+    int x; 
+    int y;
+    string a;
+};
+
+int main(int y) {
+    struct point a;
+    struct point p;
+    int c;
+    int d;
+    string e;
+
+    a.x = 2;
+    a.y = 4;
+    a.a = "Hi";
+
+    :{c, d, e} = a;
+    print(c + d);
+    print(e);
+
+    return 0;
+}

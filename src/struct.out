@@ -2,6 +2,9 @@
 source_filename = "Crusty"
 
 @fmt = private unnamed_addr constant [4 x i8] c"%d\0A\00", align 1
+@char_fmt = private unnamed_addr constant [4 x i8] c"%c\0A\00", align 1
+@float_fmt = private unnamed_addr constant [4 x i8] c"%f\0A\00", align 1
+@str_fmt = private unnamed_addr constant [4 x i8] c"%s\0A\00", align 1
 
 define i32 @main() {
 entry:
