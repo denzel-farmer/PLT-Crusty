@@ -269,6 +269,41 @@ let add_linear_decls
   new_map
 ;;
 
+(* Removes declaration if Used *)
+let remove_decl
+  (lin_map : linear_map_result)
+  (decl : var_decl)
+  : linear_map_result
+  =
+  match lin_map with
+  | Error err -> Error err
+  | Ok lin_map ->
+    let typ, name = decl in
+    match StringMap.find_opt name lin_map with
+    | Some (Used, typ) ->
+      info_println ("Found " ^ name ^ " with state Used");
+      Ok (StringMap.remove name lin_map)
+    | Some (_, typ) ->
+      info_println ("Found " ^ name ^ " but is not Used");
+      Error ("Declaration " ^ name ^ "is Unconsumed")
+    | None -> 
+      Error ("Declaration" ^ name ^ " not in linear map")
+;;
+
+(* removes new decls from linear map after checking block *)
+let remove_linear_decls
+  (lin_map : linear_map_result)
+  (vdecls : var_decl list)
+  : linear_map_result
+  =
+  match lin_map with
+  | Error err -> Error err
+  | Ok lin_map ->
+  info_println("Removing locally declared variables");
+    let new_map = List.fold_left remove_decl (Ok lin_map) vdecls in
+    new_map
+;;
+
 (* Takes in a function that takes in a linear_map, and converts it to a function
    that takes in a linear_map_result *)
 
@@ -280,9 +315,32 @@ let try_lin_map (input : linear_map_result) (f : linear_map -> linear_map_result
   | Ok lin_map -> f lin_map
 ;;
 
+(* Merges two maps to check that the states of variables among two branches are equal *)
 let merge_map (map1 : linear_map_result) (map2 : linear_map_result) : linear_map_result =
   (* TODO implement *)
-  map1
+  match map1, map2 with
+  | Ok map1', Ok map2' ->
+  info_println("Merging two branches");
+    StringMap.fold (fun name state1 acc ->
+      match acc with
+      | Ok check_map ->
+        (match StringMap.find_opt name map2' with
+        | Some state2 ->
+          let lin_state1, _ = state1 in
+          let lin_state2, _ = state2 in
+          if state1 = state2 then (
+            info_println("Variable " ^ name ^ " has same state " ^ string_of_linear_state lin_state1);
+            Ok check_map
+          ) else (
+            debug_println("Variable " ^ name ^ " has unequal states " ^ string_of_linear_state lin_state1 ^ " and " ^ string_of_linear_state lin_state2);
+            Error ("Variable " ^ name ^ " has unequal branches."))
+        | None ->
+          Error ("Variable " ^ name ^ " has unequal branches.")
+        )
+      | Error _ -> acc
+    ) map1' (Ok map1')
+  | Error err, _ -> Error err
+  | _, Error err -> Error err
 ;;
 
 (* TODO implement - this is 'top level' block checking function that includes checking helpers.
@@ -530,7 +588,9 @@ let rec linear_check_block
     let lin_map = linear_check_stmt_list (Ok lin_map) s_list in
     debug_println
       ("Checked statements, lin_map: " ^ string_of_result string_of_linear_map lin_map);
-    info_println "Done checking block, evaluating lin_map";
+    let lin_map = remove_linear_decls lin_map vdecls in
+    lin_map
+    (* info_println "Done checking block, evaluating lin_map";
     (match lin_map with
      | Error err -> Error err
      | Ok lin_map ->
@@ -546,7 +606,7 @@ let rec linear_check_block
               "Variables not consumed: "
               remaining_values
           in
-          Error err_msg))
+          Error err_msg)) *)
 ;;
 
 (* Check a function to ensure it follows linearity rules, return
@@ -573,7 +633,7 @@ let process_func (struct_info : struct_info) (func_info : func_info) (func : sfu
     linear_check_block struct_info func_info (Ok lin_map) func.slocals func_statements
   in
   debug_println
-    ("Final lin_map for " ^ func.sfname ^ string_of_result string_of_linear_map lin_map);
+    ("Final lin_map for " ^ func.sfname ^ " " ^ string_of_result string_of_linear_map lin_map);
   func.sfname, lin_map
 ;;
 
