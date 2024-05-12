@@ -1,0 +1,118 @@
+struct File{
+    string path;
+    int file_pointer;
+    int size;
+};
+
+// Psuedo system call interfaces
+
+int sys_getsize(string path) {
+    // get size of file placeholder
+    return 100;
+}
+int sys_open(string path) {
+    // open file placeholder
+    return 3;
+}
+
+void sys_close(int file_pointer) {
+    // close file placeholder
+}
+
+void sys_write(int file_pointer, string content) {
+    // overwrite file placeholder
+}
+
+string sys_read(int file_pointer, int size) {
+    // read file placeholder
+    return "file content";
+}
+
+// Low-level, crusty libraries that convert between 
+// a struct File and the system call interfaces
+
+/* Creates a linear file struct */
+struct File open_file(string path) {
+    int file_pointer;
+    int size;
+    struct File;
+
+    file_pointer = sys_open(path);
+    size = sys_getsize(path);
+
+    File = {struct File -> path, file_pointer, size};
+
+    print("Opened file:");
+    print(File.path);
+
+    return File;
+}
+
+/* Consumes a linear file struct */
+void close_file(struct File file) {
+    int file_pointer;
+    int size;
+    string path;
+
+    :{path, file_pointer, size} = file;
+
+    sys_close(file_pointer);
+}
+
+/* Only references a linear file struct */
+string read_file(ref struct File file) {
+    string content;
+    
+    content = sys_read(file.file_pointer, file.size);
+
+    print("Read file:");
+    print(content);
+
+    return content;
+}
+
+// Write technically 'consumes' unlike read, to update size. However, passes back a new struct File.
+// so it doesn't feel like it closed
+// in the future, this could be done with mutable references.
+struct File write_file(struct File file, string new_contents) {
+    int file_pointer;
+    int size;
+    string path;
+    struct File new_file;
+
+    :{path, file_pointer, size} = file;
+
+    sys_write(file_pointer, new_contents);
+
+    new_file = {struct File -> path, file_pointer, sys_getsize(path)};
+
+    return new_file;
+}
+
+
+
+// User code that calls our file library
+
+void main() {
+    struct File file;
+    string content;
+
+    // Creates a linear struct -- this must be consumed exactly once
+
+    file = open_file("file.txt");
+    content = read_file(file);
+    file = write_file(file, "new content");
+    close_file(file);
+}
+
+
+/* This function prevents compilation because */
+void no_consume() {
+    struct File file;
+    string content;
+
+    // Creates a linear struct -- this must be consumed exactly once
+
+    file = open_file("file.txt");
+
+}
