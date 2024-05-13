@@ -253,6 +253,7 @@ stmt_list:
 /* Statements */
 stmt:
   | LBRACE var_decl_list stmt_list RBRACE   { Block ($2, $3) }
+  | LBRACE var_decl_list stmt_list return_stmt RBRACE   { FBlock ($2, $3, $4) }
   | expr SEMI                               { Expr $1      }
   | ifstmt                                  { $1 }
   | WHILE LPAREN expr RPAREN stmt           { While ($3, $5)  }

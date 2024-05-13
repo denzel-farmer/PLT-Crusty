@@ -38,18 +38,19 @@ and sliteral =
   | SStringLit of string
   | SArrayLit of sexpr list
 
+type sreturn_stmt =
+  | SReturn of sexpr
+  | SVoidReturn
+
 (* Statement Types *)
 type sstmt =
   | SBlock of (var_decl list) * (sstmt list)
+  | FSBlock of (var_decl list) * (sstmt list) * sreturn_stmt
   | SExpr of sexpr
   | SIf of sexpr * sstmt * sstmt
   | SWhile of sexpr * sstmt
   | SBreak
   | SContinue
-
-type sreturn_stmt =
-  | SReturn of sexpr
-  | SVoidReturn
 
 (* Argument Declaration Type *)
 
