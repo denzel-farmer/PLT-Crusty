@@ -1,6 +1,5 @@
 open Ast
 open Sast
-
 module StringMap = Map.Make (String)
 
 (* Types for passing results and errors *)
@@ -66,7 +65,8 @@ let string_of_struct_info (struct_info : struct_info) : string =
   then "[]"
   else
     StringMap.fold
-      (fun key value acc -> acc ^ key ^ " -> " ^ Astprint.string_of_struct_def value ^ "\n")
+      (fun key value acc ->
+        acc ^ key ^ " -> " ^ Astprint.string_of_struct_def value ^ "\n")
       struct_info
       ""
 ;;
@@ -76,7 +76,8 @@ let string_of_func_info (func_info : func_info) : string =
   then "[]"
   else
     StringMap.fold
-      (fun key value acc -> acc ^ key ^ " -> " ^ Sastprint.string_of_sfunc_def value ^ "\n")
+      (fun key value acc ->
+        acc ^ key ^ " -> " ^ Sastprint.string_of_sfunc_def value ^ "\n")
       func_info
       ""
 ;;
@@ -168,19 +169,16 @@ let get_struct (struct_map : struct_info) (sname : string) : struct_def option =
 
 (* check if a given variable type is linear (based on struct_map if it is a struct type)
    if struct type and struct type not present in map, returns false *)
-let rec is_linear_type (struct_map : struct_info) (var_type : typ) : bool =
+let is_linear_type (struct_map : struct_info) (var_type : typ) : bool =
   match var_type with
   | Prim (Linear, _) -> true
+  | Prim (Unrestricted, _) -> false
   | Struct sname ->
     (match get_struct struct_map sname with
      | Some in_struct -> is_linear_struct in_struct
      | None -> false)
-  | Arr (subtyp, _) ->
-    is_linear_type struct_map subtyp
-    (* Array of linear types is linear *)
-    (* TODO add linear arrays of unrestricted types *)
+  | Arr (subtyp, _) -> false (* Linear arrays not supported *)
   | Ref _ -> false (* Refs can't be linear *)
-  | _ -> false
 ;;
 
 let is_linear_decl (struct_map : struct_info) (decl : var_decl) : bool =
@@ -220,7 +218,7 @@ let gen_func_info_map (funcs : sfunc_def list) (struct_info_map : struct_info) :
   let func_has_linear_ret (func : sfunc_def) : bool =
     match func.srtyp with
     | Nonvoid ret -> is_linear_type struct_info_map ret
-    | _ -> false
+    | Void -> false
   in
   List.fold_left
     (fun acc func ->

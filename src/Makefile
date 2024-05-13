@@ -41,9 +41,11 @@ linear.cmi : \
 sast.cmi : \
     ast.cmi
 astprint.cmo : \
-    ast.cmi
+    ast.cmi \
+    astprint.cmi
 astprint.cmx : \
-    ast.cmi
+    ast.cmi \
+    astprint.cmi
 checksemant.cmo : \
     semant.cmo \
     scanner.cmo \
