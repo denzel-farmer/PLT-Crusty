@@ -1,5 +1,6 @@
 open Ast
 open Sast
+open Log
 module StringMap = Map.Make (String)
 
 (* Types for passing results and errors *)
@@ -42,24 +43,6 @@ let lin_result_failed (lin_result : linear_result) : bool =
         | Ok _ -> false)
       lin_map_results
 ;;
-
-(* Print functions for debugging and error messages *)
-let linear_log_level = Some Debug
-
-let log_print (msg : string) (level : log_level) : unit =
-  match linear_log_level, level with
-  | Some Debug, Debug | Some Debug, Info -> print_string msg
-  | Some Info, Info -> print_string msg
-  | Some Info, Debug -> ()
-  | None, _ -> ()
-;;
-
-let log_println (msg : string) (level : log_level) : unit = log_print (msg ^ "\n") level
-let debug_print (msg : string) : unit = log_print msg Debug
-let debug_println (msg : string) : unit = log_println ("[DEBUG] " ^ msg) Debug
-let info_print (msg : string) : unit = log_print msg Info
-let info_println (msg : string) : unit = log_println ("[INFO] " ^ msg) Info
-
 let string_of_struct_info (struct_info : struct_info) : string =
   if StringMap.is_empty struct_info
   then "[]"
