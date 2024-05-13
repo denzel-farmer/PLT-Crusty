@@ -29,12 +29,13 @@ int sys_write(int file_pointer, string content) {
     return 0;
 }
 
-string sys_read(int file_pointer, int size) {
+int sys_read(int file_pointer, int size) {
     // read file placeholder
     string content;
     print("Sys call: read\n");
     content = "file content";
-    return content;
+    // TODO cant return string
+    return 0;
 }
 
 // Low-level, crusty libraries that convert between 
@@ -74,7 +75,7 @@ int close_file(struct File file) {
 }
 
 /* Only references a linear file struct */
-string read_file(ref struct File file) {
+int read_file(ref struct File file) {
     string content;
 
     print("Library Read File\n");
@@ -83,8 +84,8 @@ string read_file(ref struct File file) {
 
     print("Read file:");
     print(content);
-
-    return content;
+    // TODO cant return string
+    return 0;
 }
 
 /* Write technically 'consumes' unlike read, to update size. However, passes back a new struct File.
