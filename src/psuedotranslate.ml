@@ -171,7 +171,7 @@ let eliminate_psuedo_nodes program =
         , List.mapi
             (fun n sexpr ->
               let ftyp, fname = get_field sname n struct_info in
-              SExpr (ftyp, SAssignment (SStructAssign (sname, fname, sexpr))))
+              SExpr (ftyp, SAssignment (SStructAssign (name, fname, sexpr))))
             sexpr_list )
     | SExpr sexpr -> SExpr (translate_sexpr sexpr false)
     | SIf (cond, s1, s2) -> SIf (cond, translate_statement s1, translate_statement s2)
