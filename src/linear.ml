@@ -650,16 +650,7 @@ let rec linear_check_block
        | out_typ, SAssignment assmt -> check_assignment lin_map assmt
        | out_typ, SCall (fname, args) -> check_func_call lin_map fname args)
   in
-  (* Returns list of keys-value pairs in map in a state other than 'Used' *)
-  let get_unused (lin_map : linear_map) : (string * linear_state) list =
-    StringMap.fold
-      (fun key value acc ->
-        match value with
-        | Used, _ -> acc
-        | _ -> (key, fst value) :: acc)
-      lin_map
-      []
-  in
+
   (* Check a list of statements *)
   let rec linear_check_stmt_list (in_lin_map : linear_map_result) (s_list : sstmt list)
     : linear_map_result

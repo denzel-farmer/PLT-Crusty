@@ -2,7 +2,7 @@ all : checksemant.native checksemant
 
 # New target, using ocamlbuild 
 checksemant.native: clean
-	ocamlbuild -cflags -w,A checksemant.native
+	ocamlbuild checksemant.native
 
 # Old targets, to generate intermediate files for ocamllsp
 checksemant.lsp: sastprint.cmo astprint.cmo linear.cmo scanner.cmo crustyparse.cmo semant.cmo checksemant.cmo
