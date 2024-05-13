@@ -1,5 +1,9 @@
 all : checksemant.native checksemant
 
+# TODO remove this makefile entirely, it is obsolete
+# only used for ocamllsp which needs intermeidate products
+
+
 # New target, using ocamlbuild 
 checksemant.native: clean
 	ocamlbuild checksemant.native
