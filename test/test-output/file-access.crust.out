@@ -1,0 +1,635 @@
+[INFO] Begin checking linearity, generating program info
+[INFO] Generated program info, checking linearity of functions
+[INFO] Checking linearity of function: sys_getsize
+[DEBUG] Added args to lin_map: []
+[INFO] Checking function body
+[INFO] Checking new block
+[DEBUG] Added locals to lin_map: []
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int return(unrestricted int 100)"
+[INFO] Checking function call to return
+[DEBUG] Function call args: unrestricted int 100
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int 100"
+[DEBUG] Checked statements, lin_map: []
+[INFO] Removing locally declared variables
+[DEBUG] Final lin_map for sys_getsize []
+[INFO] Checking linearity of function: sys_open
+[DEBUG] Added args to lin_map: []
+[INFO] Checking function body
+[INFO] Checking new block
+[DEBUG] Added locals to lin_map: []
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int return(unrestricted int 3)"
+[INFO] Checking function call to return
+[DEBUG] Function call args: unrestricted int 3
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int 3"
+[DEBUG] Checked statements, lin_map: []
+[INFO] Removing locally declared variables
+[DEBUG] Final lin_map for sys_open []
+[INFO] Checking linearity of function: sys_close
+[DEBUG] Added args to lin_map: []
+[INFO] Checking function body
+[INFO] Checking new block
+[DEBUG] Added locals to lin_map: []
+[DEBUG] Checked statements, lin_map: []
+[INFO] Removing locally declared variables
+[DEBUG] Final lin_map for sys_close []
+[INFO] Checking linearity of function: sys_write
+[DEBUG] Added args to lin_map: []
+[INFO] Checking function body
+[INFO] Checking new block
+[DEBUG] Added locals to lin_map: []
+[DEBUG] Checked statements, lin_map: []
+[INFO] Removing locally declared variables
+[DEBUG] Final lin_map for sys_write []
+[INFO] Checking linearity of function: sys_read
+[DEBUG] Added args to lin_map: []
+[INFO] Checking function body
+[INFO] Checking new block
+[DEBUG] Added locals to lin_map: []
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int return(unrestricted string "file content")"
+[INFO] Checking function call to return
+[DEBUG] Function call args: unrestricted string "file content"
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted string "file content""
+[DEBUG] Checked statements, lin_map: []
+[INFO] Removing locally declared variables
+[DEBUG] Final lin_map for sys_read []
+[INFO] Checking linearity of function: open_file
+[DEBUG] Added args to lin_map: []
+[INFO] Checking function body
+[INFO] Checking new block
+[DEBUG] Added locals to lin_map: file -> Unassigned : struct File
+
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int unrestricted int file_pointer = unrestricted int sys_open(unrestricted string path)"
+[INFO] Checking assignment expression
+[DEBUG] Assignment is  "unrestricted int file_pointer = unrestricted int sys_open(unrestricted string path)"
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int sys_open(unrestricted string path)"
+[INFO] Checking function call to sys_open
+[DEBUG] Function call args: unrestricted string path
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted string path"
+Checking lone identifier "path" (is_consumed=true)
+[INFO] Marking path as consumed
+[INFO] Marking file_pointer as assigned
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int unrestricted int size = unrestricted int sys_getsize(unrestricted string path)"
+[INFO] Checking assignment expression
+[DEBUG] Assignment is  "unrestricted int size = unrestricted int sys_getsize(unrestricted string path)"
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int sys_getsize(unrestricted string path)"
+[INFO] Checking function call to sys_getsize
+[DEBUG] Function call args: unrestricted string path
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted string path"
+Checking lone identifier "path" (is_consumed=true)
+[INFO] Marking path as consumed
+[INFO] Marking size as assigned
+[INFO] Checking expression
+[DEBUG] Expression is  "struct File struct File file = struct File { struct File -> unrestricted string path, unrestricted int file_pointer, unrestricted int size}"
+[INFO] Checking assignment expression
+[DEBUG] Assignment is  "struct File file = struct File { struct File -> unrestricted string path, unrestricted int file_pointer, unrestricted int size}"
+[INFO] Checking expression
+[DEBUG] Expression is  "struct File { struct File -> unrestricted string path, unrestricted int file_pointer, unrestricted int size}"
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted string path"
+Checking lone identifier "path" (is_consumed=true)
+[INFO] Marking path as consumed
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int file_pointer"
+Checking lone identifier "file_pointer" (is_consumed=true)
+[INFO] Marking file_pointer as consumed
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int size"
+Checking lone identifier "size" (is_consumed=true)
+[INFO] Marking size as consumed
+[INFO] Marking file as assigned
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int print(unrestricted string "Opened file:")"
+[INFO] Checking function call to print
+[DEBUG] Function call args: unrestricted string "Opened file:"
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted string "Opened file:""
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int print(unrestricted string file.path)"
+[INFO] Checking function call to print
+[DEBUG] Function call args: unrestricted string file.path
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted string file.path"
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int return(struct File file)"
+[INFO] Checking function call to return
+[DEBUG] Function call args: struct File file
+[INFO] Checking expression
+[DEBUG] Expression is  "struct File file"
+Checking lone identifier "file" (is_consumed=true)
+[INFO] Marking file as consumed
+[DEBUG] Checked statements, lin_map: file -> Used : struct File
+
+[INFO] Removing locally declared variables
+[DEBUG] Didn't find decl file_pointer, assuming unrestricted
+[DEBUG] Didn't find decl size, assuming unrestricted
+[INFO] Found file with state Used
+[DEBUG] Final lin_map for open_file []
+[INFO] Checking linearity of function: close_file
+[DEBUG] Added args to lin_map: file -> Assigned : struct File
+
+[INFO] Checking function body
+[INFO] Checking new block
+[DEBUG] Added locals to lin_map: file -> Assigned : struct File
+
+[INFO] Checking expression
+[DEBUG] Expression is  "struct File :{path, file_pointer, size} = struct File file"
+[INFO] Checking assignment expression
+[DEBUG] Assignment is  ":{path, file_pointer, size} = struct File file"
+[INFO] Checking expression
+[DEBUG] Expression is  "struct File file"
+Checking lone identifier "file" (is_consumed=true)
+[INFO] Marking file as consumed
+[INFO] Marking path as assigned
+[INFO] Marking file_pointer as assigned
+[INFO] Marking size as assigned
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int sys_close(unrestricted int file_pointer)"
+[INFO] Checking function call to sys_close
+[DEBUG] Function call args: unrestricted int file_pointer
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int file_pointer"
+Checking lone identifier "file_pointer" (is_consumed=true)
+[INFO] Marking file_pointer as consumed
+[DEBUG] Checked statements, lin_map: file -> Used : struct File
+
+[INFO] Removing locally declared variables
+[DEBUG] Didn't find decl file_pointer, assuming unrestricted
+[DEBUG] Didn't find decl size, assuming unrestricted
+[DEBUG] Didn't find decl path, assuming unrestricted
+[DEBUG] Final lin_map for close_file file -> Used : struct File
+
+[INFO] Checking linearity of function: read_file
+[DEBUG] Added args to lin_map: []
+[INFO] Checking function body
+[INFO] Checking new block
+[DEBUG] Added locals to lin_map: []
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted string unrestricted string content = unrestricted string sys_read(unrestricted int file->file_pointer, unrestricted int file->size)"
+[INFO] Checking assignment expression
+[DEBUG] Assignment is  "unrestricted string content = unrestricted string sys_read(unrestricted int file->file_pointer, unrestricted int file->size)"
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted string sys_read(unrestricted int file->file_pointer, unrestricted int file->size)"
+[INFO] Checking function call to sys_read
+[DEBUG] Function call args: unrestricted int file->file_pointer, unrestricted int file->size
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int file->file_pointer"
+[DEBUG] Variable file not found, assuming unrestricted
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int file->size"
+[DEBUG] Variable file not found, assuming unrestricted
+[INFO] Marking content as assigned
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int print(unrestricted string "Read file:")"
+[INFO] Checking function call to print
+[DEBUG] Function call args: unrestricted string "Read file:"
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted string "Read file:""
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int print(unrestricted string content)"
+[INFO] Checking function call to print
+[DEBUG] Function call args: unrestricted string content
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted string content"
+Checking lone identifier "content" (is_consumed=true)
+[INFO] Marking content as consumed
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int return(unrestricted string content)"
+[INFO] Checking function call to return
+[DEBUG] Function call args: unrestricted string content
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted string content"
+Checking lone identifier "content" (is_consumed=true)
+[INFO] Marking content as consumed
+[DEBUG] Checked statements, lin_map: []
+[INFO] Removing locally declared variables
+[DEBUG] Didn't find decl content, assuming unrestricted
+[DEBUG] Final lin_map for read_file []
+[INFO] Checking linearity of function: write_file
+[DEBUG] Added args to lin_map: file -> Assigned : struct File
+
+[INFO] Checking function body
+[INFO] Checking new block
+[DEBUG] Added locals to lin_map: file -> Assigned : struct File
+new_file -> Unassigned : struct File
+
+[INFO] Checking expression
+[DEBUG] Expression is  "struct File :{path, file_pointer, size} = struct File file"
+[INFO] Checking assignment expression
+[DEBUG] Assignment is  ":{path, file_pointer, size} = struct File file"
+[INFO] Checking expression
+[DEBUG] Expression is  "struct File file"
+Checking lone identifier "file" (is_consumed=true)
+[INFO] Marking file as consumed
+[INFO] Marking path as assigned
+[INFO] Marking file_pointer as assigned
+[INFO] Marking size as assigned
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int sys_write(unrestricted int file_pointer, unrestricted string new_contents)"
+[INFO] Checking function call to sys_write
+[DEBUG] Function call args: unrestricted int file_pointer, unrestricted string new_contents
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int file_pointer"
+Checking lone identifier "file_pointer" (is_consumed=true)
+[INFO] Marking file_pointer as consumed
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted string new_contents"
+Checking lone identifier "new_contents" (is_consumed=true)
+[INFO] Marking new_contents as consumed
+[INFO] Checking expression
+[DEBUG] Expression is  "struct File struct File new_file = struct File { struct File -> unrestricted string path, unrestricted int file_pointer, unrestricted int sys_getsize(unrestricted string path)}"
+[INFO] Checking assignment expression
+[DEBUG] Assignment is  "struct File new_file = struct File { struct File -> unrestricted string path, unrestricted int file_pointer, unrestricted int sys_getsize(unrestricted string path)}"
+[INFO] Checking expression
+[DEBUG] Expression is  "struct File { struct File -> unrestricted string path, unrestricted int file_pointer, unrestricted int sys_getsize(unrestricted string path)}"
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted string path"
+Checking lone identifier "path" (is_consumed=true)
+[INFO] Marking path as consumed
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int file_pointer"
+Checking lone identifier "file_pointer" (is_consumed=true)
+[INFO] Marking file_pointer as consumed
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int sys_getsize(unrestricted string path)"
+[INFO] Checking function call to sys_getsize
+[DEBUG] Function call args: unrestricted string path
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted string path"
+Checking lone identifier "path" (is_consumed=true)
+[INFO] Marking path as consumed
+[INFO] Marking new_file as assigned
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int return(struct File new_file)"
+[INFO] Checking function call to return
+[DEBUG] Function call args: struct File new_file
+[INFO] Checking expression
+[DEBUG] Expression is  "struct File new_file"
+Checking lone identifier "new_file" (is_consumed=true)
+[INFO] Marking new_file as consumed
+[DEBUG] Checked statements, lin_map: file -> Used : struct File
+new_file -> Used : struct File
+
+[INFO] Removing locally declared variables
+[DEBUG] Didn't find decl file_pointer, assuming unrestricted
+[DEBUG] Didn't find decl size, assuming unrestricted
+[DEBUG] Didn't find decl path, assuming unrestricted
+[INFO] Found new_file with state Used
+[DEBUG] Final lin_map for write_file file -> Used : struct File
+
+[INFO] Checking linearity of function: correct_complex
+[DEBUG] Added args to lin_map: []
+[INFO] Checking function body
+[INFO] Checking new block
+[DEBUG] Added locals to lin_map: file -> Unassigned : struct File
+
+[INFO] Checking expression
+[DEBUG] Expression is  "struct File struct File file = struct File open_file(unrestricted string "file.txt")"
+[INFO] Checking assignment expression
+[DEBUG] Assignment is  "struct File file = struct File open_file(unrestricted string "file.txt")"
+[INFO] Checking expression
+[DEBUG] Expression is  "struct File open_file(unrestricted string "file.txt")"
+[INFO] Checking function call to open_file
+[DEBUG] Function call args: unrestricted string "file.txt"
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted string "file.txt""
+[INFO] Marking file as assigned
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted string unrestricted string content = unrestricted string read_file(ref struct File &file)"
+[INFO] Checking assignment expression
+[DEBUG] Assignment is  "unrestricted string content = unrestricted string read_file(ref struct File &file)"
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted string read_file(ref struct File &file)"
+[INFO] Checking function call to read_file
+[DEBUG] Function call args: ref struct File &file
+[INFO] Checking expression
+[DEBUG] Expression is  "ref struct File &file"
+[DEBUG] Marking varfileas Borrowed
+[INFO] Marking content as assigned
+[INFO] Checking expression
+[DEBUG] Expression is  "struct File struct File file = struct File write_file(struct File file, unrestricted string "new content")"
+[INFO] Checking assignment expression
+[DEBUG] Assignment is  "struct File file = struct File write_file(struct File file, unrestricted string "new content")"
+[INFO] Checking expression
+[DEBUG] Expression is  "struct File write_file(struct File file, unrestricted string "new content")"
+[INFO] Checking function call to write_file
+[DEBUG] Function call args: struct File file, unrestricted string "new content"
+[INFO] Checking expression
+[DEBUG] Expression is  "struct File file"
+Checking lone identifier "file" (is_consumed=true)
+[INFO] Marking file as consumed
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted string "new content""
+[INFO] Marking file as assigned
+[DEBUG] file is being re-asigned after use
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int close_file(struct File file)"
+[INFO] Checking function call to close_file
+[DEBUG] Function call args: struct File file
+[INFO] Checking expression
+[DEBUG] Expression is  "struct File file"
+Checking lone identifier "file" (is_consumed=true)
+[INFO] Marking file as consumed
+[DEBUG] Checked statements, lin_map: file -> Used : struct File
+
+[INFO] Removing locally declared variables
+[INFO] Found file with state Used
+[DEBUG] Didn't find decl content, assuming unrestricted
+[DEBUG] Final lin_map for correct_complex []
+[INFO] Checking linearity of function: correct_simple
+[DEBUG] Added args to lin_map: []
+[INFO] Checking function body
+[INFO] Checking new block
+[DEBUG] Added locals to lin_map: file -> Unassigned : struct File
+
+[INFO] Checking expression
+[DEBUG] Expression is  "struct File struct File file = struct File open_file(unrestricted string "file.txt")"
+[INFO] Checking assignment expression
+[DEBUG] Assignment is  "struct File file = struct File open_file(unrestricted string "file.txt")"
+[INFO] Checking expression
+[DEBUG] Expression is  "struct File open_file(unrestricted string "file.txt")"
+[INFO] Checking function call to open_file
+[DEBUG] Function call args: unrestricted string "file.txt"
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted string "file.txt""
+[INFO] Marking file as assigned
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted string unrestricted string content = unrestricted string read_file(ref struct File &file)"
+[INFO] Checking assignment expression
+[DEBUG] Assignment is  "unrestricted string content = unrestricted string read_file(ref struct File &file)"
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted string read_file(ref struct File &file)"
+[INFO] Checking function call to read_file
+[DEBUG] Function call args: ref struct File &file
+[INFO] Checking expression
+[DEBUG] Expression is  "ref struct File &file"
+[DEBUG] Marking varfileas Borrowed
+[INFO] Marking content as assigned
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int close_file(struct File file)"
+[INFO] Checking function call to close_file
+[DEBUG] Function call args: struct File file
+[INFO] Checking expression
+[DEBUG] Expression is  "struct File file"
+Checking lone identifier "file" (is_consumed=true)
+[INFO] Marking file as consumed
+[DEBUG] Checked statements, lin_map: file -> Used : struct File
+
+[INFO] Removing locally declared variables
+[INFO] Found file with state Used
+[DEBUG] Didn't find decl content, assuming unrestricted
+[DEBUG] Final lin_map for correct_simple []
+[INFO] Checking linearity of function: main
+[DEBUG] Added args to lin_map: []
+[INFO] Checking function body
+[INFO] Checking new block
+[DEBUG] Added locals to lin_map: []
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int correct_simple()"
+[INFO] Checking function call to correct_simple
+[DEBUG] Function call args: 
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int correct_complex()"
+[INFO] Checking function call to correct_complex
+[DEBUG] Function call args: 
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int return(unrestricted int 0)"
+[INFO] Checking function call to return
+[DEBUG] Function call args: unrestricted int 0
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int 0"
+[DEBUG] Checked statements, lin_map: []
+[INFO] Removing locally declared variables
+[DEBUG] Final lin_map for main []
+[INFO] Done checking linearity
+
+Abstract Syntax Tree:
+linear struct File {
+unrestricted string path;
+unrestricted int file_pointer;
+unrestricted int size;
+};
+unrestricted int sys_getsize(unrestricted string path) {
+;
+;
+return 100;
+}unrestricted int sys_open(unrestricted string path) {
+;
+;
+return 3;
+}void sys_close(unrestricted int file_pointer) {
+;
+;
+return;
+}void sys_write(unrestricted int file_pointer, unrestricted string content) {
+;
+;
+return;
+}unrestricted string sys_read(unrestricted int file_pointer, unrestricted int size) {
+;
+;
+return "file content";
+}struct File open_file(unrestricted string path) {
+unrestricted int file_pointer;
+unrestricted int size;
+struct File file;
+file_pointer = sys_open(path);
+size = sys_getsize(path);
+file = { struct File -> path, file_pointer, size};
+print("Opened file:");
+print(file.path);
+return file;
+}void close_file(struct File file) {
+unrestricted int file_pointer;
+unrestricted int size;
+unrestricted string path;
+:{path, file_pointer, size} = file;
+sys_close(file_pointer);
+return;
+}unrestricted string read_file(ref struct File file) {
+unrestricted string content;
+content = sys_read(file->file_pointer, file->size);
+print("Read file:");
+print(content);
+return content;
+}struct File write_file(struct File file, unrestricted string new_contents) {
+unrestricted int file_pointer;
+unrestricted int size;
+unrestricted string path;
+struct File new_file;
+:{path, file_pointer, size} = file;
+sys_write(file_pointer, new_contents);
+new_file = { struct File -> path, file_pointer, sys_getsize(path)};
+return new_file;
+}void correct_complex() {
+struct File file;
+unrestricted string content;
+file = open_file("file.txt");
+content = read_file(&file);
+file = write_file(file, "new content");
+close_file(file);
+return;
+}void correct_simple() {
+struct File file;
+unrestricted string content;
+file = open_file("file.txt");
+content = read_file(&file);
+close_file(file);
+return;
+}unrestricted int main() {
+;
+correct_simple();
+correct_complex();
+return 0;
+}
+
+Semantic Checked Abstract Syntax Tree:
+linear struct File {
+unrestricted string path;
+unrestricted int file_pointer;
+unrestricted int size;
+};
+unrestricted int sys_getsize(unrestricted string path) {
+;
+;
+return unrestricted int 100;
+}unrestricted int sys_open(unrestricted string path) {
+;
+;
+return unrestricted int 3;
+}void sys_close(unrestricted int file_pointer) {
+;
+;
+return;
+}void sys_write(unrestricted int file_pointer, unrestricted string content) {
+;
+;
+return;
+}unrestricted string sys_read(unrestricted int file_pointer, unrestricted int size) {
+;
+;
+return unrestricted string "file content";
+}struct File open_file(unrestricted string path) {
+unrestricted int file_pointer;
+unrestricted int size;
+struct File file;
+unrestricted int unrestricted int file_pointer = unrestricted int sys_open(unrestricted string path);
+unrestricted int unrestricted int size = unrestricted int sys_getsize(unrestricted string path);
+struct File struct File file = struct File { struct File -> unrestricted string path, unrestricted int file_pointer, unrestricted int size};
+unrestricted int print(unrestricted string "Opened file:");
+unrestricted int print(unrestricted string file.path);
+return struct File file;
+}void close_file(struct File file) {
+unrestricted int file_pointer;
+unrestricted int size;
+unrestricted string path;
+struct File :{path, file_pointer, size} = struct File file;
+unrestricted int sys_close(unrestricted int file_pointer);
+return;
+}unrestricted string read_file(ref struct File file) {
+unrestricted string content;
+unrestricted string unrestricted string content = unrestricted string sys_read(unrestricted int file->file_pointer, unrestricted int file->size);
+unrestricted int print(unrestricted string "Read file:");
+unrestricted int print(unrestricted string content);
+return unrestricted string content;
+}struct File write_file(struct File file, unrestricted string new_contents) {
+unrestricted int file_pointer;
+unrestricted int size;
+unrestricted string path;
+struct File new_file;
+struct File :{path, file_pointer, size} = struct File file;
+unrestricted int sys_write(unrestricted int file_pointer, unrestricted string new_contents);
+struct File struct File new_file = struct File { struct File -> unrestricted string path, unrestricted int file_pointer, unrestricted int sys_getsize(unrestricted string path)};
+return struct File new_file;
+}void correct_complex() {
+struct File file;
+unrestricted string content;
+struct File struct File file = struct File open_file(unrestricted string "file.txt");
+unrestricted string unrestricted string content = unrestricted string read_file(ref struct File &file);
+struct File struct File file = struct File write_file(struct File file, unrestricted string "new content");
+unrestricted int close_file(struct File file);
+return;
+}void correct_simple() {
+struct File file;
+unrestricted string content;
+struct File struct File file = struct File open_file(unrestricted string "file.txt");
+unrestricted string unrestricted string content = unrestricted string read_file(ref struct File &file);
+unrestricted int close_file(struct File file);
+return;
+}unrestricted int main() {
+;
+unrestricted int correct_simple();
+unrestricted int correct_complex();
+return unrestricted int 0;
+}
+
+Linearity Results:
+LINEAR CHECK SUCCESS
+Program Info:
+Struct Info:
+File -> linear struct File {
+unrestricted string path;
+unrestricted int file_pointer;
+unrestricted int size;
+}
+
+Func Info:
+close_file -> void close_file(struct File file) {
+unrestricted int file_pointer;
+unrestricted int size;
+unrestricted string path;
+struct File :{path, file_pointer, size} = struct File file;
+unrestricted int sys_close(unrestricted int file_pointer);
+return;
+}
+open_file -> struct File open_file(unrestricted string path) {
+unrestricted int file_pointer;
+unrestricted int size;
+struct File file;
+unrestricted int unrestricted int file_pointer = unrestricted int sys_open(unrestricted string path);
+unrestricted int unrestricted int size = unrestricted int sys_getsize(unrestricted string path);
+struct File struct File file = struct File { struct File -> unrestricted string path, unrestricted int file_pointer, unrestricted int size};
+unrestricted int print(unrestricted string "Opened file:");
+unrestricted int print(unrestricted string file.path);
+return struct File file;
+}
+write_file -> struct File write_file(struct File file, unrestricted string new_contents) {
+unrestricted int file_pointer;
+unrestricted int size;
+unrestricted string path;
+struct File new_file;
+struct File :{path, file_pointer, size} = struct File file;
+unrestricted int sys_write(unrestricted int file_pointer, unrestricted string new_contents);
+struct File struct File new_file = struct File { struct File -> unrestricted string path, unrestricted int file_pointer, unrestricted int sys_getsize(unrestricted string path)};
+return struct File new_file;
+}
+
+Linear Maps:
+sys_getsize -> []
+sys_open -> []
+sys_close -> []
+sys_write -> []
+sys_read -> []
+open_file -> []
+close_file -> file -> Used : struct File
+
+read_file -> []
+write_file -> file -> Used : struct File
+
+correct_complex -> []
+correct_simple -> []
+main -> []
+
+
+COMPILATION SUCCESS

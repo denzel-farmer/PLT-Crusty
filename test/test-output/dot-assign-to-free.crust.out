@@ -1,0 +1,159 @@
+[INFO] Begin checking linearity, generating program info
+[INFO] Generated program info, checking linearity of functions
+[INFO] Checking linearity of function: main
+[DEBUG] Added args to lin_map: []
+[INFO] Checking function body
+[INFO] Checking new block
+[DEBUG] Added locals to lin_map: new -> Unassigned : struct lin_point
+
+[INFO] Checking expression
+[DEBUG] Expression is  "struct point_info struct point_info init_info = struct point_info { struct point_info -> unrestricted char 'a'}"
+[INFO] Checking assignment expression
+[DEBUG] Assignment is  "struct point_info init_info = struct point_info { struct point_info -> unrestricted char 'a'}"
+[INFO] Checking expression
+[DEBUG] Expression is  "struct point_info { struct point_info -> unrestricted char 'a'}"
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted char 'a'"
+[INFO] Marking init_info as assigned
+[INFO] Checking expression
+[DEBUG] Expression is  "struct point_info struct point_info second_info = struct point_info { struct point_info -> unrestricted char 'b'}"
+[INFO] Checking assignment expression
+[DEBUG] Assignment is  "struct point_info second_info = struct point_info { struct point_info -> unrestricted char 'b'}"
+[INFO] Checking expression
+[DEBUG] Expression is  "struct point_info { struct point_info -> unrestricted char 'b'}"
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted char 'b'"
+[INFO] Marking second_info as assigned
+[INFO] Checking expression
+[DEBUG] Expression is  "struct lin_point struct lin_point new = struct lin_point { struct lin_point -> unrestricted int 1, unrestricted int 2, struct point_info init_info}"
+[INFO] Checking assignment expression
+[DEBUG] Assignment is  "struct lin_point new = struct lin_point { struct lin_point -> unrestricted int 1, unrestricted int 2, struct point_info init_info}"
+[INFO] Checking expression
+[DEBUG] Expression is  "struct lin_point { struct lin_point -> unrestricted int 1, unrestricted int 2, struct point_info init_info}"
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int 1"
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int 2"
+[INFO] Checking expression
+[DEBUG] Expression is  "struct point_info init_info"
+Checking lone identifier "init_info" (is_consumed=true)
+[INFO] Marking init_info as consumed
+[INFO] Marking new as assigned
+[INFO] Checking expression
+[DEBUG] Expression is  "struct point_info new.info = struct point_info second_info"
+[INFO] Checking assignment expression
+[DEBUG] Assignment is  "new.info = struct point_info second_info"
+[INFO] Checking expression
+[DEBUG] Expression is  "struct point_info second_info"
+Checking lone identifier "second_info" (is_consumed=true)
+[INFO] Marking second_info as consumed
+[INFO] Checking expression
+[DEBUG] Expression is  "struct lin_point :{x, y, third_info} = struct lin_point new"
+[INFO] Checking assignment expression
+[DEBUG] Assignment is  ":{x, y, third_info} = struct lin_point new"
+[INFO] Checking expression
+[DEBUG] Expression is  "struct lin_point new"
+Checking lone identifier "new" (is_consumed=true)
+[INFO] Marking new as consumed
+[INFO] Marking x as assigned
+[INFO] Marking y as assigned
+[INFO] Marking third_info as assigned
+[INFO] Checking expression
+[DEBUG] Expression is  "struct point_info :{c} = struct point_info third_info"
+[INFO] Checking assignment expression
+[DEBUG] Assignment is  ":{c} = struct point_info third_info"
+[INFO] Checking expression
+[DEBUG] Expression is  "struct point_info third_info"
+Checking lone identifier "third_info" (is_consumed=true)
+[INFO] Marking third_info as consumed
+[INFO] Marking c as assigned
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int return(unrestricted char c)"
+[INFO] Checking function call to return
+[DEBUG] Function call args: unrestricted char c
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted char c"
+Checking lone identifier "c" (is_consumed=true)
+[INFO] Marking c as consumed
+[DEBUG] Checked statements, lin_map: new -> Used : struct lin_point
+
+[INFO] Removing locally declared variables
+[INFO] Found new with state Used
+[DEBUG] Didn't find decl init_info, assuming unrestricted
+[DEBUG] Didn't find decl second_info, assuming unrestricted
+[DEBUG] Didn't find decl third_info, assuming unrestricted
+[DEBUG] Didn't find decl x, assuming unrestricted
+[DEBUG] Didn't find decl y, assuming unrestricted
+[DEBUG] Didn't find decl c, assuming unrestricted
+[DEBUG] Final lin_map for main []
+[INFO] Done checking linearity
+
+Abstract Syntax Tree:
+unrestricted struct point_info {
+unrestricted char c;
+};
+linear struct lin_point {
+unrestricted int x;
+unrestricted int y;
+struct point_info info;
+};
+unrestricted char main() {
+struct lin_point new;
+struct point_info init_info;
+struct point_info second_info;
+struct point_info third_info;
+unrestricted int x;
+unrestricted int y;
+unrestricted char c;
+init_info = { struct point_info -> 'a'};
+second_info = { struct point_info -> 'b'};
+new = { struct lin_point -> 1, 2, init_info};
+new.info = second_info;
+:{x, y, third_info} = new;
+:{c} = third_info;
+return c;
+}
+
+Semantic Checked Abstract Syntax Tree:
+unrestricted struct point_info {
+unrestricted char c;
+};
+linear struct lin_point {
+unrestricted int x;
+unrestricted int y;
+struct point_info info;
+};
+unrestricted char main() {
+struct lin_point new;
+struct point_info init_info;
+struct point_info second_info;
+struct point_info third_info;
+unrestricted int x;
+unrestricted int y;
+unrestricted char c;
+struct point_info struct point_info init_info = struct point_info { struct point_info -> unrestricted char 'a'};
+struct point_info struct point_info second_info = struct point_info { struct point_info -> unrestricted char 'b'};
+struct lin_point struct lin_point new = struct lin_point { struct lin_point -> unrestricted int 1, unrestricted int 2, struct point_info init_info};
+struct point_info new.info = struct point_info second_info;
+struct lin_point :{x, y, third_info} = struct lin_point new;
+struct point_info :{c} = struct point_info third_info;
+return unrestricted char c;
+}
+
+Linearity Results:
+LINEAR CHECK SUCCESS
+Program Info:
+Struct Info:
+lin_point -> linear struct lin_point {
+unrestricted int x;
+unrestricted int y;
+struct point_info info;
+}
+
+Func Info:
+[]
+Linear Maps:
+main -> []
+
+
+COMPILATION SUCCESS

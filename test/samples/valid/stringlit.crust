@@ -1,7 +1,7 @@
-int main() {
+string main() {
     string a; 
 
     a = "abc";
 
-    return a[2];
+    return a;
 } 

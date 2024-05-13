@@ -1,0 +1,119 @@
+[INFO] Begin checking linearity, generating program info
+[INFO] Generated program info, checking linearity of functions
+[INFO] Checking linearity of function: sum_points
+[DEBUG] Added args to lin_map: []
+[INFO] Checking function body
+[INFO] Checking new block
+[DEBUG] Added locals to lin_map: []
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int return(unrestricted int unrestricted int unrestricted int unrestricted int a->x + unrestricted int b->x + unrestricted int b->x * unrestricted int unrestricted int unrestricted int b->y + unrestricted int b->y + unrestricted int a->y)"
+[INFO] Checking function call to return
+[DEBUG] Function call args: unrestricted int unrestricted int unrestricted int unrestricted int a->x + unrestricted int b->x + unrestricted int b->x * unrestricted int unrestricted int unrestricted int b->y + unrestricted int b->y + unrestricted int a->y
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int unrestricted int unrestricted int unrestricted int a->x + unrestricted int b->x + unrestricted int b->x * unrestricted int unrestricted int unrestricted int b->y + unrestricted int b->y + unrestricted int a->y"
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int unrestricted int unrestricted int a->x + unrestricted int b->x + unrestricted int b->x"
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int unrestricted int a->x + unrestricted int b->x"
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int a->x"
+[DEBUG] Variable a not found, assuming unrestricted
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int b->x"
+[DEBUG] Variable b not found, assuming unrestricted
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int b->x"
+[DEBUG] Variable b not found, assuming unrestricted
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int unrestricted int unrestricted int b->y + unrestricted int b->y + unrestricted int a->y"
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int unrestricted int b->y + unrestricted int b->y"
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int b->y"
+[DEBUG] Variable b not found, assuming unrestricted
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int b->y"
+[DEBUG] Variable b not found, assuming unrestricted
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int a->y"
+[DEBUG] Variable a not found, assuming unrestricted
+[DEBUG] Checked statements, lin_map: []
+[INFO] Removing locally declared variables
+[DEBUG] Final lin_map for sum_points []
+[INFO] Checking linearity of function: main
+[DEBUG] Added args to lin_map: []
+[INFO] Checking function body
+[INFO] Checking new block
+[DEBUG] Added locals to lin_map: a -> Unassigned : struct lin_point
+
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int return(unrestricted int sum_points(ref struct lin_point &a, ref struct point &b))"
+[INFO] Checking function call to return
+[DEBUG] Function call args: unrestricted int sum_points(ref struct lin_point &a, ref struct point &b)
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int sum_points(ref struct lin_point &a, ref struct point &b)"
+[INFO] Checking function call to sum_points
+[DEBUG] Function call args: ref struct lin_point &a, ref struct point &b
+[INFO] Checking expression
+[DEBUG] Expression is  "ref struct lin_point &a"
+[INFO] Checking expression
+[DEBUG] Expression is  "ref struct point &b"
+[DEBUG] Checked statements, lin_map: Cannot borrow a before assignment
+[DEBUG] Final lin_map for main Cannot borrow a before assignment
+[INFO] Done checking linearity
+
+Abstract Syntax Tree:
+linear struct lin_point {
+unrestricted int x;
+unrestricted int y;
+};
+unrestricted struct point {
+unrestricted int x;
+unrestricted int y;
+};
+unrestricted int sum_points(ref struct lin_point a, ref struct point b) {
+;
+;
+return a->x + b->x + b->x * b->y + b->y + a->y;
+}unrestricted int main() {
+struct lin_point a;
+struct point b;
+;
+return sum_points(&a, &b);
+}
+
+Semantic Checked Abstract Syntax Tree:
+linear struct lin_point {
+unrestricted int x;
+unrestricted int y;
+};
+unrestricted struct point {
+unrestricted int x;
+unrestricted int y;
+};
+unrestricted int sum_points(ref struct lin_point a, ref struct point b) {
+;
+;
+return unrestricted int unrestricted int unrestricted int unrestricted int a->x + unrestricted int b->x + unrestricted int b->x * unrestricted int unrestricted int unrestricted int b->y + unrestricted int b->y + unrestricted int a->y;
+}unrestricted int main() {
+struct lin_point a;
+struct point b;
+;
+return unrestricted int sum_points(ref struct lin_point &a, ref struct point &b);
+}
+
+Linearity Results:
+LINEAR CHECK FAIL
+Program Info:
+Struct Info:
+lin_point -> linear struct lin_point {
+unrestricted int x;
+unrestricted int y;
+}
+
+Func Info:
+[]
+Linear Maps:
+sum_points -> []
+main -> Cannot borrow a before assignment
+

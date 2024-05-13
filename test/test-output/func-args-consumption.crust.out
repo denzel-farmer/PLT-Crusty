@@ -1,0 +1,193 @@
+[INFO] Begin checking linearity, generating program info
+[INFO] Generated program info, checking linearity of functions
+[INFO] Checking linearity of function: make
+[DEBUG] Added args to lin_map: []
+[INFO] Checking function body
+[INFO] Checking new block
+[DEBUG] Added locals to lin_map: new -> Unassigned : struct lin_point
+
+[INFO] Checking expression
+[DEBUG] Expression is  "struct lin_point struct lin_point new = struct lin_point { struct lin_point -> unrestricted int 1, unrestricted int 2}"
+[INFO] Checking assignment expression
+[DEBUG] Assignment is  "struct lin_point new = struct lin_point { struct lin_point -> unrestricted int 1, unrestricted int 2}"
+[INFO] Checking expression
+[DEBUG] Expression is  "struct lin_point { struct lin_point -> unrestricted int 1, unrestricted int 2}"
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int 1"
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int 2"
+[INFO] Marking new as assigned
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int return(struct lin_point new)"
+[INFO] Checking function call to return
+[DEBUG] Function call args: struct lin_point new
+[INFO] Checking expression
+[DEBUG] Expression is  "struct lin_point new"
+Checking lone identifier "new" (is_consumed=true)
+[INFO] Marking new as consumed
+[DEBUG] Checked statements, lin_map: new -> Used : struct lin_point
+
+[INFO] Removing locally declared variables
+[INFO] Found new with state Used
+[DEBUG] Final lin_map for make []
+[INFO] Checking linearity of function: consume
+[DEBUG] Added args to lin_map: p -> Assigned : struct lin_point
+
+[INFO] Checking function body
+[INFO] Checking new block
+[DEBUG] Added locals to lin_map: p -> Assigned : struct lin_point
+
+[INFO] Checking expression
+[DEBUG] Expression is  "struct lin_point :{x, y} = struct lin_point p"
+[INFO] Checking assignment expression
+[DEBUG] Assignment is  ":{x, y} = struct lin_point p"
+[INFO] Checking expression
+[DEBUG] Expression is  "struct lin_point p"
+Checking lone identifier "p" (is_consumed=true)
+[INFO] Marking p as consumed
+[INFO] Marking x as assigned
+[INFO] Marking y as assigned
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int return(unrestricted int unrestricted int x + unrestricted int y)"
+[INFO] Checking function call to return
+[DEBUG] Function call args: unrestricted int unrestricted int x + unrestricted int y
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int unrestricted int x + unrestricted int y"
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int x"
+Checking lone identifier "x" (is_consumed=false)
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int y"
+Checking lone identifier "y" (is_consumed=false)
+[DEBUG] Checked statements, lin_map: p -> Used : struct lin_point
+
+[INFO] Removing locally declared variables
+[DEBUG] Didn't find decl x, assuming unrestricted
+[DEBUG] Didn't find decl y, assuming unrestricted
+[DEBUG] Final lin_map for consume p -> Used : struct lin_point
+
+[INFO] Checking linearity of function: main
+[DEBUG] Added args to lin_map: []
+[INFO] Checking function body
+[INFO] Checking new block
+[DEBUG] Added locals to lin_map: a -> Unassigned : struct lin_point
+
+[INFO] Checking expression
+[DEBUG] Expression is  "struct lin_point struct lin_point a = struct lin_point make()"
+[INFO] Checking assignment expression
+[DEBUG] Assignment is  "struct lin_point a = struct lin_point make()"
+[INFO] Checking expression
+[DEBUG] Expression is  "struct lin_point make()"
+[INFO] Checking function call to make
+[DEBUG] Function call args: 
+[INFO] Marking a as assigned
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int unrestricted int result = unrestricted int consume(struct lin_point a)"
+[INFO] Checking assignment expression
+[DEBUG] Assignment is  "unrestricted int result = unrestricted int consume(struct lin_point a)"
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int consume(struct lin_point a)"
+[INFO] Checking function call to consume
+[DEBUG] Function call args: struct lin_point a
+[INFO] Checking expression
+[DEBUG] Expression is  "struct lin_point a"
+Checking lone identifier "a" (is_consumed=true)
+[INFO] Marking a as consumed
+[INFO] Marking result as assigned
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int return(unrestricted int result)"
+[INFO] Checking function call to return
+[DEBUG] Function call args: unrestricted int result
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int result"
+Checking lone identifier "result" (is_consumed=true)
+[INFO] Marking result as consumed
+[DEBUG] Checked statements, lin_map: a -> Used : struct lin_point
+
+[INFO] Removing locally declared variables
+[INFO] Found a with state Used
+[DEBUG] Didn't find decl result, assuming unrestricted
+[DEBUG] Final lin_map for main []
+[INFO] Done checking linearity
+
+Abstract Syntax Tree:
+linear struct lin_point {
+unrestricted int x;
+unrestricted int y;
+};
+struct lin_point make() {
+struct lin_point new;
+new = { struct lin_point -> 1, 2};
+return new;
+}unrestricted int consume(struct lin_point p) {
+unrestricted int x;
+unrestricted int y;
+:{x, y} = p;
+return x + y;
+}linear int main() {
+struct lin_point a;
+unrestricted int result;
+a = make();
+result = consume(a);
+return result;
+}
+
+Semantic Checked Abstract Syntax Tree:
+linear struct lin_point {
+unrestricted int x;
+unrestricted int y;
+};
+struct lin_point make() {
+struct lin_point new;
+struct lin_point struct lin_point new = struct lin_point { struct lin_point -> unrestricted int 1, unrestricted int 2};
+return struct lin_point new;
+}unrestricted int consume(struct lin_point p) {
+unrestricted int x;
+unrestricted int y;
+struct lin_point :{x, y} = struct lin_point p;
+return unrestricted int unrestricted int x + unrestricted int y;
+}linear int main() {
+struct lin_point a;
+unrestricted int result;
+struct lin_point struct lin_point a = struct lin_point make();
+unrestricted int unrestricted int result = unrestricted int consume(struct lin_point a);
+return unrestricted int result;
+}
+
+Linearity Results:
+LINEAR CHECK SUCCESS
+Program Info:
+Struct Info:
+lin_point -> linear struct lin_point {
+unrestricted int x;
+unrestricted int y;
+}
+
+Func Info:
+consume -> unrestricted int consume(struct lin_point p) {
+unrestricted int x;
+unrestricted int y;
+struct lin_point :{x, y} = struct lin_point p;
+return unrestricted int unrestricted int x + unrestricted int y;
+}
+main -> linear int main() {
+struct lin_point a;
+unrestricted int result;
+struct lin_point struct lin_point a = struct lin_point make();
+unrestricted int unrestricted int result = unrestricted int consume(struct lin_point a);
+return unrestricted int result;
+}
+make -> struct lin_point make() {
+struct lin_point new;
+struct lin_point struct lin_point new = struct lin_point { struct lin_point -> unrestricted int 1, unrestricted int 2};
+return struct lin_point new;
+}
+
+Linear Maps:
+make -> []
+consume -> p -> Used : struct lin_point
+
+main -> []
+
+
+COMPILATION SUCCESS

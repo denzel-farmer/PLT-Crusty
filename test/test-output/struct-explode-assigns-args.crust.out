@@ -1,0 +1,1 @@
+STRUCT ID(point_info) LBRACE CHAR ID(c) SEMI RBRACE STRUCT Fatal error: exception Crustyparse.MenhirBasics.Error

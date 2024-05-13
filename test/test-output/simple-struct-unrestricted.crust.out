@@ -1,0 +1,114 @@
+[INFO] Begin checking linearity, generating program info
+[INFO] Generated program info, checking linearity of functions
+[INFO] Checking linearity of function: main
+[DEBUG] Added args to lin_map: []
+[INFO] Checking function body
+[INFO] Checking new block
+[DEBUG] Added locals to lin_map: []
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int a.x = unrestricted int 1"
+[INFO] Checking assignment expression
+[DEBUG] Assignment is  "a.x = unrestricted int 1"
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int 1"
+[DEBUG] Variable a not found, assuming unrestricted
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int a.y = unrestricted int 2"
+[INFO] Checking assignment expression
+[DEBUG] Assignment is  "a.y = unrestricted int 2"
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int 2"
+[DEBUG] Variable a not found, assuming unrestricted
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int b.x = unrestricted int 3"
+[INFO] Checking assignment expression
+[DEBUG] Assignment is  "b.x = unrestricted int 3"
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int 3"
+[DEBUG] Variable b not found, assuming unrestricted
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int b.y = unrestricted int 4"
+[INFO] Checking assignment expression
+[DEBUG] Assignment is  "b.y = unrestricted int 4"
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int 4"
+[DEBUG] Variable b not found, assuming unrestricted
+[INFO] Checking expression
+[DEBUG] Expression is  "struct point :{c, d} = struct point a"
+[INFO] Checking assignment expression
+[DEBUG] Assignment is  ":{c, d} = struct point a"
+[INFO] Checking expression
+[DEBUG] Expression is  "struct point a"
+Checking lone identifier "a" (is_consumed=true)
+[INFO] Marking a as consumed
+[INFO] Marking c as assigned
+[INFO] Marking d as assigned
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int return(unrestricted int unrestricted int c + unrestricted int d)"
+[INFO] Checking function call to return
+[DEBUG] Function call args: unrestricted int unrestricted int c + unrestricted int d
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int unrestricted int c + unrestricted int d"
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int c"
+Checking lone identifier "c" (is_consumed=false)
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int d"
+Checking lone identifier "d" (is_consumed=false)
+[DEBUG] Checked statements, lin_map: []
+[INFO] Removing locally declared variables
+[DEBUG] Didn't find decl a, assuming unrestricted
+[DEBUG] Didn't find decl b, assuming unrestricted
+[DEBUG] Didn't find decl c, assuming unrestricted
+[DEBUG] Didn't find decl d, assuming unrestricted
+[DEBUG] Final lin_map for main []
+[INFO] Done checking linearity
+
+Abstract Syntax Tree:
+unrestricted struct point {
+unrestricted int x;
+unrestricted int y;
+};
+unrestricted int main() {
+struct point a;
+struct point b;
+unrestricted int c;
+unrestricted int d;
+a.x = 1;
+a.y = 2;
+b.x = 3;
+b.y = 4;
+:{c, d} = a;
+return c + d;
+}
+
+Semantic Checked Abstract Syntax Tree:
+unrestricted struct point {
+unrestricted int x;
+unrestricted int y;
+};
+unrestricted int main() {
+struct point a;
+struct point b;
+unrestricted int c;
+unrestricted int d;
+unrestricted int a.x = unrestricted int 1;
+unrestricted int a.y = unrestricted int 2;
+unrestricted int b.x = unrestricted int 3;
+unrestricted int b.y = unrestricted int 4;
+struct point :{c, d} = struct point a;
+return unrestricted int unrestricted int c + unrestricted int d;
+}
+
+Linearity Results:
+LINEAR CHECK SUCCESS
+Program Info:
+Struct Info:
+[]
+Func Info:
+[]
+Linear Maps:
+main -> []
+
+
+COMPILATION SUCCESS

@@ -27,7 +27,7 @@ linear int main() {
     int result;
 
     outer = make();
-    while (1) {
+    while (true) {
       
     }
     a = make();

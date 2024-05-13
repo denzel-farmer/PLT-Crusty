@@ -1,0 +1,93 @@
+[INFO] Begin checking linearity, generating program info
+[INFO] Generated program info, checking linearity of functions
+[INFO] Checking linearity of function: get_x
+[DEBUG] Added args to lin_map: in_a -> Assigned : struct a
+
+[INFO] Checking function body
+[INFO] Checking new block
+[DEBUG] Added locals to lin_map: in_a -> Assigned : struct a
+
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int return(unrestricted int in_a.x)"
+[INFO] Checking function call to return
+[DEBUG] Function call args: unrestricted int in_a.x
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int in_a.x"
+[DEBUG] Checked statements, lin_map: in_a -> Assigned : struct a
+
+[INFO] Removing locally declared variables
+[DEBUG] Final lin_map for get_x in_a -> Assigned : struct a
+
+[INFO] Checking linearity of function: main
+[DEBUG] Added args to lin_map: []
+[INFO] Checking function body
+[INFO] Checking new block
+[DEBUG] Added locals to lin_map: a -> Unassigned : struct a
+
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int a.x = unrestricted int 5"
+[INFO] Checking assignment expression
+[DEBUG] Assignment is  "a.x = unrestricted int 5"
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int 5"
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int a.b = unrestricted int 10"
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int return(unrestricted int get_x(struct a a))"
+[DEBUG] Checked statements, lin_map: Cannot assign members of linear variable a before assignment
+[DEBUG] Final lin_map for main Cannot assign members of linear variable a before assignment
+[INFO] Done checking linearity
+
+Abstract Syntax Tree:
+linear struct a {
+unrestricted int x;
+unrestricted int b;
+};
+unrestricted int get_x(struct a in_a) {
+;
+;
+return in_a.x;
+}unrestricted int main() {
+struct a a;
+a.x = 5;
+a.b = 10;
+return get_x(a);
+}
+
+Semantic Checked Abstract Syntax Tree:
+linear struct a {
+unrestricted int x;
+unrestricted int b;
+};
+unrestricted int get_x(struct a in_a) {
+;
+;
+return unrestricted int in_a.x;
+}unrestricted int main() {
+struct a a;
+unrestricted int a.x = unrestricted int 5;
+unrestricted int a.b = unrestricted int 10;
+return unrestricted int get_x(struct a a);
+}
+
+Linearity Results:
+LINEAR CHECK FAIL
+Program Info:
+Struct Info:
+a -> linear struct a {
+unrestricted int x;
+unrestricted int b;
+}
+
+Func Info:
+get_x -> unrestricted int get_x(struct a in_a) {
+;
+;
+return unrestricted int in_a.x;
+}
+
+Linear Maps:
+get_x -> in_a -> Assigned : struct a
+
+main -> Cannot assign members of linear variable a before assignment
+

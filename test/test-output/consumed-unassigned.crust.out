@@ -1,0 +1,41 @@
+[INFO] Begin checking linearity, generating program info
+[INFO] Generated program info, checking linearity of functions
+[INFO] Checking linearity of function: main
+[DEBUG] Added args to lin_map: []
+[INFO] Checking function body
+[INFO] Checking new block
+[DEBUG] Added locals to lin_map: a -> Unassigned : linear int
+
+[INFO] Checking expression
+[DEBUG] Expression is  "linear int a"
+Checking lone identifier "a" (is_consumed=false)
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int return(unrestricted int 0)"
+[DEBUG] Checked statements, lin_map: Linear variable "a" used before assignment
+[DEBUG] Final lin_map for main Linear variable "a" used before assignment
+[INFO] Done checking linearity
+
+Abstract Syntax Tree:
+unrestricted int main() {
+linear int a;
+a;
+return 0;
+}
+
+Semantic Checked Abstract Syntax Tree:
+unrestricted int main() {
+linear int a;
+linear int a;
+return unrestricted int 0;
+}
+
+Linearity Results:
+LINEAR CHECK FAIL
+Program Info:
+Struct Info:
+[]
+Func Info:
+[]
+Linear Maps:
+main -> Linear variable "a" used before assignment
+
