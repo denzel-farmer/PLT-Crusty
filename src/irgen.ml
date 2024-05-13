@@ -363,8 +363,8 @@ let translate ((globals : A.var_decl list), (structs : A.struct_def list), (func
 
     (* Add a return if the last block falls off the end *)
     match fdecl.sreturn with
-      | A.Void -> add_terminal func_builder (L.build_ret_void)
-      | A.Nonvoid expr -> 
+      | Void -> add_terminal func_builder (L.build_ret_void)
+      | Nonvoid expr -> 
         add_terminal func_builder (L.build_ret (build_expr func_builder expr))
 
 (* 
