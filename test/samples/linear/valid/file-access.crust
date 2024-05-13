@@ -31,8 +31,10 @@ int sys_write(int file_pointer, string content) {
 
 string sys_read(int file_pointer, int size) {
     // read file placeholder
+    string content;
     print("Sys call: read\n");
-    return "file content";
+    content = "file content";
+    return content;
 }
 
 // Low-level, crusty libraries that convert between 
