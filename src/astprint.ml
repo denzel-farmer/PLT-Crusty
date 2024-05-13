@@ -106,6 +106,7 @@ let string_of_var_decl (typ, name) =
 
 let rec string_of_stmt = function
   | Block (vars, stmts) -> "{\n" ^ String.concat "\n" (List.map string_of_var_decl vars) ^ String.concat "\n" (List.map string_of_stmt stmts) ^ "\n}"
+  | FBlock (vars, stmts, ret) -> "{\n" ^ String.concat "\n" (List.map string_of_var_decl vars) ^ String.concat "\n" (List.map string_of_stmt stmts) ^ "\n}"
   | Expr e -> string_of_expr e 
   | If (cond, stmt1, stmt2) ->
     "if ("

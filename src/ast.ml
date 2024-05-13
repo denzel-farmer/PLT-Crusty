@@ -95,18 +95,19 @@ and literal =
 (* Declaration Types *)
 type var_decl = typ * string
 
+type return_stmt =
+  | Return of expr
+  | VoidReturn
+
 (* Statement Types *)
 type stmt =
   | Block of (var_decl list) * (stmt list)
+  | FBlock of (var_decl list) * (stmt list) * return_stmt
   | Expr of expr
   | If of expr * stmt * stmt
   | While of expr * stmt
   | Break
   | Continue
-
-type return_stmt =
-  | Return of expr
-  | VoidReturn
 
 (* Function Definition Type *)
 type func_def =

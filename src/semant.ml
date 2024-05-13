@@ -381,27 +381,7 @@ let check program =
         |  _ -> raise (Failure ("expected Boolean expression in " ^ string_of_expr e))
       in t
     in 
-    let rec check_stmt_list l = 
-    match l with 
-    [] -> []
-    | s :: sl -> check_stmt s :: check_stmt_list sl
-    (* return a statement *)
-    and check_stmt s = 
-      match s with 
-        Block (vl, sl) -> 
-          enter_scope ();
-          List.iter (fun (ty, name) -> add_symbol (ty, name)) vl;
-          let checked_stmts = check_stmt_list sl in
-          exit_scope ();
-          SBlock (vl, checked_stmts)
-      | Expr e -> SExpr (check_expr e)
-      | If(e, st1, st2) ->
-        SIf(check_bool_expr e, check_stmt st1, check_stmt st2)
-      | While(e, st) ->
-        SWhile(check_bool_expr e, check_stmt st)
-      | Break -> SBreak
-      | Continue -> SContinue
-    and check_return_stmt s = 
+    let check_return_stmt s = 
       let r = match s with 
         | Return e ->
           let (t, e') = check_expr e in
@@ -417,6 +397,34 @@ let check program =
           | _ -> raise (Failure ("Missing return statement"))
           in s
       in r
+    in
+    let rec check_stmt_list l = 
+    match l with 
+    [] -> []
+    | s :: sl -> check_stmt s :: check_stmt_list sl
+    (* return a statement *)
+    and check_stmt s = 
+      match s with 
+        Block (vl, sl) -> 
+          enter_scope ();
+          List.iter (fun (ty, name) -> add_symbol (ty, name)) vl;
+          let checked_stmts = check_stmt_list sl in
+          exit_scope ();
+          SBlock (vl, checked_stmts)
+      | FBlock (vl, sl, r) -> 
+          enter_scope ();
+          List.iter (fun (ty, name) -> add_symbol (ty, name)) vl;
+          let checked_stmts = check_stmt_list sl in
+          let checked_r = check_return_stmt r in
+          exit_scope ();
+          FSBlock (vl, checked_stmts, checked_r)
+      | Expr e -> SExpr (check_expr e)
+      | If(e, st1, st2) ->
+        SIf(check_bool_expr e, check_stmt st1, check_stmt st2)
+      | While(e, st) ->
+        SWhile(check_bool_expr e, check_stmt st)
+      | Break -> SBreak
+      | Continue -> SContinue
     in 
     let checked_body = check_stmt_list func.body in
     let checked_return = check_return_stmt func.return in 

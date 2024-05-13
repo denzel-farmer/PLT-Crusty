@@ -324,6 +324,25 @@ let translate ((globals : A.var_decl list), (structs : A.struct_def list), (func
           let result_builder = List.fold_left build_stmt builder sl in
           exit_scope ();
           result_builder
+      | FSBlock (vl, sl, r) -> 
+        enter_scope ();
+          List.iter (fun (ty, name) ->
+            ignore (add_symbol builder name ty (ltype_of_typ ty))
+          ) vl;
+          let result_builder = List.fold_left build_stmt builder sl in
+
+          (* Function to handle return statements at the end of functions *)
+          let handle_return_stmt builder =
+            match r with
+            | SVoidReturn -> ignore (L.build_ret_void builder)
+            | SReturn expr -> 
+              let return_val = build_expr builder expr in
+              ignore (L.build_ret return_val builder)
+          in
+          handle_return_stmt result_builder;
+
+          exit_scope ();
+          result_builder
       | SExpr e -> ignore(build_expr builder e); builder
       | SIf (predicate, then_stmt, else_stmt) ->
         let bool_val = build_expr builder predicate in
@@ -359,7 +378,7 @@ let translate ((globals : A.var_decl list), (structs : A.struct_def list), (func
     in
 
     (* Build the code for each statement in the function *)
-    let func_builder = build_stmt builder (SBlock (fdecl.slocals, fdecl.sbody)) in
+    let func_builder = build_stmt builder (FSBlock (fdecl.slocals, fdecl.sbody, fdecl.sreturn)) in
 
     (* Add a return if the last block falls off the end *)
     add_terminal func_builder (L.build_ret (L.const_int i32_t 0));

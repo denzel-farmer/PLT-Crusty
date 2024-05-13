@@ -103,6 +103,7 @@ and string_of_sassignment = function
 
 let rec string_of_sstmt = function
   | SBlock (vars, stmts) -> "{\n" ^ String.concat "\n" (List.map string_of_var_decl vars) ^ String.concat "\n" (List.map string_of_sstmt stmts) ^ "\n}"
+  | FSBlock (vars, stmts, r) -> "{\n" ^ String.concat "\n" (List.map string_of_var_decl vars) ^ String.concat "\n" (List.map string_of_sstmt stmts) ^ "\n}"
   | SExpr e -> string_of_sexpr e 
   | SIf (cond, stmt1, stmt2) ->
     "if ("
