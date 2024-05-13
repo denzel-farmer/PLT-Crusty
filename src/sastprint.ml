@@ -1,6 +1,5 @@
 open Ast
 open Sast
-open Astprint
 
 let string_of_prim_typ = function
   | Int -> "int"
