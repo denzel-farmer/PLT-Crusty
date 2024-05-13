@@ -629,7 +629,6 @@ let rec linear_check_block
          | Some (Unassigned, _) -> Error ("Cannot borrow " ^ var_id ^ " before assignment")
          | Some (Ref, _) -> Error ("Cannot borrow reference " ^ var_id)
          | Some (Used, _) -> Error ("Cannot borrow " ^ var_id ^ " after use"))
-      | SIndex _ -> raise (Failure "Linear checker: Index operation not supported")
     in
     (* Check expression *)
     info_println "Checking expression";
