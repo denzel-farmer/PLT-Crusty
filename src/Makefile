@@ -1,21 +1,11 @@
-all : scanparse helloworld checksemant
+all : checksemant.native checksemant
 
-##############################
-#
-# HW 2: Question 1
-#
-# Compilation: 
-# Option 1: Simply type "make" to compile the calculator (recommended, auto-test included)
-# Option 2: "ocamlbuild calc.native" will also build the calculator
+# New target, using ocamlbuild 
+checksemant.native: clean
+	ocamlbuild -cflags -w,A checksemant.native
 
-# For testing, you can run the binary executable and test it with
-# standard input via terminal.
-# Or use calc.tb (testbench file): you can modify the file directly
-# with the exprssion you want to test before make. After compiling
-# your executable successfully, the output of test case will be 
-# generate automatically in a file named calc.out
-
-checksemant: sastprint.cmo astprint.cmo linear.cmo scanner.cmo crustyparse.cmo semant.cmo checksemant.cmo
+# Old targets, to generate intermediate files for ocamllsp
+checksemant.lsp: sastprint.cmo astprint.cmo linear.cmo scanner.cmo crustyparse.cmo semant.cmo checksemant.cmo
 	ocamlc -w A -o checksemant $^
 
 scanparse : crustyparse.cmo scanner.cmo astprint.cmo scanparse.cmo
@@ -107,11 +97,13 @@ linear.cmx : \
 sastprint.cmo : \
     sast.cmi \
     astprint.cmo \
-    ast.cmi
+    ast.cmi \
+    sastprint.cmi
 sastprint.cmx : \
     sast.cmi \
     astprint.cmx \
-    ast.cmi
+    ast.cmi \
+    sastprint.cmi
 scanner.cmo : \
     crustyparse.cmi
 scanner.cmx : \
@@ -143,4 +135,4 @@ semantparse.cmx : \
 
 .PHONY : clean
 clean :
-	rm -rf *.cmi *.cmo crustyparse.ml crustyparse.mli crustyparse.output scanner.ml scanparse hello.out crustyparse.conflicts checksemant
+	rm -rf *.cmi *.cmo _build checksemant.native crustyparse.ml crustyparse.mli crustyparse.output scanner.ml scanparse hello.out crustyparse.conflicts checksemant
