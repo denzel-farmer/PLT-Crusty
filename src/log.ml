@@ -7,8 +7,8 @@ let log_level = Some Debug
 
 let log_print (msg : string) (level : log_level) : unit =
   match log_level, level with
-  | Some Debug, Debug | Some Debug, Info -> print_string msg
-  | Some Info, Info -> print_string msg
+  | Some Debug, Debug | Some Debug, Info -> output_string Pervasives.stderr msg
+  | Some Info, Info -> output_string Pervasives.stderr msg
   | Some Info, Debug -> ()
   | None, _ -> ()
 ;;
