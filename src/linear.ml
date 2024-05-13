@@ -1,7 +1,6 @@
 open Ast
 open Sast
-open Astprint
-open Sastprint
+
 module StringMap = Map.Make (String)
 
 (* Types for passing results and errors *)
@@ -67,7 +66,7 @@ let string_of_struct_info (struct_info : struct_info) : string =
   then "[]"
   else
     StringMap.fold
-      (fun key value acc -> acc ^ key ^ " -> " ^ string_of_struct_def value ^ "\n")
+      (fun key value acc -> acc ^ key ^ " -> " ^ Astprint.string_of_struct_def value ^ "\n")
       struct_info
       ""
 ;;
@@ -77,7 +76,7 @@ let string_of_func_info (func_info : func_info) : string =
   then "[]"
   else
     StringMap.fold
-      (fun key value acc -> acc ^ key ^ " -> " ^ string_of_sfunc_def value ^ "\n")
+      (fun key value acc -> acc ^ key ^ " -> " ^ Sastprint.string_of_sfunc_def value ^ "\n")
       func_info
       ""
 ;;
@@ -110,7 +109,7 @@ let string_of_linear_map (lin_map : linear_map) : string =
         ^ " -> "
         ^ string_of_linear_state (fst value)
         ^ " : "
-        ^ string_of_typ (snd value)
+        ^ Astprint.string_of_typ (snd value)
         ^ "\n")
       lin_map
       ""
@@ -154,9 +153,10 @@ let ( let* ) = Result.bind
 
 (* Returns true if the given struct is linear, based on its qualifier *)
 let is_linear_struct (in_struct : struct_def) : bool =
-  match in_struct with
-  | { lin_qual = Linear } -> true
-  | _ -> false
+  let lin_qual = in_struct.lin_qual in
+  match lin_qual with
+  | Linear -> true
+  | Unrestricted -> false
 ;;
 
 (* Given a struct map and a struct name, search the struct map for that struct *)
@@ -427,7 +427,7 @@ let rec linear_check_block
     (* Check an assignment expression *)
     let check_assignment (lin_map : linear_map) (assmt : sassignment) : linear_map_result =
       info_println "Checking assignment expression";
-      debug_println ("Assignment is  \"" ^ string_of_sassignment assmt ^ "\"");
+      debug_println ("Assignment is  \"" ^ Sastprint.string_of_sassignment assmt ^ "\"");
       match assmt with
       | SAssign (id, expr) ->
         (match id with
@@ -513,7 +513,7 @@ let rec linear_check_block
       : linear_map_result
       =
       info_println ("Checking function call to " ^ fname);
-      debug_println ("Function call args: " ^ string_of_sexpr_list args);
+      debug_println ("Function call args: " ^ Sastprint.string_of_sexpr_list args);
       (* Check each function arguement; if linear, it gets consumed *)
       let lin_map =
         List.fold_left (fun acc arg -> check_expr acc true arg) (Ok lin_map) args
@@ -632,7 +632,7 @@ let rec linear_check_block
     in
     (* Check expression *)
     info_println "Checking expression";
-    debug_println ("Expression is  \"" ^ string_of_sexpr expr ^ "\"");
+    debug_println ("Expression is  \"" ^ Sastprint.string_of_sexpr expr ^ "\"");
     match lin_map with
     | Error err -> Error err
     | Ok lin_map ->
