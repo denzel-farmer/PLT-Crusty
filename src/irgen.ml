@@ -362,7 +362,13 @@ let translate ((globals : A.var_decl list), (structs : A.struct_def list), (func
     let func_builder = build_stmt builder (SBlock (fdecl.slocals, fdecl.sbody)) in
 
     (* Add a return if the last block falls off the end *)
-    add_terminal func_builder (L.build_ret (L.const_int i32_t 0));
+    match fdecl.sreturn with
+      | A.Void -> add_terminal func_builder (L.build_ret_void)
+      | A.Nonvoid expr -> 
+        add_terminal func_builder (L.build_ret (build_expr func_builder expr))
+
+(* 
+    add_terminal func_builder (L.build_ret (L.const_int i32_t 0)); *)
   in
 
   List.iter build_function_body functions;
