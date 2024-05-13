@@ -19,7 +19,7 @@ let rec compare_stripped_types (first : typ) (second : typ) : bool =
   | _ -> false 
 ;;
 
-let rec compare_sexpr_decl_stripped_types (first : var_decl) (second : sexpr) : bool =
+let compare_sexpr_decl_stripped_types (first : var_decl) (second : sexpr) : bool =
   let (t1, _) = first in
   let (t2, _) = second in
   compare_stripped_types t1 t2
