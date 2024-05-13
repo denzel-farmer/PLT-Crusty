@@ -32,6 +32,25 @@ type log_level =
   | Debug
   | Info
 
+let lin_result_get_reason (lin_result : linear_result) : string option =
+  let program_info_result, lin_map_result_tuples = lin_result in
+  match program_info_result with
+  | Error reason -> Some reason
+  | Ok _ ->
+    let lin_map_result =
+      List.find_opt
+        (fun (_, lin_map_result) ->
+          match lin_map_result with
+          | Error _ -> true
+          | Ok _ -> false)
+        lin_map_result_tuples
+    in
+    (match lin_map_result with
+     | Some (_, Error reason) -> Some reason
+     | Some (_, Ok _) -> raise (Failure "Lin result get reason did something weird")
+     | None -> None)
+;;
+
 let lin_result_failed (lin_result : linear_result) : bool =
   match lin_result with
   | Error _, _ -> true
@@ -43,6 +62,7 @@ let lin_result_failed (lin_result : linear_result) : bool =
         | Ok _ -> false)
       lin_map_results
 ;;
+
 let string_of_struct_info (struct_info : struct_info) : string =
   if StringMap.is_empty struct_info
   then "[]"
@@ -633,7 +653,6 @@ let rec linear_check_block
        | out_typ, SAssignment assmt -> check_assignment lin_map assmt
        | out_typ, SCall (fname, args) -> check_func_call lin_map fname args)
   in
-
   (* Check a list of statements *)
   let rec linear_check_stmt_list (in_lin_map : linear_map_result) (s_list : sstmt list)
     : linear_map_result

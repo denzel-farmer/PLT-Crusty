@@ -1,4 +1,5 @@
 type log_level = Debug | Info
+val log_level : log_level option
 val log_print : string -> log_level -> unit
 val log_println : string -> log_level -> unit
 val debug_print : string -> unit

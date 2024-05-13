@@ -3,12 +3,16 @@ type log_level =
   | Info
 
 (* Print functions for debugging and error messages *)
-let log_level = Some Debug
+let log_level = (Some Debug)
+(* let set_log_level (new_level : log_level) : unit = log_level := new_level
+let set_log_level_debug = set_log_level (Some Debug)
+let set_log_level_info = set_log_level (Some Info)
+let disable_logging = set_log_level None *)
 
 let log_print (msg : string) (level : log_level) : unit =
   match log_level, level with
-  | Some Debug, Debug | Some Debug, Info -> output_string Pervasives.stderr msg
-  | Some Info, Info -> output_string Pervasives.stderr msg
+  | Some Debug, Debug | Some Debug, Info -> output_string Stdlib.stderr msg
+  | Some Info, Info -> output_string Stdlib.stderr msg
   | Some Info, Debug -> ()
   | None, _ -> ()
 ;;

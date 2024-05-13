@@ -1,4 +1,5 @@
 let _ =
+  (* Log.set_log_level_debug; *)
   let lexbuf = Lexing.from_channel stdin in
   Log.info_println "\nGenerating Abstract Syntax Tree";
   let program = Crustyparse.program Scanner.token lexbuf in
@@ -15,5 +16,5 @@ let _ =
     Log.info_println "\n Doing psuedo-translations...";
     let translated = Psuedotranslate.eliminate_psuedo_nodes sprogram in
     Log.debug_println (Sastprint.string_of_sprogram translated);
-    print_endline "\n[PART 1] COMPILATION SUCCESS";)
+    print_endline "\n[PART 1] COMPILATION SUCCESS")
 ;;
