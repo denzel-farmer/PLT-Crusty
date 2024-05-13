@@ -76,14 +76,14 @@ int close_file(struct File file) {
 
 /* Only references a linear file struct */
 int read_file(ref struct File file) {
-    string content;
+    int content;
 
     print("Library Read File\n");
     
     content = sys_read(file->file_pointer, file->size);
 
     print("Read file:");
-    print(content);
+    // print(content);
     // TODO cant return string
     return 0;
 }
@@ -116,7 +116,7 @@ struct File write_file(struct File file, string new_contents) {
 the file struct and creates a new one. */
 int correct_complex() {
     struct File file;
-    string content;
+    int content;
 
     /* Creates a linear struct -- this must be consumed exactly once*/
     file = open_file("file.txt");
@@ -133,13 +133,13 @@ int correct_complex() {
 /* This is the correct usage, because the file struct is consumed exactly once */
 int correct_simple() {
     struct File file;
-    string content;
+    int content;
 
     /* Creates a linear struct -- this must be consumed exactly once */
 
     file = open_file("file.txt");
 
-    content = read_file(&file);
+    int = read_file(&file);
 
     close_file(file);
     return 0;
