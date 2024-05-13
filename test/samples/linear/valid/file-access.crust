@@ -139,7 +139,7 @@ int correct_simple() {
 
     file = open_file("file.txt");
 
-    int = read_file(&file);
+    content = read_file(&file);
 
     close_file(file);
     return 0;
