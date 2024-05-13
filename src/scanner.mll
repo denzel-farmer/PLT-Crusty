@@ -3,9 +3,6 @@
 {
   open Crustyparse
 
-  (* Helper functions *)
-  let printf = Format.eprintf
-
   let unescape_char c =
     match c with
     | "\\n" -> '\n'
@@ -51,96 +48,94 @@ rule token = parse
 | "//"     { line_comment lexbuf }
 
 (* Grouping/Separating *)
-| '('      { printf "LPAREN "; LPAREN }
-| ')'      { printf "RPAREN "; RPAREN }
-| '{'      { printf "LBRACE "; LBRACE }
-| '}'      { printf "RBRACE "; RBRACE }
-| '['      { printf "LBRACK "; LBRACK }
-| ']'      { printf "RBRACK "; RBRACK }
-| ';'      { printf "SEMI "; SEMI }
-| ','      { printf "COMMA "; COMMA }
-| ':'      { printf "EXPLODE "; EXPLODE }
+| '('      { LPAREN }
+| ')'      { RPAREN }
+| '{'      { LBRACE }
+| '}'      { RBRACE }
+| '['      { LBRACK }
+| ']'      { RBRACK }
+| ';'      { SEMI }
+| ','      { COMMA }
+| ':'      { EXPLODE }
 
 (* Keywords *)
 (* Primitive Types *)
-| "int"   { printf "INT "; INT }
-| "bool"  { printf "BOOL "; BOOL }
-| "char"  { printf "CHAR "; CHAR }
-| "float" { printf "FLOAT "; FLOAT }
-| "void"  { printf "VOID "; VOID }
-| "string" { printf "STRING "; STRING }
+| "int"   { INT }
+| "bool"  { BOOL }
+| "char"  { CHAR }
+| "float" { FLOAT }
+| "void"  { VOID }
+| "string" { STRING }
 
 (* Type Qualifiers *)
-| "ref"   { printf "REF "; REF }
-| "linear" { printf "LINEAR "; LINEAR }
-| "unrestricted" { printf "UNRESTRICTED "; UNRESTRICTED }
-| "const" { printf "CONST "; CONST }
+| "ref"   { REF }
+| "linear" { LINEAR }
+| "unrestricted" { UNRESTRICTED }
+| "const" { CONST }
 
 (* Compound Types *)
-| "struct" { printf "STRUCT "; STRUCT }
+| "struct" { STRUCT }
 
 (* Operators *)
-| '='      { printf "ASSIGN "; ASSIGN }
+| '='      { ASSIGN }
 
 (* Arithmetic Operators *)
-| '+'      { printf "PLUS "; PLUS }
-| '-'      { printf "MINUS "; MINUS }
-| '*'      { printf "STAR "; STAR }
-| '/'      { printf "DIVIDE "; DIVIDE }
-| '%'      { printf "MOD "; MOD }
-| "++"     { printf "INCR "; INCR }
-| "--"     { printf "DECR "; DECR }
+| '+'      { PLUS }
+| '-'      { MINUS }
+| '*'      { STAR }
+| '/'      { DIVIDE }
+| '%'      { MOD }
+| "++"     { INCR }
+| "--"     { DECR }
 
 (* Comparison Operators*)
-| "=="     { printf "EQ "; EQ }
-| "!="     { printf "NEQ "; NEQ }
-| '<'      { printf "LT "; LT }
-| "<="     { printf "LTE "; LTE }
-| '>'      { printf "GT "; GT }
-| ">="     { printf "GTE "; GTE }
+| "=="     { EQ }
+| "!="     { NEQ }
+| '<'      { LT }
+| "<="     { LTE }
+| '>'      { GT }
+| ">="     { GTE }
 
 (* Logical Operators *)
-| "&&"     { printf "AND "; AND }
-| "||"     { printf "OR "; OR }
-| "!"      { printf "NOT "; NOT }
+| "&&"     { AND }
+| "||"     { OR }
+| "!"      { NOT }
 
 (* Struct Operators *)
-| '.'      { printf "DOT "; DOT }
+| '.'      { DOT }
 
 (* Borrowing Operators *)
-| '&'      { printf "BORROW "; BORROW }
-| "->"     { printf "ARROW "; ARROW }
+| '&'      { BORROW }
+| "->"     { ARROW }
 
 (* Control Flow *)
-| "if"     { printf "IF "; IF }
-| "else"   { printf "ELSE "; ELSE }
-| "while"  { printf "WHILE "; WHILE }
-| "break"  { printf "BREAK "; BREAK }
-| "continue" { printf "CONTINUE "; CONTINUE }
-| "return" { printf "RETURN "; RETURN }
-| "true"   { printf "BOOLLIT(true) "; BOOLLIT(true)  }
-| "false"  { printf "BOOLLIT(false) "; BOOLLIT(false) }
+| "if"     { IF }
+| "else"   { ELSE }
+| "while"  { WHILE }
+| "break"  { BREAK }
+| "continue" { CONTINUE }
+| "return" { RETURN }
+| "true"   { BOOLLIT(true)  }
+| "false"  { BOOLLIT(false) }
 
 (* Identifier *)
-| letter (digit | letter | '_')* as lem { printf "%s " ("ID(" ^ lem ^ ")"); ID(lem) }
+| letter (digit | letter | '_')* as lem { ID(lem) }
 
 (* Literals *)
-| int as lem  { printf "%s " ("INTLIT(" ^ lem ^ ")"); INTLIT(int_of_string lem) }
-| float as lem { printf "%s " ("FLOATLIT(" ^ lem ^ ")"); FLOATLIT(float_of_string lem) }
+| int as lem  { INTLIT(int_of_string lem) }
+| float as lem { FLOATLIT(float_of_string lem) }
 | '\'' ascii '\'' as lem { 
     let char_val = process_escapes (String.sub lem 1 (String.length lem - 2)) in
-    printf "%s " ("CHARLIT('" ^ Char.escaped char_val.[0] ^ "')");
     CHARLIT(char_val.[0])
   }
 | '\"' (ascii)* '\"' as lem {
     let string_val = String.sub lem 1 (String.length lem - 2) in
     let processed_string = process_escapes string_val in
-    printf "%s " ("STRINGLIT(\"" ^ String.escaped processed_string ^ "\")");
     STRINGLIT(processed_string)
   }
 
 (* End of File *)
-| eof { printf "EOF "; EOF }
+| eof { EOF }
 | _ as char { raise (Failure("illegal character " ^ Char.escaped char)) }
 
 and comment = parse

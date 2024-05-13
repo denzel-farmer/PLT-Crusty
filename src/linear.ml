@@ -281,7 +281,7 @@ let remove_decl (lin_map : linear_map_result) (decl : var_decl) : linear_map_res
        Ok (StringMap.remove name lin_map)
      | Some (_, typ) ->
        info_println ("Found " ^ name ^ " but is not Used");
-       Error ("Declaration " ^ name ^ "is Unconsumed")
+       Error ("Declaration " ^ name ^ " is Unconsumed")
      | None ->
        debug_println ("Didn't find decl " ^ name ^ ", assuming unrestricted");
        Ok lin_map)
@@ -626,9 +626,9 @@ let rec linear_check_block
              (* Update to have state Borrowed *)
              debug_println ("Marking var" ^ var_id ^ "as Borrowed");
              Ok (StringMap.add var_id (Borrowed, typ) lin_map))
-         | Some (Unassigned, _) -> Error ("Cannot borrow " ^ var_id ^ "before assignment")
+         | Some (Unassigned, _) -> Error ("Cannot borrow " ^ var_id ^ " before assignment")
          | Some (Ref, _) -> Error ("Cannot borrow reference " ^ var_id)
-         | Some (Used, _) -> Error ("Cannot borrow " ^ var_id ^ "after use"))
+         | Some (Used, _) -> Error ("Cannot borrow " ^ var_id ^ " after use"))
       | SIndex _ -> raise (Failure "Linear checker: Index operation not supported")
     in
     (* Check expression *)
