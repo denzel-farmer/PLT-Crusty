@@ -63,7 +63,7 @@ void close_file(struct File file) {
 string read_file(ref struct File file) {
     string content;
     
-    content = sys_read(file.file_pointer, file.size);
+    content = sys_read(file->file_pointer, file->size);
 
     print("Read file:");
     print(content);
@@ -90,7 +90,6 @@ struct File write_file(struct File file, string new_contents) {
     return new_file;
 }
 
-
 /* User code that calls our file library */
 
 /* This function prevents compilation because */
@@ -105,5 +104,11 @@ void not_consumed() {
     /*** Exits function without consuming file --> compiler error ***/
 
 }
+
+
+void main() {
+    not_consumed();
+}
+
 
 
