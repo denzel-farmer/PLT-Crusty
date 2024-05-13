@@ -22,7 +22,7 @@ let () =
   let lexbuf = Lexing.from_channel !channel in
   Log.info_println "\nGenerating Abstract Syntax Tree";
   let ast = Crustyparse.program Scanner.token lexbuf in
-  Log.debug_println (Astprint.string_of_program program);
+  Log.debug_println (Astprint.string_of_program ast);
   match !action with
   | Ast -> print_string (Astprint.string_of_program ast)
   | _ ->
