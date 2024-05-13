@@ -8,23 +8,30 @@ struct File{
 
 int sys_getsize(string path) {
     // get size of file placeholder
+    print("Sys call: getsize\n");
     return 100;
 }
 int sys_open(string path) {
     // open file placeholder
+    print("Sys call: open\n");
     return 3;
 }
 
-void sys_close(int file_pointer) {
+int sys_close(int file_pointer) {
     // close file placeholder
+    print("Sys call: close\n");
+    return 0;
 }
 
-void sys_write(int file_pointer, string content) {
+int sys_write(int file_pointer, string content) {
     // overwrite file placeholder
+    print("Sys call: write\n");
+    return 0;
 }
 
 string sys_read(int file_pointer, int size) {
     // read file placeholder
+    print("Sys call: read\n");
     return "file content";
 }
 
@@ -36,6 +43,8 @@ struct File open_file(string path) {
     int file_pointer;
     int size;
     struct File file;
+
+    print("Library Open File\n");
 
     file_pointer = sys_open(path);
     size = sys_getsize(path);
@@ -49,19 +58,24 @@ struct File open_file(string path) {
 }
 
 /* Consumes a linear file struct */
-void close_file(struct File file) {
+int close_file(struct File file) {
     int file_pointer;
     int size;
     string path;
 
+    print("Library Close File\n");
+
     :{path, file_pointer, size} = file;
 
     sys_close(file_pointer);
+    return 0;
 }
 
 /* Only references a linear file struct */
 string read_file(ref struct File file) {
     string content;
+
+    print("Library Read File\n");
     
     content = sys_read(file->file_pointer, file->size);
 
@@ -81,6 +95,8 @@ struct File write_file(struct File file, string new_contents) {
     string path;
     struct File new_file;
 
+    print("Library Write File\n");
+
     :{path, file_pointer, size} = file;
 
     sys_write(file_pointer, new_contents);
@@ -95,7 +111,7 @@ struct File write_file(struct File file, string new_contents) {
 
 /* This is allowed, because from type system's perspective, write_file() consumes 
 the file struct and creates a new one. */
-void correct_complex() {
+int correct_complex() {
     struct File file;
     string content;
 
@@ -107,11 +123,12 @@ void correct_complex() {
     file = write_file(file, "new content");
 
     close_file(file);
+    return 0;
 
 }
 
 /* This is the correct usage, because the file struct is consumed exactly once */
-void correct_simple() {
+int correct_simple() {
     struct File file;
     string content;
 
@@ -122,6 +139,7 @@ void correct_simple() {
     content = read_file(&file);
 
     close_file(file);
+    return 0;
 }
 
 
