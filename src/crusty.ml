@@ -28,16 +28,20 @@ let () =
   | _ ->
     Log.info_println "\nGenerating Semantically Checked Abstract Syntax Tree";
     let sast = Semant.check ast in
+    Log.debug_println "\nSAST:";
     Log.debug_println (Sastprint.string_of_sprogram sast);
     Log.info_println "\nDoing Linearity Checks...";
     let linear_result = Linear.check sast in
+    Log.debug_println (Linear.string_of_linear_result linear_result);
+    Log.debug_println "\nLinear Report:";
     Log.debug_println (Linear.string_of_linear_result linear_result);
     if Linear.lin_result_failed linear_result
     then print_endline "\nLINEARITY CHECK FAILED"
     else (
       Log.info_println "\nLinearity Check Passed";
-      Log.info_println "\n Doing psuedo-translations...";
+      Log.info_println "\nDoing psuedo-translations...";
       let translated = Psuedotranslate.eliminate_psuedo_nodes sast in
+      Log.debug_println "\nTranslated:";
       Log.debug_println (Sastprint.string_of_sprogram translated);
       match !action with
       | Ast -> ()
