@@ -35,42 +35,42 @@ helloworld: scanparse hello.cp
 # Extra dependencies not found by ocamldep
 scanner.cmo : crustyparse.cmo
 
-# Dependencies from ocamldep
+ast.cmo : \
+    ast.cmi
+ast.cmx : \
+    ast.cmi
 ast.cmi :
-crustyparse.cmi : \
-    ast.cmi
-linear.cmi : \
-    sast.cmi \
-    ast.cmi
-sast.cmi : \
-    ast.cmi
 astprint.cmo : \
     ast.cmi \
     astprint.cmi
 astprint.cmx : \
-    ast.cmi \
+    ast.cmx \
     astprint.cmi
+astprint.cmi : \
+    ast.cmi
 checksemant.cmo : \
     semant.cmo \
     scanner.cmo \
-    sastprint.cmo \
-    linear.cmi \
+    sastprint.cmi \
+    psuedotranslate.cmo \
+    linear.cmo \
     crustyparse.cmi \
-    astprint.cmo
+    astprint.cmi
 checksemant.cmx : \
     semant.cmx \
     scanner.cmx \
     sastprint.cmx \
+    psuedotranslate.cmx \
     linear.cmx \
     crustyparse.cmx \
     astprint.cmx
 crusty.cmo : \
     semant.cmo \
     scanner.cmo \
-    sastprint.cmo \
+    sastprint.cmi \
     irgen.cmo \
     crustyparse.cmi \
-    astprint.cmo
+    astprint.cmi
 crusty.cmx : \
     semant.cmx \
     scanner.cmx \
@@ -82,34 +82,52 @@ crustyparse.cmo : \
     ast.cmi \
     crustyparse.cmi
 crustyparse.cmx : \
-    ast.cmi \
+    ast.cmx \
     crustyparse.cmi
+crustyparse.cmi : \
+    ast.cmi
 irgen.cmo : \
     sast.cmi \
     ast.cmi
 irgen.cmx : \
-    sast.cmi \
-    ast.cmi
-irgen2.cmo :
-irgen2.cmx :
+    sast.cmx \
+    ast.cmx
 linear.cmo : \
+    sastprint.cmi \
     sast.cmi \
-    ast.cmi \
-    linear.cmi
+    log.cmi \
+    astprint.cmi \
+    ast.cmi
 linear.cmx : \
-    sast.cmi \
+    sastprint.cmx \
+    sast.cmx \
+    log.cmx \
+    astprint.cmx \
+    ast.cmx
+log.cmo : \
+    log.cmi
+log.cmx : \
+    log.cmi
+log.cmi :
+sast.cmo : \
     ast.cmi \
-    linear.cmi
+    sast.cmi
+sast.cmx : \
+    ast.cmx \
+    sast.cmi
+sast.cmi : \
+    ast.cmi
 sastprint.cmo : \
     sast.cmi \
-    astprint.cmo \
     ast.cmi \
     sastprint.cmi
 sastprint.cmx : \
-    sast.cmi \
-    astprint.cmx \
-    ast.cmi \
+    sast.cmx \
+    ast.cmx \
     sastprint.cmi
+sastprint.cmi : \
+    sast.cmi \
+    ast.cmi
 scanner.cmo : \
     crustyparse.cmi
 scanner.cmx : \
@@ -117,25 +135,27 @@ scanner.cmx : \
 scanparse.cmo : \
     scanner.cmo \
     crustyparse.cmi \
-    astprint.cmo
+    astprint.cmi
 scanparse.cmx : \
     scanner.cmx \
     crustyparse.cmx \
     astprint.cmx
 semant.cmo : \
     sast.cmi \
-    astprint.cmo \
+    astprint.cmi \
     ast.cmi
 semant.cmx : \
-    sast.cmi \
+    sast.cmx \
     astprint.cmx \
-    ast.cmi
+    ast.cmx
 semantparse.cmo : \
     scanner.cmo \
     crustyparse.cmi
 semantparse.cmx : \
     scanner.cmx \
     crustyparse.cmx
+structs.cmo :
+structs.cmx :
 ##############################
 
 
