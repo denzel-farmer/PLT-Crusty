@@ -63,7 +63,7 @@ void close_file(struct File file) {
 string read_file(ref struct File file) {
     string content;
     
-    content = sys_read(file->file_pointer, file->size);
+    content = sys_read(file.file_pointer, file.size);
 
     print("Read file:");
     print(content);
@@ -93,42 +93,17 @@ struct File write_file(struct File file, string new_contents) {
 
 /* User code that calls our file library */
 
-/* This is allowed, because from type system's perspective, write_file() consumes 
-the file struct and creates a new one. */
-void correct_complex() {
+/* This function prevents compilation because */
+void not_consumed() {
     struct File file;
     string content;
 
-    /* Creates a linear struct -- this must be consumed exactly once*/
-    file = open_file("file.txt");
-
-    content = read_file(&file);
-
-    file = write_file(file, "new content");
-
-    close_file(file);
-
-}
-
-/* This is the correct usage, because the file struct is consumed exactly once */
-void correct_simple() {
-    struct File file;
-    string content;
-
-    /* Creates a linear struct -- this must be consumed exactly once */
+    /*** Creates a linear struct -- this must be consumed exactly once ***/
 
     file = open_file("file.txt");
 
-    content = read_file(&file);
+    /*** Exits function without consuming file --> compiler error ***/
 
-    close_file(file);
 }
 
-
-int main() {
-    correct_simple();
-    correct_complex();
-
-    return 0;
-}
 
