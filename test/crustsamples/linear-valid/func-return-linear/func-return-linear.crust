@@ -12,6 +12,6 @@ linear int main() {
     linear int a; 
     
     a = make();
-
-    return a;
+    print(a);
+    return 0;
 } 

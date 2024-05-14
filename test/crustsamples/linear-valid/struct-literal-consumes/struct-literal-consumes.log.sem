@@ -19,6 +19,7 @@ init_info = { struct point_info -> 'a'};
 new = { struct lin_point -> 1, 2, init_info};
 :{x, y, second_info} = new;
 :{c} = second_info;
+print(c);
 return c;
 }
 [INFO] 
@@ -42,6 +43,7 @@ struct point_info struct point_info init_info = struct point_info { struct point
 struct lin_point struct lin_point new = struct lin_point { struct lin_point -> unrestricted int 1, unrestricted int 2, struct point_info init_info};
 struct lin_point :{x, y, second_info} = struct lin_point new;
 struct point_info :{c} = struct point_info second_info;
+unrestricted int print(unrestricted char c);
 return unrestricted char c;
 }
 [INFO] 
@@ -100,6 +102,14 @@ Checking lone identifier "new" (is_consumed=true)
 Checking lone identifier "second_info" (is_consumed=true)
 [INFO] Marking second_info as consumed
 [INFO] Marking c as assigned
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int print(unrestricted char c)"
+[INFO] Checking function call to print
+[DEBUG] Function call args: unrestricted char c
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted char c"
+Checking lone identifier "c" (is_consumed=true)
+[INFO] Marking c as consumed
 [INFO] Checking expression
 [DEBUG] Expression is  "unrestricted int return(unrestricted char c)"
 [INFO] Checking function call to return
@@ -175,5 +185,6 @@ struct point_info new.info = struct point_info init_info
 };
 struct lin_point :{x, y, second_info} = struct lin_point new;
 struct point_info :{c} = struct point_info second_info;
+unrestricted int print(unrestricted char c);
 return unrestricted char c;
 }

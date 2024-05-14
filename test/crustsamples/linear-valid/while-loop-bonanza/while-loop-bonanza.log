@@ -4,9 +4,9 @@ Generating Abstract Syntax Tree
 unrestricted int x;
 unrestricted int y;
 };
-struct lin_point make() {
+struct lin_point make(unrestricted int x, unrestricted int y) {
 struct lin_point new;
-new = { struct lin_point -> 1, 2};
+new = { struct lin_point -> x, y};
 return new;
 }unrestricted int consume(struct lin_point p) {
 unrestricted int x;
@@ -16,14 +16,24 @@ return x + y;
 }linear int main() {
 struct lin_point outer;
 unrestricted int result;
-outer = make();
-while (true)
+unrestricted int iters;
+iters = 10;
+result = 0;
+outer = make(0, 0);
+while (iters > 0)
 {
-struct lin_point innerconsume(outer)
-inner = make()
+struct lin_point innerresult = consume(outer)
+inner = make(result, result + 1)
 outer = inner
+print("Iters:")
+print(iters)
+print("Result:")
+print(result)
+--iters
 };
 result = consume(outer);
+print("Final:");
+print(result);
 return result;
 }
 [INFO] 
@@ -34,9 +44,9 @@ SAST:
 unrestricted int x;
 unrestricted int y;
 };
-struct lin_point make() {
+struct lin_point make(unrestricted int x, unrestricted int y) {
 struct lin_point new;
-struct lin_point struct lin_point new = struct lin_point { struct lin_point -> unrestricted int 1, unrestricted int 2};
+struct lin_point struct lin_point new = struct lin_point { struct lin_point -> unrestricted int x, unrestricted int y};
 return struct lin_point new;
 }unrestricted int consume(struct lin_point p) {
 unrestricted int x;
@@ -46,14 +56,24 @@ return unrestricted int unrestricted int x + unrestricted int y;
 }linear int main() {
 struct lin_point outer;
 unrestricted int result;
-struct lin_point struct lin_point outer = struct lin_point make();
-while (unrestricted bool true)
+unrestricted int iters;
+unrestricted int unrestricted int iters = unrestricted int 10;
+unrestricted int unrestricted int result = unrestricted int 0;
+struct lin_point struct lin_point outer = struct lin_point make(unrestricted int 0, unrestricted int 0);
+while (unrestricted bool unrestricted int iters > unrestricted int 0)
 {
-struct lin_point innerunrestricted int consume(struct lin_point outer)
-struct lin_point struct lin_point inner = struct lin_point make()
+struct lin_point innerunrestricted int unrestricted int result = unrestricted int consume(struct lin_point outer)
+struct lin_point struct lin_point inner = struct lin_point make(unrestricted int result, unrestricted int unrestricted int result + unrestricted int 1)
 struct lin_point struct lin_point outer = struct lin_point inner
+unrestricted int print(unrestricted string "Iters:")
+unrestricted int print(unrestricted int iters)
+unrestricted int print(unrestricted string "Result:")
+unrestricted int print(unrestricted int result)
+unrestricted int --unrestricted int iters
 };
 unrestricted int unrestricted int result = unrestricted int consume(struct lin_point outer);
+unrestricted int print(unrestricted string "Final:");
+unrestricted int print(unrestricted int result);
 return unrestricted int result;
 }
 [INFO] 
@@ -67,15 +87,19 @@ Doing Linearity Checks...
 [DEBUG] Added locals to lin_map: new -> Unassigned : struct lin_point
 
 [INFO] Checking expression
-[DEBUG] Expression is  "struct lin_point struct lin_point new = struct lin_point { struct lin_point -> unrestricted int 1, unrestricted int 2}"
+[DEBUG] Expression is  "struct lin_point struct lin_point new = struct lin_point { struct lin_point -> unrestricted int x, unrestricted int y}"
 [INFO] Checking assignment expression
-[DEBUG] Assignment is  "struct lin_point new = struct lin_point { struct lin_point -> unrestricted int 1, unrestricted int 2}"
+[DEBUG] Assignment is  "struct lin_point new = struct lin_point { struct lin_point -> unrestricted int x, unrestricted int y}"
 [INFO] Checking expression
-[DEBUG] Expression is  "struct lin_point { struct lin_point -> unrestricted int 1, unrestricted int 2}"
+[DEBUG] Expression is  "struct lin_point { struct lin_point -> unrestricted int x, unrestricted int y}"
 [INFO] Checking expression
-[DEBUG] Expression is  "unrestricted int 1"
+[DEBUG] Expression is  "unrestricted int x"
+Checking lone identifier "x" (is_consumed=true)
+[INFO] Marking x as consumed
 [INFO] Checking expression
-[DEBUG] Expression is  "unrestricted int 2"
+[DEBUG] Expression is  "unrestricted int y"
+Checking lone identifier "y" (is_consumed=true)
+[INFO] Marking y as consumed
 [INFO] Marking new as assigned
 [INFO] Checking expression
 [DEBUG] Expression is  "unrestricted int return(struct lin_point new)"
@@ -133,20 +157,47 @@ Checking lone identifier "y" (is_consumed=false)
 [DEBUG] Added locals to lin_map: outer -> Unassigned : struct lin_point
 
 [INFO] Checking expression
-[DEBUG] Expression is  "struct lin_point struct lin_point outer = struct lin_point make()"
+[DEBUG] Expression is  "unrestricted int unrestricted int iters = unrestricted int 10"
 [INFO] Checking assignment expression
-[DEBUG] Assignment is  "struct lin_point outer = struct lin_point make()"
+[DEBUG] Assignment is  "unrestricted int iters = unrestricted int 10"
 [INFO] Checking expression
-[DEBUG] Expression is  "struct lin_point make()"
+[DEBUG] Expression is  "unrestricted int 10"
+[INFO] Marking iters as assigned
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int unrestricted int result = unrestricted int 0"
+[INFO] Checking assignment expression
+[DEBUG] Assignment is  "unrestricted int result = unrestricted int 0"
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int 0"
+[INFO] Marking result as assigned
+[INFO] Checking expression
+[DEBUG] Expression is  "struct lin_point struct lin_point outer = struct lin_point make(unrestricted int 0, unrestricted int 0)"
+[INFO] Checking assignment expression
+[DEBUG] Assignment is  "struct lin_point outer = struct lin_point make(unrestricted int 0, unrestricted int 0)"
+[INFO] Checking expression
+[DEBUG] Expression is  "struct lin_point make(unrestricted int 0, unrestricted int 0)"
 [INFO] Checking function call to make
-[DEBUG] Function call args: 
+[DEBUG] Function call args: unrestricted int 0, unrestricted int 0
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int 0"
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int 0"
 [INFO] Marking outer as assigned
 [INFO] Checking expression
-[DEBUG] Expression is  "unrestricted bool true"
+[DEBUG] Expression is  "unrestricted bool unrestricted int iters > unrestricted int 0"
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int iters"
+Checking lone identifier "iters" (is_consumed=false)
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int 0"
 [INFO] Checking new block
 [DEBUG] Added locals to lin_map: inner -> Unassigned : struct lin_point
 outer -> Assigned : struct lin_point
 
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int unrestricted int result = unrestricted int consume(struct lin_point outer)"
+[INFO] Checking assignment expression
+[DEBUG] Assignment is  "unrestricted int result = unrestricted int consume(struct lin_point outer)"
 [INFO] Checking expression
 [DEBUG] Expression is  "unrestricted int consume(struct lin_point outer)"
 [INFO] Checking function call to consume
@@ -155,14 +206,26 @@ outer -> Assigned : struct lin_point
 [DEBUG] Expression is  "struct lin_point outer"
 Checking lone identifier "outer" (is_consumed=true)
 [INFO] Marking outer as consumed
+[INFO] Marking result as assigned
 [INFO] Checking expression
-[DEBUG] Expression is  "struct lin_point struct lin_point inner = struct lin_point make()"
+[DEBUG] Expression is  "struct lin_point struct lin_point inner = struct lin_point make(unrestricted int result, unrestricted int unrestricted int result + unrestricted int 1)"
 [INFO] Checking assignment expression
-[DEBUG] Assignment is  "struct lin_point inner = struct lin_point make()"
+[DEBUG] Assignment is  "struct lin_point inner = struct lin_point make(unrestricted int result, unrestricted int unrestricted int result + unrestricted int 1)"
 [INFO] Checking expression
-[DEBUG] Expression is  "struct lin_point make()"
+[DEBUG] Expression is  "struct lin_point make(unrestricted int result, unrestricted int unrestricted int result + unrestricted int 1)"
 [INFO] Checking function call to make
-[DEBUG] Function call args: 
+[DEBUG] Function call args: unrestricted int result, unrestricted int unrestricted int result + unrestricted int 1
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int result"
+Checking lone identifier "result" (is_consumed=true)
+[INFO] Marking result as consumed
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int unrestricted int result + unrestricted int 1"
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int result"
+Checking lone identifier "result" (is_consumed=false)
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int 1"
 [INFO] Marking inner as assigned
 [INFO] Checking expression
 [DEBUG] Expression is  "struct lin_point struct lin_point outer = struct lin_point inner"
@@ -174,6 +237,39 @@ Checking lone identifier "inner" (is_consumed=true)
 [INFO] Marking inner as consumed
 [INFO] Marking outer as assigned
 [DEBUG] outer is being re-asigned after use
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int print(unrestricted string "Iters:")"
+[INFO] Checking function call to print
+[DEBUG] Function call args: unrestricted string "Iters:"
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted string "Iters:""
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int print(unrestricted int iters)"
+[INFO] Checking function call to print
+[DEBUG] Function call args: unrestricted int iters
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int iters"
+Checking lone identifier "iters" (is_consumed=true)
+[INFO] Marking iters as consumed
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int print(unrestricted string "Result:")"
+[INFO] Checking function call to print
+[DEBUG] Function call args: unrestricted string "Result:"
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted string "Result:""
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int print(unrestricted int result)"
+[INFO] Checking function call to print
+[DEBUG] Function call args: unrestricted int result
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int result"
+Checking lone identifier "result" (is_consumed=true)
+[INFO] Marking result as consumed
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int --unrestricted int iters"
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int iters"
+Checking lone identifier "iters" (is_consumed=false)
 [DEBUG] Checked statements, lin_map: inner -> Used : struct lin_point
 outer -> Assigned : struct lin_point
 
@@ -195,6 +291,20 @@ Checking lone identifier "outer" (is_consumed=true)
 [INFO] Marking outer as consumed
 [INFO] Marking result as assigned
 [INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int print(unrestricted string "Final:")"
+[INFO] Checking function call to print
+[DEBUG] Function call args: unrestricted string "Final:"
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted string "Final:""
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int print(unrestricted int result)"
+[INFO] Checking function call to print
+[DEBUG] Function call args: unrestricted int result
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int result"
+Checking lone identifier "result" (is_consumed=true)
+[INFO] Marking result as consumed
+[INFO] Checking expression
 [DEBUG] Expression is  "unrestricted int return(unrestricted int result)"
 [INFO] Checking function call to return
 [DEBUG] Function call args: unrestricted int result
@@ -207,6 +317,7 @@ Checking lone identifier "result" (is_consumed=true)
 [INFO] Removing locally declared variables
 [INFO] Found outer with state Used
 [DEBUG] Didn't find decl result, assuming unrestricted
+[DEBUG] Didn't find decl iters, assuming unrestricted
 [DEBUG] Final lin_map for main []
 [INFO] Done checking linearity
 [DEBUG] LINEAR CHECK SUCCESS
@@ -227,19 +338,29 @@ return unrestricted int unrestricted int x + unrestricted int y;
 main -> linear int main() {
 struct lin_point outer;
 unrestricted int result;
-struct lin_point struct lin_point outer = struct lin_point make();
-while (unrestricted bool true)
+unrestricted int iters;
+unrestricted int unrestricted int iters = unrestricted int 10;
+unrestricted int unrestricted int result = unrestricted int 0;
+struct lin_point struct lin_point outer = struct lin_point make(unrestricted int 0, unrestricted int 0);
+while (unrestricted bool unrestricted int iters > unrestricted int 0)
 {
-struct lin_point innerunrestricted int consume(struct lin_point outer)
-struct lin_point struct lin_point inner = struct lin_point make()
+struct lin_point innerunrestricted int unrestricted int result = unrestricted int consume(struct lin_point outer)
+struct lin_point struct lin_point inner = struct lin_point make(unrestricted int result, unrestricted int unrestricted int result + unrestricted int 1)
 struct lin_point struct lin_point outer = struct lin_point inner
+unrestricted int print(unrestricted string "Iters:")
+unrestricted int print(unrestricted int iters)
+unrestricted int print(unrestricted string "Result:")
+unrestricted int print(unrestricted int result)
+unrestricted int --unrestricted int iters
 };
 unrestricted int unrestricted int result = unrestricted int consume(struct lin_point outer);
+unrestricted int print(unrestricted string "Final:");
+unrestricted int print(unrestricted int result);
 return unrestricted int result;
 }
-make -> struct lin_point make() {
+make -> struct lin_point make(unrestricted int x, unrestricted int y) {
 struct lin_point new;
-struct lin_point struct lin_point new = struct lin_point { struct lin_point -> unrestricted int 1, unrestricted int 2};
+struct lin_point struct lin_point new = struct lin_point { struct lin_point -> unrestricted int x, unrestricted int y};
 return struct lin_point new;
 }
 
@@ -269,19 +390,29 @@ return unrestricted int unrestricted int x + unrestricted int y;
 main -> linear int main() {
 struct lin_point outer;
 unrestricted int result;
-struct lin_point struct lin_point outer = struct lin_point make();
-while (unrestricted bool true)
+unrestricted int iters;
+unrestricted int unrestricted int iters = unrestricted int 10;
+unrestricted int unrestricted int result = unrestricted int 0;
+struct lin_point struct lin_point outer = struct lin_point make(unrestricted int 0, unrestricted int 0);
+while (unrestricted bool unrestricted int iters > unrestricted int 0)
 {
-struct lin_point innerunrestricted int consume(struct lin_point outer)
-struct lin_point struct lin_point inner = struct lin_point make()
+struct lin_point innerunrestricted int unrestricted int result = unrestricted int consume(struct lin_point outer)
+struct lin_point struct lin_point inner = struct lin_point make(unrestricted int result, unrestricted int unrestricted int result + unrestricted int 1)
 struct lin_point struct lin_point outer = struct lin_point inner
+unrestricted int print(unrestricted string "Iters:")
+unrestricted int print(unrestricted int iters)
+unrestricted int print(unrestricted string "Result:")
+unrestricted int print(unrestricted int result)
+unrestricted int --unrestricted int iters
 };
 unrestricted int unrestricted int result = unrestricted int consume(struct lin_point outer);
+unrestricted int print(unrestricted string "Final:");
+unrestricted int print(unrestricted int result);
 return unrestricted int result;
 }
-make -> struct lin_point make() {
+make -> struct lin_point make(unrestricted int x, unrestricted int y) {
 struct lin_point new;
-struct lin_point struct lin_point new = struct lin_point { struct lin_point -> unrestricted int 1, unrestricted int 2};
+struct lin_point struct lin_point new = struct lin_point { struct lin_point -> unrestricted int x, unrestricted int y};
 return struct lin_point new;
 }
 
@@ -307,11 +438,11 @@ Translated:
 unrestricted int x;
 unrestricted int y;
 };
-struct lin_point make() {
+struct lin_point make(unrestricted int x, unrestricted int y) {
 struct lin_point new;
 {
-unrestricted int new.x = unrestricted int 1
-unrestricted int new.y = unrestricted int 2
+unrestricted int new.x = unrestricted int x
+unrestricted int new.y = unrestricted int y
 };
 return struct lin_point new;
 }unrestricted int consume(struct lin_point p) {
@@ -322,29 +453,23 @@ return unrestricted int unrestricted int x + unrestricted int y;
 }linear int main() {
 struct lin_point outer;
 unrestricted int result;
-struct lin_point struct lin_point outer = struct lin_point make();
-while (unrestricted bool true)
+unrestricted int iters;
+unrestricted int unrestricted int iters = unrestricted int 10;
+unrestricted int unrestricted int result = unrestricted int 0;
+struct lin_point struct lin_point outer = struct lin_point make(unrestricted int 0, unrestricted int 0);
+while (unrestricted bool unrestricted int iters > unrestricted int 0)
 {
-struct lin_point innerunrestricted int consume(struct lin_point outer)
-struct lin_point struct lin_point inner = struct lin_point make()
+struct lin_point innerunrestricted int unrestricted int result = unrestricted int consume(struct lin_point outer)
+struct lin_point struct lin_point inner = struct lin_point make(unrestricted int result, unrestricted int unrestricted int result + unrestricted int 1)
 struct lin_point struct lin_point outer = struct lin_point inner
+unrestricted int print(unrestricted string "Iters:")
+unrestricted int print(unrestricted int iters)
+unrestricted int print(unrestricted string "Result:")
+unrestricted int print(unrestricted int result)
+unrestricted int unrestricted int iters = unrestricted int unrestricted int iters - unrestricted int 1
 };
 unrestricted int unrestricted int result = unrestricted int consume(struct lin_point outer);
+unrestricted int print(unrestricted string "Final:");
+unrestricted int print(unrestricted int result);
 return unrestricted int result;
 }
-PLEASE submit a bug report to https://github.com/llvm/llvm-project/issues/ and include the crash backtrace.
-Stack dump:
-0.	Program arguments: /usr/bin/lli
-Stack dump without symbol names (ensure you have llvm-symbolizer in your PATH or set the environment var `LLVM_SYMBOLIZER_PATH` to point to it):
-/lib/x86_64-linux-gnu/libLLVM-14.so.1(_ZN4llvm3sys15PrintStackTraceERNS_11raw_ostreamEi+0x31)[0x7f34cfaa5291]
-/lib/x86_64-linux-gnu/libLLVM-14.so.1(_ZN4llvm3sys17RunSignalHandlersEv+0xee)[0x7f34cfaa2fbe]
-/lib/x86_64-linux-gnu/libLLVM-14.so.1(+0xea57c6)[0x7f34cfaa57c6]
-/lib/x86_64-linux-gnu/libc.so.6(+0x3c050)[0x7f34ce65b050]
-[0x7f34d5656020]
-[0x7f34d5656080]
-/lib/x86_64-linux-gnu/libLLVM-14.so.1(_ZN4llvm3orc9runAsMainEPFiiPPcENS_8ArrayRefINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEEENS_8OptionalINS_9StringRefEEE+0x16d)[0x7f34d14fa04d]
-/usr/bin/lli(_Z9runOrcJITPKc+0x2880)[0x4188d0]
-/usr/bin/lli(main+0x33c)[0x4138ec]
-/lib/x86_64-linux-gnu/libc.so.6(+0x2724a)[0x7f34ce64624a]
-/lib/x86_64-linux-gnu/libc.so.6(__libc_start_main+0x85)[0x7f34ce646305]
-/usr/bin/lli(_start+0x21)[0x410a21]

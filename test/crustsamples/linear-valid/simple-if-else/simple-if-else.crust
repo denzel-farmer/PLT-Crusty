@@ -7,6 +7,6 @@ linear int main() {
     } else {
         a = 2;
     }
-
-    return a;
+    print(a);
+    return 0;
 }

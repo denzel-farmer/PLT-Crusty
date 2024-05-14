@@ -7,7 +7,8 @@ return b;
 }linear int main() {
 linear int a;
 a = make();
-return a;
+print(a);
+return 0;
 }
 [INFO] 
 Generating Semantically Checked Abstract Syntax Tree
@@ -20,7 +21,8 @@ return linear int b;
 }linear int main() {
 linear int a;
 linear int linear int a = linear int make();
-return linear int a;
+unrestricted int print(linear int a);
+return unrestricted int 0;
 }
 [INFO] 
 Doing Linearity Checks...
@@ -68,13 +70,19 @@ Checking lone identifier "b" (is_consumed=true)
 [DEBUG] Function call args: 
 [INFO] Marking a as assigned
 [INFO] Checking expression
-[DEBUG] Expression is  "unrestricted int return(linear int a)"
-[INFO] Checking function call to return
+[DEBUG] Expression is  "unrestricted int print(linear int a)"
+[INFO] Checking function call to print
 [DEBUG] Function call args: linear int a
 [INFO] Checking expression
 [DEBUG] Expression is  "linear int a"
 Checking lone identifier "a" (is_consumed=true)
 [INFO] Marking a as consumed
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int return(unrestricted int 0)"
+[INFO] Checking function call to return
+[DEBUG] Function call args: unrestricted int 0
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int 0"
 [DEBUG] Checked statements, lin_map: a -> Used : linear int
 
 [INFO] Removing locally declared variables
@@ -89,7 +97,8 @@ Func Info:
 main -> linear int main() {
 linear int a;
 linear int linear int a = linear int make();
-return linear int a;
+unrestricted int print(linear int a);
+return unrestricted int 0;
 }
 make -> linear int make() {
 linear int b;
@@ -111,7 +120,8 @@ Func Info:
 main -> linear int main() {
 linear int a;
 linear int linear int a = linear int make();
-return linear int a;
+unrestricted int print(linear int a);
+return unrestricted int 0;
 }
 make -> linear int make() {
 linear int b;
@@ -138,5 +148,6 @@ return linear int b;
 }linear int main() {
 linear int a;
 linear int linear int a = linear int make();
-return linear int a;
+unrestricted int print(linear int a);
+return unrestricted int 0;
 }

@@ -27,12 +27,13 @@ linear int main() {
     int result;
 
     outer = make();
-    while (true) {
-      
+    result = 0;
+    while (result < 10) {
+        result = result + 1;
+        print(result);
     }
-    a = make();
 
-    result = consume(a);
-
+    result = consume(outer);
+    print(result);
     return result;
 } 

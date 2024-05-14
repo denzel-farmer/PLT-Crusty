@@ -14,5 +14,6 @@ linear int main() {
         a = 2;
     }
 
-    return a;
+    print(a);
+    return 0;
 }

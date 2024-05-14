@@ -30,5 +30,8 @@ linear int main() {
 
     result = consume(a);
 
+    // Should be 3
+    print(result);
+
     return result;
 } 

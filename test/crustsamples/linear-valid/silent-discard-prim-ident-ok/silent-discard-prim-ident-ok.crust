@@ -9,5 +9,7 @@ linear int main() {
 
     a;
 
-    return a;
+    print(a);
+    
+    return 0;
 } 

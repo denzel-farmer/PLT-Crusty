@@ -18,6 +18,7 @@ struct lin_point a;
 unrestricted int result;
 a = make();
 result = consume(a);
+print(result);
 return result;
 }
 [INFO] 
@@ -42,6 +43,7 @@ struct lin_point a;
 unrestricted int result;
 struct lin_point struct lin_point a = struct lin_point make();
 unrestricted int unrestricted int result = unrestricted int consume(struct lin_point a);
+unrestricted int print(unrestricted int result);
 return unrestricted int result;
 }
 [INFO] 
@@ -143,6 +145,14 @@ Checking lone identifier "a" (is_consumed=true)
 [INFO] Marking a as consumed
 [INFO] Marking result as assigned
 [INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int print(unrestricted int result)"
+[INFO] Checking function call to print
+[DEBUG] Function call args: unrestricted int result
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int result"
+Checking lone identifier "result" (is_consumed=true)
+[INFO] Marking result as consumed
+[INFO] Checking expression
 [DEBUG] Expression is  "unrestricted int return(unrestricted int result)"
 [INFO] Checking function call to return
 [DEBUG] Function call args: unrestricted int result
@@ -177,6 +187,7 @@ struct lin_point a;
 unrestricted int result;
 struct lin_point struct lin_point a = struct lin_point make();
 unrestricted int unrestricted int result = unrestricted int consume(struct lin_point a);
+unrestricted int print(unrestricted int result);
 return unrestricted int result;
 }
 make -> struct lin_point make() {
@@ -213,6 +224,7 @@ struct lin_point a;
 unrestricted int result;
 struct lin_point struct lin_point a = struct lin_point make();
 unrestricted int unrestricted int result = unrestricted int consume(struct lin_point a);
+unrestricted int print(unrestricted int result);
 return unrestricted int result;
 }
 make -> struct lin_point make() {
@@ -260,5 +272,6 @@ struct lin_point a;
 unrestricted int result;
 struct lin_point struct lin_point a = struct lin_point make();
 unrestricted int unrestricted int result = unrestricted int consume(struct lin_point a);
+unrestricted int print(unrestricted int result);
 return unrestricted int result;
 }

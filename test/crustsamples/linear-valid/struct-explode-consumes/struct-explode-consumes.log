@@ -8,9 +8,12 @@ unrestricted int main() {
 struct lin_point new;
 unrestricted int x;
 unrestricted int y;
+unrestricted int result;
 new = { struct lin_point -> 1, 2};
 :{x, y} = new;
-return x + y;
+result = x + y;
+print(result);
+return result;
 }
 [INFO] 
 Generating Semantically Checked Abstract Syntax Tree
@@ -24,9 +27,12 @@ unrestricted int main() {
 struct lin_point new;
 unrestricted int x;
 unrestricted int y;
+unrestricted int result;
 struct lin_point struct lin_point new = struct lin_point { struct lin_point -> unrestricted int 1, unrestricted int 2};
 struct lin_point :{x, y} = struct lin_point new;
-return unrestricted int unrestricted int x + unrestricted int y;
+unrestricted int unrestricted int result = unrestricted int unrestricted int x + unrestricted int y;
+unrestricted int print(unrestricted int result);
+return unrestricted int result;
 }
 [INFO] 
 Doing Linearity Checks...
@@ -60,9 +66,9 @@ Checking lone identifier "new" (is_consumed=true)
 [INFO] Marking x as assigned
 [INFO] Marking y as assigned
 [INFO] Checking expression
-[DEBUG] Expression is  "unrestricted int return(unrestricted int unrestricted int x + unrestricted int y)"
-[INFO] Checking function call to return
-[DEBUG] Function call args: unrestricted int unrestricted int x + unrestricted int y
+[DEBUG] Expression is  "unrestricted int unrestricted int result = unrestricted int unrestricted int x + unrestricted int y"
+[INFO] Checking assignment expression
+[DEBUG] Assignment is  "unrestricted int result = unrestricted int unrestricted int x + unrestricted int y"
 [INFO] Checking expression
 [DEBUG] Expression is  "unrestricted int unrestricted int x + unrestricted int y"
 [INFO] Checking expression
@@ -71,12 +77,30 @@ Checking lone identifier "x" (is_consumed=false)
 [INFO] Checking expression
 [DEBUG] Expression is  "unrestricted int y"
 Checking lone identifier "y" (is_consumed=false)
+[INFO] Marking result as assigned
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int print(unrestricted int result)"
+[INFO] Checking function call to print
+[DEBUG] Function call args: unrestricted int result
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int result"
+Checking lone identifier "result" (is_consumed=true)
+[INFO] Marking result as consumed
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int return(unrestricted int result)"
+[INFO] Checking function call to return
+[DEBUG] Function call args: unrestricted int result
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int result"
+Checking lone identifier "result" (is_consumed=true)
+[INFO] Marking result as consumed
 [DEBUG] Checked statements, lin_map: new -> Used : struct lin_point
 
 [INFO] Removing locally declared variables
 [INFO] Found new with state Used
 [DEBUG] Didn't find decl x, assuming unrestricted
 [DEBUG] Didn't find decl y, assuming unrestricted
+[DEBUG] Didn't find decl result, assuming unrestricted
 [DEBUG] Final lin_map for main []
 [INFO] Done checking linearity
 [DEBUG] LINEAR CHECK SUCCESS
@@ -127,10 +151,13 @@ unrestricted int main() {
 struct lin_point new;
 unrestricted int x;
 unrestricted int y;
+unrestricted int result;
 {
 unrestricted int new.x = unrestricted int 1
 unrestricted int new.y = unrestricted int 2
 };
 struct lin_point :{x, y} = struct lin_point new;
-return unrestricted int unrestricted int x + unrestricted int y;
+unrestricted int unrestricted int result = unrestricted int unrestricted int x + unrestricted int y;
+unrestricted int print(unrestricted int result);
+return unrestricted int result;
 }

@@ -13,7 +13,8 @@ else
 {
 a = 2
 };
-return a;
+print(a);
+return 0;
 }
 [INFO] 
 Generating Semantically Checked Abstract Syntax Tree
@@ -32,7 +33,8 @@ else
 {
 linear int linear int a = unrestricted int 2
 };
-return linear int a;
+unrestricted int print(linear int a);
+return unrestricted int 0;
 }
 [INFO] 
 Doing Linearity Checks...
@@ -95,13 +97,19 @@ b -> Used : linear int
 [INFO] Merging two branches
 [INFO] Variable a has same state Assigned
 [INFO] Checking expression
-[DEBUG] Expression is  "unrestricted int return(linear int a)"
-[INFO] Checking function call to return
+[DEBUG] Expression is  "unrestricted int print(linear int a)"
+[INFO] Checking function call to print
 [DEBUG] Function call args: linear int a
 [INFO] Checking expression
 [DEBUG] Expression is  "linear int a"
 Checking lone identifier "a" (is_consumed=true)
 [INFO] Marking a as consumed
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int return(unrestricted int 0)"
+[INFO] Checking function call to return
+[DEBUG] Function call args: unrestricted int 0
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int 0"
 [DEBUG] Checked statements, lin_map: a -> Used : linear int
 
 [INFO] Removing locally declared variables
@@ -126,7 +134,8 @@ else
 {
 linear int linear int a = unrestricted int 2
 };
-return linear int a;
+unrestricted int print(linear int a);
+return unrestricted int 0;
 }
 
 Linear Maps:
@@ -152,7 +161,8 @@ else
 {
 linear int linear int a = unrestricted int 2
 };
-return linear int a;
+unrestricted int print(linear int a);
+return unrestricted int 0;
 }
 
 Linear Maps:
@@ -179,5 +189,6 @@ else
 {
 linear int linear int a = unrestricted int 2
 };
-return linear int a;
+unrestricted int print(linear int a);
+return unrestricted int 0;
 }

@@ -3,5 +3,6 @@ linear int main() {
 
     a = 1;
 
-    return a;
+    print(a);
+    return 0;
 } 

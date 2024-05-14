@@ -4,9 +4,11 @@ struct lin_point {
 };
 
 char main() {
-
+    print("Before");
     // This is fine, nothing gets silent discarded
     {struct lin_point -> 1,2};
+
+    print("Done");
 
     return 'a';
 } 

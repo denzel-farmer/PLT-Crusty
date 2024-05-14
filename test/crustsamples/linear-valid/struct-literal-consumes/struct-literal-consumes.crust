@@ -25,5 +25,7 @@ char main() {
 
     :{c} = second_info;
 
+    print(c);
+
     return c;
 } 

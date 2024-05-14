@@ -4,10 +4,10 @@ struct lin_point {
 };
 
 
-struct lin_point make() {
+struct lin_point make(int x, int y) {
     struct lin_point new;
 
-    new = {struct lin_point -> 1,2 };
+    new = {struct lin_point -> x,y};
 
     return new;
 }
@@ -25,19 +25,33 @@ int consume(struct lin_point p) {
 linear int main() {
     struct lin_point outer;
     int result;
+    int iters;
 
-    outer = make();
-    while (true) {
+    iters = 10;
+    result = 0;
+    outer = make(0, 0);
+    while (iters > 0) {
         struct lin_point inner;
 
-        consume(outer);
+        result = consume(outer);
 
-        inner = make();
+        inner = make(result, result + 1);
 
-        outer = inner;      
+        outer = inner;  
+
+        print("Iters:");
+        print(iters);
+
+        print("Result:");
+        print(result);
+
+
+        iters--;   
     }
     
     result = consume(outer);
+    print("Final:");
+    print(result);
 
     return result;
 } 
