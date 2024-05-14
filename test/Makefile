@@ -8,4 +8,4 @@ test-checksemant:
 
 .PHONY: clean
 clean:
-	find . -type f \( -name "*.log" -o -name "*.log.sem" -o -name "*.out" -o -name "*.out.llvm" -o -name "*.out.sem" \) -delete 
+	find . -type f \( -name "*.log" -o -name "*.log.sem" -o -name "*.out" -o -name "*.out.llvm" -o -name "*.out.sem" \) ! -name "*.expected.out" -delete 
