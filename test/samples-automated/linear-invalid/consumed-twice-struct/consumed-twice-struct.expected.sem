@@ -1,0 +1,3 @@
+
+ LINEAR CHECK FAILED, EXITING
+Reason: Variable p1 consumed more than once

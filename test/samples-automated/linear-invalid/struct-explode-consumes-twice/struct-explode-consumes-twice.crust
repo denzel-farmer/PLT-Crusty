@@ -1,0 +1,19 @@
+// Demonstrate that struct explosion counts as consuming the struct.
+struct lin_point {
+    int x;
+    int y;
+};
+
+int main() {
+    struct lin_point new;
+    int x; 
+    int y;
+
+    new = {struct lin_point -> 1,2 };
+
+    :{x, y} = new;
+    :{x, y} = new;
+
+
+    return x + y;
+} 

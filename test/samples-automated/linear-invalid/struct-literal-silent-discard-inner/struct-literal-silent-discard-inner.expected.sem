@@ -1,0 +1,3 @@
+
+ LINEAR CHECK FAILED, EXITING
+Reason: Linear variable init_info cannot be silently discarded
