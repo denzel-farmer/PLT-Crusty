@@ -1,10 +1,63 @@
+''' Test module for testing both semantic checking and ir generation of the crusty compiler.'''
 import os
 import subprocess
 import sys
 
+# Output Colors 
 PASS = '\033[92m'
 FAIL = '\033[91m'
 ENDC = '\033[0m'
+
+# File suffix constants
+CRUST_SUFFIX = ".crust"
+EXPECTED_SEMANT_SUFFIX = ".expected.sem"
+OUT_SEMANT_SUFFIX = ".out.sem"
+
+def print_short_pad_path(path):
+    short_file_path = os.path.relpath(file_path, samples_folder)
+
+    # Print short file path, but pad with spaces so the next print statement aligns
+    print(f"{short_file_path[-80:]:80}", end="")
+
+
+def run_semantic_test(semant_checker_path, sample_dir, sample_name):
+    sample_base = f"{sample_dir}/{sample_name}"
+    sample_path = f"{sample_base}{CRUST_SUFFIX}"
+
+    print("[SEMANT] ", end="")
+    print_short_pad_path(sample_path)
+
+
+    # Paths
+    expected_output_path = f"{sample_base}{EXPECTED_SEMANT_SUFFIX}"
+    output_file_path = f"{sample_base}{OUT_SEMANT_SUFFIX}"
+
+    with open(sample_path, "r") as input_file, open(output_file_path, "w") as output_file:
+            subprocess.run([binary_path], stdin=input_file,
+                            stdout=output_file, stderr=sys.stdout)
+
+    # Compare the output with the expected output
+    if os.path.isfile(expected_output_path):
+        with open(expected_output_path, "r") as expected_file, open(output_file_path, "r") as actual_file:
+            expected_output = expected_file.read()
+            actual_output = actual_file.read()
+
+            if expected_output != actual_output:
+                print(f"{FAIL}FAILED{ENDC}")
+            else:
+                print(f"{PASS}PASSED{ENDC}")
+    else:
+        print(f"Expected output file not found for {sample_path}")
+
+
+
+# Run a single test
+def run_test(src_path, sample_dir, sample_name, test_IR=False):
+    print(f"Running binary on file: {sample_dir}/{sample_name}")
+    with open(f"{sample_dir}/{sample_name}", "r") as file:
+        subprocess.run([binary_path], stdin=file,
+                       stdout=sys.stdout, stderr=sys.stdout)
+
 
 
 def linear_check_success(output):
