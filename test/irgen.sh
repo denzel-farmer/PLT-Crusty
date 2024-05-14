@@ -1,7 +1,7 @@
 #!/bin/bash
 
 for case in "irgen/"*.crust; do 
-    ../src/./crusty.native < $case > $case.out 2> $case.stderr
+    .././crusty.native < $case > $case.out 2> $case.stderr
     lli $case.out > $case.out.expected 2> $case.stderr /dev/null/
 
     rm $case.stderr

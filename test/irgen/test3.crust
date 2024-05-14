@@ -1,4 +1,4 @@
-struct point {
+unrestricted struct point {
     int x;
     int y;
 };
