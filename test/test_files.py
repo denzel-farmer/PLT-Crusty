@@ -1,4 +1,4 @@
-''' Test module for testing both semantic checking and ir generation of the crusty compiler.'''
+''' Old test module for manually checking simple passed/failed on check semant'''
 import os
 import subprocess
 import sys

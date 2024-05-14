@@ -8,6 +8,13 @@
 *.cmxs
 *.cmxa
 
+# Autotester
+*.log
+*.log.sem
+*.out.sem
+*.out.llvm
+*.out
+
 # ocamlbuild working directory
 _build/
 

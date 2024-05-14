@@ -1,3 +1,5 @@
+''' Automated tester for Crusty compiler '''
+
 import os
 import subprocess
 import sys
@@ -9,7 +11,7 @@ FAIL = '\033[91m'
 ENDC = '\033[0m'
 
 # File path constants 
-SAMPLE_DIR = "crustsamples"
+SAMPLE_DIR = "samples-automated"
 
 SEMANT_CHECKER_PATH = "../checksemant.native"
 IR_GEN_PATH = "../crusty.native"
