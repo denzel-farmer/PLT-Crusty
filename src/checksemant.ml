@@ -11,10 +11,14 @@ let _ =
   let linear_result = Linear.check sprogram in
   Log.debug_println (Linear.string_of_linear_result linear_result);
   if Linear.lin_result_failed linear_result
-  then print_endline "\n[PART 1] COMPILATION FAILED, EXITING"
+  then (print_endline "\n LINEAR CHECK FAILED, EXITING";
+  match Linear.lin_result_get_reason linear_result with
+  | Some reason -> print_endline ("Reason: " ^ reason)
+  | None -> raise (Failure "No reason given for linear check failure")
+  )
   else (
     Log.info_println "\n Doing psuedo-translations...";
     let translated = Psuedotranslate.eliminate_psuedo_nodes sprogram in
     Log.debug_println (Sastprint.string_of_sprogram translated);
-    print_endline "\n[PART 1] COMPILATION SUCCESS")
+    print_endline "\nSEMANTIC COMPILATION SUCCESS")
 ;;
