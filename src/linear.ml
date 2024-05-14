@@ -350,7 +350,7 @@ let merge_map (map1 : linear_map_result) (map2 : linear_map_result) : linear_map
   | _, Error err -> Error err
 ;;
 
-(* TODO implement - this is 'top level' block checking function that includes checking helpers.
+(*  This is 'top level' block checking function that includes checking helpers.
    I put everything under this function so we could just pass in struct_info and func_info once
    and use them everywhere since they don't change rather than keep passing them to every subfunction *)
 let rec linear_check_block
@@ -663,6 +663,8 @@ let rec linear_check_block
       match stmt with
       | SBlock (vdecls, stmts) ->
         linear_check_block struct_info func_info lin_map vdecls stmts
+      | FSBlock (vdecls, stmts, ret_stmt) -> 
+        linear_check_block struct_info func_info lin_map vdecls stmts
       | SExpr ex -> check_expr lin_map false ex
       | SIf (cond_ex, true_stmt, false_stmt) ->
         let lin_map = check_expr lin_map false cond_ex in
@@ -676,19 +678,8 @@ let rec linear_check_block
       | SBreak | SContinue -> raise (Failure "Break and Continue not supported")
     in
     List.fold_left linear_check_stmt in_lin_map s_list
-    (* I removed merging here, because I think we should do that in
-       the outer level check block, but I could be wrong*)
   in
   (* Actual body of check_block: *)
-  (*One possible way to do this that isn't saving/comparing the lin map:
-    - save new decls in a list
-    - add new decls to lin map
-    - check statements
-    - remove new decls from lin map one by one, checking that none are unconsumed
-    - return lin map
-  *)
-
-  (*Basic implementation that only works for one level of scope *)
   info_println "Checking new block";
   match lin_map with
   | Error err -> Error err
@@ -703,24 +694,6 @@ let rec linear_check_block
     let lin_map = remove_linear_decls lin_map vdecls in
     lin_map
 ;;
-
-(* info_println "Done checking block, evaluating lin_map";
-   (match lin_map with
-   | Error err -> Error err
-   | Ok lin_map ->
-   (* Check that all variables are consumed *)
-   let remaining_values = get_unused lin_map in
-   (match remaining_values with
-   | [] -> Ok lin_map
-   | _ ->
-   let err_msg =
-   List.fold_left
-   (fun acc (key, state) ->
-   acc ^ key ^ " is " ^ string_of_linear_state state ^ ", ")
-   "Variables not consumed: "
-   remaining_values
-   in
-   Error err_msg)) *)
 
 (* Check a function to ensure it follows linearity rules, return
    a tuple of function name and the final lin_map *)
