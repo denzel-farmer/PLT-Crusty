@@ -1,0 +1,30 @@
+; ModuleID = 'Crusty'
+source_filename = "Crusty"
+
+@fmt = private unnamed_addr constant [4 x i8] c"%d\0A\00", align 1
+@char_fmt = private unnamed_addr constant [4 x i8] c"%c\0A\00", align 1
+@float_fmt = private unnamed_addr constant [4 x i8] c"%f\0A\00", align 1
+@str_fmt = private unnamed_addr constant [3 x i8] c"%s\00", align 1
+
+define i32 @main() {
+entry:
+  %new = alloca { i32, i32 }, align 8
+  %x = alloca i32, align 4
+  %y = alloca i32, align 4
+  %tmp = getelementptr inbounds { i32, i32 }, { i32, i32 }* %new, i32 0, i32 0
+  store i32 1, i32* %tmp, align 4
+  %tmp1 = getelementptr inbounds { i32, i32 }, { i32, i32 }* %new, i32 0, i32 1
+  store i32 2, i32* %tmp1, align 4
+  %field_ptr = getelementptr inbounds { i32, i32 }, { i32, i32 }* %new, i32 0, i32 0
+  %field_val = load i32, i32* %field_ptr, align 4
+  store i32 %field_val, i32* %x, align 4
+  %field_ptr2 = getelementptr inbounds { i32, i32 }, { i32, i32 }* %new, i32 0, i32 1
+  %field_val3 = load i32, i32* %field_ptr2, align 4
+  store i32 %field_val3, i32* %y, align 4
+  %x4 = load i32, i32* %x, align 4
+  %y5 = load i32, i32* %y, align 4
+  %tmp6 = add i32 %x4, %y5
+  ret i32 %tmp6
+}
+
+declare i32 @printf(i8*, ...)

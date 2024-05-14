@@ -1,0 +1,48 @@
+; ModuleID = 'Crusty'
+source_filename = "Crusty"
+
+@fmt = private unnamed_addr constant [4 x i8] c"%d\0A\00", align 1
+@char_fmt = private unnamed_addr constant [4 x i8] c"%c\0A\00", align 1
+@float_fmt = private unnamed_addr constant [4 x i8] c"%f\0A\00", align 1
+@str_fmt = private unnamed_addr constant [3 x i8] c"%s\00", align 1
+
+define i8 @main() {
+entry:
+  %new = alloca { i32, i32, { i8 } }, align 8
+  %init_info = alloca { i8 }, align 8
+  %second_info = alloca { i8 }, align 8
+  %third_info = alloca { i8 }, align 8
+  %x = alloca i32, align 4
+  %y = alloca i32, align 4
+  %c = alloca i8, align 1
+  %tmp = getelementptr inbounds { i8 }, { i8 }* %init_info, i32 0, i32 0
+  store i8 97, i8* %tmp, align 1
+  %tmp1 = getelementptr inbounds { i8 }, { i8 }* %second_info, i32 0, i32 0
+  store i8 98, i8* %tmp1, align 1
+  %tmp2 = getelementptr inbounds { i32, i32, { i8 } }, { i32, i32, { i8 } }* %new, i32 0, i32 0
+  store i32 1, i32* %tmp2, align 4
+  %tmp3 = getelementptr inbounds { i32, i32, { i8 } }, { i32, i32, { i8 } }* %new, i32 0, i32 1
+  store i32 2, i32* %tmp3, align 4
+  %init_info4 = load { i8 }, { i8 }* %init_info, align 1
+  %tmp5 = getelementptr inbounds { i32, i32, { i8 } }, { i32, i32, { i8 } }* %new, i32 0, i32 2
+  store { i8 } %init_info4, { i8 }* %tmp5, align 1
+  %second_info6 = load { i8 }, { i8 }* %second_info, align 1
+  %tmp7 = getelementptr inbounds { i32, i32, { i8 } }, { i32, i32, { i8 } }* %new, i32 0, i32 2
+  store { i8 } %second_info6, { i8 }* %tmp7, align 1
+  %field_ptr = getelementptr inbounds { i32, i32, { i8 } }, { i32, i32, { i8 } }* %new, i32 0, i32 0
+  %field_val = load i32, i32* %field_ptr, align 4
+  store i32 %field_val, i32* %x, align 4
+  %field_ptr8 = getelementptr inbounds { i32, i32, { i8 } }, { i32, i32, { i8 } }* %new, i32 0, i32 1
+  %field_val9 = load i32, i32* %field_ptr8, align 4
+  store i32 %field_val9, i32* %y, align 4
+  %field_ptr10 = getelementptr inbounds { i32, i32, { i8 } }, { i32, i32, { i8 } }* %new, i32 0, i32 2
+  %field_val11 = load { i8 }, { i8 }* %field_ptr10, align 1
+  store { i8 } %field_val11, { i8 }* %third_info, align 1
+  %field_ptr12 = getelementptr inbounds { i8 }, { i8 }* %third_info, i32 0, i32 0
+  %field_val13 = load i8, i8* %field_ptr12, align 1
+  store i8 %field_val13, i8* %c, align 1
+  %c14 = load i8, i8* %c, align 1
+  ret i8 %c14
+}
+
+declare i32 @printf(i8*, ...)

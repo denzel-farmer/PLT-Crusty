@@ -1,0 +1,170 @@
+[INFO] 
+Generating Abstract Syntax Tree
+[DEBUG] linear struct lin_point {
+unrestricted int x;
+unrestricted int y;
+};
+unrestricted int consume(struct lin_point p) {
+unrestricted int a;
+unrestricted int b;
+:{a, b} = p;
+return a + b;
+}unrestricted int main() {
+unrestricted int result;
+struct lin_point p1;
+p1 = { struct lin_point -> 1, 2};
+result = consume(p1) + consume(p1);
+return result;
+}
+[INFO] 
+Generating Semantically Checked Abstract Syntax Tree
+[DEBUG] 
+SAST:
+[DEBUG] linear struct lin_point {
+unrestricted int x;
+unrestricted int y;
+};
+unrestricted int consume(struct lin_point p) {
+unrestricted int a;
+unrestricted int b;
+struct lin_point :{a, b} = struct lin_point p;
+return unrestricted int unrestricted int a + unrestricted int b;
+}unrestricted int main() {
+unrestricted int result;
+struct lin_point p1;
+struct lin_point struct lin_point p1 = struct lin_point { struct lin_point -> unrestricted int 1, unrestricted int 2};
+unrestricted int unrestricted int result = unrestricted int unrestricted int consume(struct lin_point p1) + unrestricted int consume(struct lin_point p1);
+return unrestricted int result;
+}
+[INFO] 
+Doing Linearity Checks...
+[INFO] Begin checking linearity, generating program info
+[INFO] Generated program info, checking linearity of functions
+[INFO] Checking linearity of function: consume
+[DEBUG] Added args to lin_map: p -> Assigned : struct lin_point
+
+[INFO] Checking function body
+[INFO] Checking new block
+[DEBUG] Added locals to lin_map: p -> Assigned : struct lin_point
+
+[INFO] Checking expression
+[DEBUG] Expression is  "struct lin_point :{a, b} = struct lin_point p"
+[INFO] Checking assignment expression
+[DEBUG] Assignment is  ":{a, b} = struct lin_point p"
+[INFO] Checking expression
+[DEBUG] Expression is  "struct lin_point p"
+Checking lone identifier "p" (is_consumed=true)
+[INFO] Marking p as consumed
+[INFO] Marking a as assigned
+[INFO] Marking b as assigned
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int return(unrestricted int unrestricted int a + unrestricted int b)"
+[INFO] Checking function call to return
+[DEBUG] Function call args: unrestricted int unrestricted int a + unrestricted int b
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int unrestricted int a + unrestricted int b"
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int a"
+Checking lone identifier "a" (is_consumed=false)
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int b"
+Checking lone identifier "b" (is_consumed=false)
+[DEBUG] Checked statements, lin_map: p -> Used : struct lin_point
+
+[INFO] Removing locally declared variables
+[DEBUG] Didn't find decl a, assuming unrestricted
+[DEBUG] Didn't find decl b, assuming unrestricted
+[DEBUG] Final lin_map for consume p -> Used : struct lin_point
+
+[INFO] Checking linearity of function: main
+[DEBUG] Added args to lin_map: []
+[INFO] Checking function body
+[INFO] Checking new block
+[DEBUG] Added locals to lin_map: p1 -> Unassigned : struct lin_point
+
+[INFO] Checking expression
+[DEBUG] Expression is  "struct lin_point struct lin_point p1 = struct lin_point { struct lin_point -> unrestricted int 1, unrestricted int 2}"
+[INFO] Checking assignment expression
+[DEBUG] Assignment is  "struct lin_point p1 = struct lin_point { struct lin_point -> unrestricted int 1, unrestricted int 2}"
+[INFO] Checking expression
+[DEBUG] Expression is  "struct lin_point { struct lin_point -> unrestricted int 1, unrestricted int 2}"
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int 1"
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int 2"
+[INFO] Marking p1 as assigned
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int unrestricted int result = unrestricted int unrestricted int consume(struct lin_point p1) + unrestricted int consume(struct lin_point p1)"
+[INFO] Checking assignment expression
+[DEBUG] Assignment is  "unrestricted int result = unrestricted int unrestricted int consume(struct lin_point p1) + unrestricted int consume(struct lin_point p1)"
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int unrestricted int consume(struct lin_point p1) + unrestricted int consume(struct lin_point p1)"
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int consume(struct lin_point p1)"
+[INFO] Checking function call to consume
+[DEBUG] Function call args: struct lin_point p1
+[INFO] Checking expression
+[DEBUG] Expression is  "struct lin_point p1"
+Checking lone identifier "p1" (is_consumed=true)
+[INFO] Marking p1 as consumed
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int consume(struct lin_point p1)"
+[INFO] Checking function call to consume
+[DEBUG] Function call args: struct lin_point p1
+[INFO] Checking expression
+[DEBUG] Expression is  "struct lin_point p1"
+Checking lone identifier "p1" (is_consumed=true)
+[INFO] Marking p1 as consumed
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int return(unrestricted int result)"
+[DEBUG] Checked statements, lin_map: Variable p1 consumed more than once
+[DEBUG] Final lin_map for main Variable p1 consumed more than once
+[INFO] Done checking linearity
+[DEBUG] LINEAR CHECK FAIL
+Program Info:
+Struct Info:
+lin_point -> linear struct lin_point {
+unrestricted int x;
+unrestricted int y;
+}
+
+Func Info:
+consume -> unrestricted int consume(struct lin_point p) {
+unrestricted int a;
+unrestricted int b;
+struct lin_point :{a, b} = struct lin_point p;
+return unrestricted int unrestricted int a + unrestricted int b;
+}
+
+Linear Maps:
+consume -> p -> Used : struct lin_point
+
+main -> Variable p1 consumed more than once
+
+[DEBUG] 
+Linear Report:
+[DEBUG] LINEAR CHECK FAIL
+Program Info:
+Struct Info:
+lin_point -> linear struct lin_point {
+unrestricted int x;
+unrestricted int y;
+}
+
+Func Info:
+consume -> unrestricted int consume(struct lin_point p) {
+unrestricted int a;
+unrestricted int b;
+struct lin_point :{a, b} = struct lin_point p;
+return unrestricted int unrestricted int a + unrestricted int b;
+}
+
+Linear Maps:
+consume -> p -> Used : struct lin_point
+
+main -> Variable p1 consumed more than once
+
+lli: <stdin>:1:1: error: expected top-level entity
+\Linearity Check: FAILED
+^
+

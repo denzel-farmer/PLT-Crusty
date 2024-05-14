@@ -1,0 +1,183 @@
+[INFO] 
+Generating Abstract Syntax Tree
+[DEBUG] linear int main() {
+linear int a;
+if (true)
+{
+linear int b
+unrestricted int ca = 1
+b = 2
+c = b
+}
+else
+{
+a = 2
+};
+return a;
+}
+[INFO] 
+Generating Semantically Checked Abstract Syntax Tree
+[DEBUG] 
+SAST:
+[DEBUG] linear int main() {
+linear int a;
+if (unrestricted bool true)
+{
+linear int b
+unrestricted int clinear int linear int a = unrestricted int 1
+linear int linear int b = unrestricted int 2
+unrestricted int unrestricted int c = linear int b
+}
+else
+{
+linear int linear int a = unrestricted int 2
+};
+return linear int a;
+}
+[INFO] 
+Doing Linearity Checks...
+[INFO] Begin checking linearity, generating program info
+[INFO] Generated program info, checking linearity of functions
+[INFO] Checking linearity of function: main
+[DEBUG] Added args to lin_map: []
+[INFO] Checking function body
+[INFO] Checking new block
+[DEBUG] Added locals to lin_map: a -> Unassigned : linear int
+
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted bool true"
+[INFO] Checking new block
+[DEBUG] Added locals to lin_map: a -> Unassigned : linear int
+b -> Unassigned : linear int
+
+[INFO] Checking expression
+[DEBUG] Expression is  "linear int linear int a = unrestricted int 1"
+[INFO] Checking assignment expression
+[DEBUG] Assignment is  "linear int a = unrestricted int 1"
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int 1"
+[INFO] Marking a as assigned
+[INFO] Checking expression
+[DEBUG] Expression is  "linear int linear int b = unrestricted int 2"
+[INFO] Checking assignment expression
+[DEBUG] Assignment is  "linear int b = unrestricted int 2"
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int 2"
+[INFO] Marking b as assigned
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int unrestricted int c = linear int b"
+[INFO] Checking assignment expression
+[DEBUG] Assignment is  "unrestricted int c = linear int b"
+[INFO] Checking expression
+[DEBUG] Expression is  "linear int b"
+Checking lone identifier "b" (is_consumed=true)
+[INFO] Marking b as consumed
+[INFO] Marking c as assigned
+[DEBUG] Checked statements, lin_map: a -> Assigned : linear int
+b -> Used : linear int
+
+[INFO] Removing locally declared variables
+[INFO] Found b with state Used
+[DEBUG] Didn't find decl c, assuming unrestricted
+[INFO] Checking new block
+[DEBUG] Added locals to lin_map: a -> Unassigned : linear int
+
+[INFO] Checking expression
+[DEBUG] Expression is  "linear int linear int a = unrestricted int 2"
+[INFO] Checking assignment expression
+[DEBUG] Assignment is  "linear int a = unrestricted int 2"
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int 2"
+[INFO] Marking a as assigned
+[DEBUG] Checked statements, lin_map: a -> Assigned : linear int
+
+[INFO] Removing locally declared variables
+[INFO] Merging two branches
+[INFO] Variable a has same state Assigned
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int return(linear int a)"
+[INFO] Checking function call to return
+[DEBUG] Function call args: linear int a
+[INFO] Checking expression
+[DEBUG] Expression is  "linear int a"
+Checking lone identifier "a" (is_consumed=true)
+[INFO] Marking a as consumed
+[DEBUG] Checked statements, lin_map: a -> Used : linear int
+
+[INFO] Removing locally declared variables
+[INFO] Found a with state Used
+[DEBUG] Final lin_map for main []
+[INFO] Done checking linearity
+[DEBUG] LINEAR CHECK SUCCESS
+Program Info:
+Struct Info:
+[]
+Func Info:
+main -> linear int main() {
+linear int a;
+if (unrestricted bool true)
+{
+linear int b
+unrestricted int clinear int linear int a = unrestricted int 1
+linear int linear int b = unrestricted int 2
+unrestricted int unrestricted int c = linear int b
+}
+else
+{
+linear int linear int a = unrestricted int 2
+};
+return linear int a;
+}
+
+Linear Maps:
+main -> []
+
+[DEBUG] 
+Linear Report:
+[DEBUG] LINEAR CHECK SUCCESS
+Program Info:
+Struct Info:
+[]
+Func Info:
+main -> linear int main() {
+linear int a;
+if (unrestricted bool true)
+{
+linear int b
+unrestricted int clinear int linear int a = unrestricted int 1
+linear int linear int b = unrestricted int 2
+unrestricted int unrestricted int c = linear int b
+}
+else
+{
+linear int linear int a = unrestricted int 2
+};
+return linear int a;
+}
+
+Linear Maps:
+main -> []
+
+[INFO] 
+Linearity Check Passed
+[INFO] 
+Doing psuedo-translations...
+[INFO] Generating struct info
+[DEBUG] Struct info: []
+[DEBUG] 
+Translated:
+[DEBUG] linear int main() {
+linear int a;
+if (unrestricted bool true)
+{
+linear int b
+unrestricted int clinear int linear int a = unrestricted int 1
+linear int linear int b = unrestricted int 2
+unrestricted int unrestricted int c = linear int b
+}
+else
+{
+linear int linear int a = unrestricted int 2
+};
+return linear int a;
+}

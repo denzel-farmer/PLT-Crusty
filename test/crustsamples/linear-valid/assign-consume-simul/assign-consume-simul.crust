@@ -8,6 +8,7 @@ int main() {
     struct lin_point new;
     int x; 
     int y;
+    int result;
 
     new = {struct lin_point -> 1,2 };
 
@@ -15,6 +16,9 @@ int main() {
 
     :{x, y} = new;
 
-
-    return x + y;
+    result = x + y;
+    print("result: ");
+    print(result);
+    print("\n");
+    return result;
 } 

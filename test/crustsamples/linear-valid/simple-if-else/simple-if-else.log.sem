@@ -1,0 +1,119 @@
+[INFO] 
+Generating Abstract Syntax Tree
+[DEBUG] linear int main() {
+linear int a;
+if (true)
+{
+a = 1
+}
+else
+{
+a = 2
+};
+return a;
+}
+[INFO] 
+Generating Semantically Checked Abstract Syntax Tree
+[DEBUG] linear int main() {
+linear int a;
+if (unrestricted bool true)
+{
+linear int linear int a = unrestricted int 1
+}
+else
+{
+linear int linear int a = unrestricted int 2
+};
+return linear int a;
+}
+[INFO] 
+Doing Linearity Checks...
+[INFO] Begin checking linearity, generating program info
+[INFO] Generated program info, checking linearity of functions
+[INFO] Checking linearity of function: main
+[DEBUG] Added args to lin_map: []
+[INFO] Checking function body
+[INFO] Checking new block
+[DEBUG] Added locals to lin_map: a -> Unassigned : linear int
+
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted bool true"
+[INFO] Checking new block
+[DEBUG] Added locals to lin_map: a -> Unassigned : linear int
+
+[INFO] Checking expression
+[DEBUG] Expression is  "linear int linear int a = unrestricted int 1"
+[INFO] Checking assignment expression
+[DEBUG] Assignment is  "linear int a = unrestricted int 1"
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int 1"
+[INFO] Marking a as assigned
+[DEBUG] Checked statements, lin_map: a -> Assigned : linear int
+
+[INFO] Removing locally declared variables
+[INFO] Checking new block
+[DEBUG] Added locals to lin_map: a -> Unassigned : linear int
+
+[INFO] Checking expression
+[DEBUG] Expression is  "linear int linear int a = unrestricted int 2"
+[INFO] Checking assignment expression
+[DEBUG] Assignment is  "linear int a = unrestricted int 2"
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int 2"
+[INFO] Marking a as assigned
+[DEBUG] Checked statements, lin_map: a -> Assigned : linear int
+
+[INFO] Removing locally declared variables
+[INFO] Merging two branches
+[INFO] Variable a has same state Assigned
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int return(linear int a)"
+[INFO] Checking function call to return
+[DEBUG] Function call args: linear int a
+[INFO] Checking expression
+[DEBUG] Expression is  "linear int a"
+Checking lone identifier "a" (is_consumed=true)
+[INFO] Marking a as consumed
+[DEBUG] Checked statements, lin_map: a -> Used : linear int
+
+[INFO] Removing locally declared variables
+[INFO] Found a with state Used
+[DEBUG] Final lin_map for main []
+[INFO] Done checking linearity
+[DEBUG] LINEAR CHECK SUCCESS
+Program Info:
+Struct Info:
+[]
+Func Info:
+main -> linear int main() {
+linear int a;
+if (unrestricted bool true)
+{
+linear int linear int a = unrestricted int 1
+}
+else
+{
+linear int linear int a = unrestricted int 2
+};
+return linear int a;
+}
+
+Linear Maps:
+main -> []
+
+[INFO] 
+ Doing psuedo-translations...
+[INFO] Generating struct info
+[DEBUG] Struct info: []
+[DEBUG] linear int main() {
+linear int a;
+if (unrestricted bool true)
+{
+linear int linear int a = unrestricted int 1
+}
+else
+{
+linear int linear int a = unrestricted int 2
+};
+return linear int a;
+}

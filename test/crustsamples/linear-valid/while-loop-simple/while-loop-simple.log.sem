@@ -1,0 +1,30 @@
+[INFO] 
+Generating Abstract Syntax Tree
+[DEBUG] linear struct lin_point {
+unrestricted int x;
+unrestricted int y;
+};
+struct lin_point make() {
+struct lin_point new;
+new = { struct lin_point -> 1, 2};
+return new;
+}unrestricted int consume(struct lin_point p) {
+unrestricted int x;
+unrestricted int y;
+:{x, y} = p;
+return x + y;
+}linear int main() {
+struct lin_point outer;
+unrestricted int result;
+outer = make();
+while (true)
+{
+
+};
+a = make();
+result = consume(a);
+return result;
+}
+[INFO] 
+Generating Semantically Checked Abstract Syntax Tree
+Fatal error: exception Failure("undeclared identifier a")

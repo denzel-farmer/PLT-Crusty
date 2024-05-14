@@ -1,0 +1,89 @@
+[INFO] 
+Generating Abstract Syntax Tree
+[DEBUG] linear struct lin_point {
+unrestricted int x;
+unrestricted int y;
+};
+unrestricted char main() {
+;
+{ struct lin_point -> 1, 2};
+return 'a';
+}
+[INFO] 
+Generating Semantically Checked Abstract Syntax Tree
+[DEBUG] 
+SAST:
+[DEBUG] linear struct lin_point {
+unrestricted int x;
+unrestricted int y;
+};
+unrestricted char main() {
+;
+struct lin_point { struct lin_point -> unrestricted int 1, unrestricted int 2};
+return unrestricted char 'a';
+}
+[INFO] 
+Doing Linearity Checks...
+[INFO] Begin checking linearity, generating program info
+[INFO] Generated program info, checking linearity of functions
+[INFO] Checking linearity of function: main
+[DEBUG] Added args to lin_map: []
+[INFO] Checking function body
+[INFO] Checking new block
+[DEBUG] Added locals to lin_map: []
+[INFO] Checking expression
+[DEBUG] Expression is  "struct lin_point { struct lin_point -> unrestricted int 1, unrestricted int 2}"
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int 1"
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int 2"
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int return(unrestricted char 'a')"
+[INFO] Checking function call to return
+[DEBUG] Function call args: unrestricted char 'a'
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted char 'a'"
+[DEBUG] Checked statements, lin_map: []
+[INFO] Removing locally declared variables
+[DEBUG] Final lin_map for main []
+[INFO] Done checking linearity
+[DEBUG] LINEAR CHECK SUCCESS
+Program Info:
+Struct Info:
+lin_point -> linear struct lin_point {
+unrestricted int x;
+unrestricted int y;
+}
+
+Func Info:
+[]
+Linear Maps:
+main -> []
+
+[DEBUG] 
+Linear Report:
+[DEBUG] LINEAR CHECK SUCCESS
+Program Info:
+Struct Info:
+lin_point -> linear struct lin_point {
+unrestricted int x;
+unrestricted int y;
+}
+
+Func Info:
+[]
+Linear Maps:
+main -> []
+
+[INFO] 
+Linearity Check Passed
+[INFO] 
+Doing psuedo-translations...
+[INFO] Generating struct info
+[DEBUG] Struct info: lin_point -> linear struct lin_point {
+unrestricted int x;
+unrestricted int y;
+}
+
+Fatal error: exception Failure("Struct literal translation failed: unnamed struct literals not yet implemented")
+Symbols not found: [ main ]

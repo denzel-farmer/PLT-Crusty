@@ -1,0 +1,118 @@
+[INFO] 
+Generating Abstract Syntax Tree
+[DEBUG] linear struct lin_point {
+unrestricted int x;
+};
+struct lin_point make() {
+struct lin_point b;
+b = { struct lin_point -> 1};
+return b;
+}unrestricted int main() {
+;
+make();
+return 0;
+}
+[INFO] 
+Generating Semantically Checked Abstract Syntax Tree
+[DEBUG] 
+SAST:
+[DEBUG] linear struct lin_point {
+unrestricted int x;
+};
+struct lin_point make() {
+struct lin_point b;
+struct lin_point struct lin_point b = struct lin_point { struct lin_point -> unrestricted int 1};
+return struct lin_point b;
+}unrestricted int main() {
+;
+struct lin_point make();
+return unrestricted int 0;
+}
+[INFO] 
+Doing Linearity Checks...
+[INFO] Begin checking linearity, generating program info
+[INFO] Generated program info, checking linearity of functions
+[INFO] Checking linearity of function: make
+[DEBUG] Added args to lin_map: []
+[INFO] Checking function body
+[INFO] Checking new block
+[DEBUG] Added locals to lin_map: b -> Unassigned : struct lin_point
+
+[INFO] Checking expression
+[DEBUG] Expression is  "struct lin_point struct lin_point b = struct lin_point { struct lin_point -> unrestricted int 1}"
+[INFO] Checking assignment expression
+[DEBUG] Assignment is  "struct lin_point b = struct lin_point { struct lin_point -> unrestricted int 1}"
+[INFO] Checking expression
+[DEBUG] Expression is  "struct lin_point { struct lin_point -> unrestricted int 1}"
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int 1"
+[INFO] Marking b as assigned
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int return(struct lin_point b)"
+[INFO] Checking function call to return
+[DEBUG] Function call args: struct lin_point b
+[INFO] Checking expression
+[DEBUG] Expression is  "struct lin_point b"
+Checking lone identifier "b" (is_consumed=true)
+[INFO] Marking b as consumed
+[DEBUG] Checked statements, lin_map: b -> Used : struct lin_point
+
+[INFO] Removing locally declared variables
+[INFO] Found b with state Used
+[DEBUG] Final lin_map for make []
+[INFO] Checking linearity of function: main
+[DEBUG] Added args to lin_map: []
+[INFO] Checking function body
+[INFO] Checking new block
+[DEBUG] Added locals to lin_map: []
+[INFO] Checking expression
+[DEBUG] Expression is  "struct lin_point make()"
+[INFO] Checking function call to make
+[DEBUG] Function call args: 
+[INFO] Checking expression
+[DEBUG] Expression is  "unrestricted int return(unrestricted int 0)"
+[DEBUG] Checked statements, lin_map: Function make returns linear value that is not consumed
+[DEBUG] Final lin_map for main Function make returns linear value that is not consumed
+[INFO] Done checking linearity
+[DEBUG] LINEAR CHECK FAIL
+Program Info:
+Struct Info:
+lin_point -> linear struct lin_point {
+unrestricted int x;
+}
+
+Func Info:
+make -> struct lin_point make() {
+struct lin_point b;
+struct lin_point struct lin_point b = struct lin_point { struct lin_point -> unrestricted int 1};
+return struct lin_point b;
+}
+
+Linear Maps:
+make -> []
+main -> Function make returns linear value that is not consumed
+
+[DEBUG] 
+Linear Report:
+[DEBUG] LINEAR CHECK FAIL
+Program Info:
+Struct Info:
+lin_point -> linear struct lin_point {
+unrestricted int x;
+}
+
+Func Info:
+make -> struct lin_point make() {
+struct lin_point b;
+struct lin_point struct lin_point b = struct lin_point { struct lin_point -> unrestricted int 1};
+return struct lin_point b;
+}
+
+Linear Maps:
+make -> []
+main -> Function make returns linear value that is not consumed
+
+lli: <stdin>:1:1: error: expected top-level entity
+\Linearity Check: FAILED
+^
+

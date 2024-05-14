@@ -1,0 +1,3 @@
+
+ LINEAR CHECK FAILED, EXITING
+Reason: Variable new consumed more than once
