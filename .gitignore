@@ -14,6 +14,7 @@
 *.out.sem
 *.out.llvm
 *.out
+!*.expected.out
 
 # ocamlbuild working directory
 _build/
