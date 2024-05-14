@@ -1,10 +1,11 @@
 .PHONY: test
+test: test-automated
 
-test:
+test-automated:
 	python3 tests.py
 
 test-checksemant:
-	python3 test_files.py ../src/checksemant
+	python3 samples-manual/old_tester.py ../checksemant.native
 
 .PHONY: clean
 clean:
