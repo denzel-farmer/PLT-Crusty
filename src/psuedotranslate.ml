@@ -159,6 +159,7 @@ let eliminate_psuedo_nodes program =
   let rec translate_statement (stmt : sstmt) : sstmt =
     match stmt with
     | SBlock (decls, stmts) -> SBlock (decls, List.map translate_statement stmts)
+    | FSBlock (decls, stmts, ret_stmt) -> FSBlock (decls, List.map translate_statement stmts, ret_stmt)
     (* Special struct literal translation can translate an expression into a statements *)
     | SExpr
         ( typ

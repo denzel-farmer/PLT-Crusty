@@ -36,7 +36,7 @@ let () =
     Log.debug_println "\nLinear Report:";
     Log.debug_println (Linear.string_of_linear_result linear_result);
     if Linear.lin_result_failed linear_result
-    then print_endline "\Linearity Check: FAILED"
+    then print_endline "\nLinearity Check: FAILED"
     else (
       Log.info_println "\nLinearity Check Passed";
       Log.info_println "\nDoing psuedo-translations...";
