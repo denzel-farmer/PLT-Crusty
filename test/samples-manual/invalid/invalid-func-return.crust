@@ -1,0 +1,15 @@
+/* This test should fail because make returns void, but currently doesn't
+because we don't seem to compare the return type of a function during assignment */
+void make() {
+    int b;
+
+    b = 5;
+}
+
+linear int main() {
+    int a; 
+    
+    a = make();
+
+    return a;
+} 

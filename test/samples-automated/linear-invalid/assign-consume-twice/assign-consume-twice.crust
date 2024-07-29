@@ -1,0 +1,22 @@
+struct lin_point {
+    int x;
+    int y;
+};
+
+int main() {
+    struct lin_point new;
+    struct lin_point new2;
+    struct lin_point new3;
+    int x; 
+    int y;
+
+    new = {struct lin_point -> 1,2 };
+
+    new2 = new;
+
+    // New is now invalid, can't use again
+
+    new3 = new;
+
+    return x + y;
+} 

@@ -1,0 +1,24 @@
+// show that you can assign and consume in the same expr
+struct lin_point {
+    int x;
+    int y;
+};
+
+int main() {
+    struct lin_point new;
+    int x; 
+    int y;
+    int result;
+
+    new = {struct lin_point -> 1,2 };
+
+    new = new;
+
+    :{x, y} = new;
+
+    result = x + y;
+    print("result: ");
+    print(result);
+    print("\n");
+    return result;
+} 

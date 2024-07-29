@@ -1,0 +1,18 @@
+struct point_info {
+    char c;
+};
+
+struct lin_point {
+    int x;
+    int y;
+    struct point_info info;
+};
+
+char main() {
+    struct point_info init_info;
+    struct lin_point p; 
+
+    p = {struct lin_point -> }
+
+    return 'a';
+} 

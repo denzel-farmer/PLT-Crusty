@@ -1,0 +1,7 @@
+string main() {
+    string a; 
+
+    a = "abc";
+
+    return a;
+} 

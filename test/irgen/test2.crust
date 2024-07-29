@@ -1,0 +1,19 @@
+unrestricted struct point {
+    int x;
+    int y;
+};
+
+int main(){
+    int x; 
+    int y;
+    struct point a;
+
+    x = 2 - 4;
+    y = x + 5;
+    a.x = y;
+    print(x);
+    print(y);
+    print(a.x);
+
+    return 0;
+}

@@ -1,0 +1,22 @@
+unrestricted struct point {
+    int x;
+    int y;
+};
+
+int borrow(ref struct point a, ref struct point b){
+    b = a;
+    b->y = 3;
+    return 2;
+}
+
+int main(){
+    struct point c;
+    struct point d; 
+
+    d.y = 2;
+    borrow(&c, &d);
+    print(c.y);
+    print(d.y);
+
+    return 0;
+}

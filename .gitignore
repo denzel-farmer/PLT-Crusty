@@ -8,6 +8,14 @@
 *.cmxs
 *.cmxa
 
+# Autotester
+*.log
+*.log.sem
+*.out.sem
+*.out.llvm
+*.out
+!*.expected.out
+
 # ocamlbuild working directory
 _build/
 
@@ -27,3 +35,5 @@ setup.log
 
 # Local OPAM switch
 _opam/
+
+.vscode

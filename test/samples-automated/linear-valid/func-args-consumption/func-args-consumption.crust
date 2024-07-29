@@ -1,0 +1,37 @@
+struct lin_point {
+    int x;
+    int y;
+};
+
+
+struct lin_point make() {
+    struct lin_point new;
+
+    new = {struct lin_point -> 1,2 };
+
+    return new;
+}
+
+int consume(struct lin_point p) {
+    int x;
+    int y;
+
+    :{x, y} = p;
+
+    return x + y;
+}
+
+
+linear int main() {
+    struct lin_point a;
+    int result;
+
+    a = make();
+
+    result = consume(a);
+
+    // Should be 3
+    print(result);
+
+    return result;
+} 

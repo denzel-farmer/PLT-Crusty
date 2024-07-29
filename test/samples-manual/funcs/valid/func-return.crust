@@ -1,0 +1,14 @@
+// This test currently fails, because function call nodes 
+// seem to be given 'unrestricted int' no matter what, when 
+// their type should be populated from the function definition.
+float sum_floats(float a, float b) {
+    return a + b;
+}
+
+float main() {
+    float result;
+
+    result = sum_floats(1.0, 2.0);
+
+    return result;
+} 

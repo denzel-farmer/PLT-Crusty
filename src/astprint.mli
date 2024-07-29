@@ -1,0 +1,20 @@
+val string_of_prim_typ : Ast.primType -> string
+val string_of_lin : Ast.lin_qual -> string
+val string_of_typ : Ast.typ -> string
+val string_of_ret_typ : Ast.ret_typ -> string
+val string_of_binArithOp : Ast.binArithOp -> string
+val string_of_binLogOp : Ast.binLogOp -> string
+val string_of_unLogOp : Ast.unLogOp -> string
+val string_of_compOp : Ast.compOp -> string
+val string_of_unArithOp : Ast.unArithOp -> string
+val string_of_accessOp : Ast.accessOp -> string
+val string_of_literal : Ast.literal -> string
+val string_of_expr : Ast.expr -> string
+val string_of_operation : Ast.operation -> string
+val string_of_assignment : Ast.assignment -> string
+val string_of_var_decl : Ast.typ * string -> string
+val string_of_stmt : Ast.stmt -> string
+val string_of_return : Ast.return_stmt -> string
+val string_of_func_def : Ast.func_def -> string
+val string_of_struct_def : Ast.struct_def -> string
+val string_of_program : Ast.program -> string
