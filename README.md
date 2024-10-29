@@ -21,6 +21,3 @@ The crusty.native accepts input (a program) from stdin via a lexbuf stream, runs
 
 For instance, we ran ./crusty.native < basic.crust > basic.out, and then lli basic.out. When running lli basic.out, all print statements then appear in the terminal as when running a standard executable program. 
 
-# Authors
-
-This project was written entirely by Caroline Somers.
